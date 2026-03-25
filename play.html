@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Game Player</title>
+    <meta name="description" content="Fullscreen game player with back-to-library navigation.">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Game Player">
+    <meta property="og:description" content="Launch games in a fullscreen-style player with quick navigation.">
+    <meta property="og:image" content="icon.svg">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Game Player">
+    <meta name="twitter:description" content="Launch games in a fullscreen-style player.">
+    <meta name="twitter:image" content="icon.svg">
+    <link rel="icon" href="TemplateData/favicon.ico" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --bg: #0d1426;
+            --surface: #111c35;
+            --line: #22345f;
+            --text: #e9eeff;
+            --muted: #9aabcf;
+            --accent: #3d8dff;
+            --accent-strong: #1f67ce;
+        }
+
+        * { box-sizing: border-box; }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 80% -20%, #21438f 0, transparent 40%),
+                radial-gradient(circle at 10% 100%, #1b6c80 0, transparent 35%),
+                var(--bg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(8, 17, 35, 0.85);
+            backdrop-filter: blur(8px);
+        }
+
+        .title {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--muted);
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 9px;
+            padding: 9px 12px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #fff;
+            background: var(--accent);
+        }
+
+        .btn:hover {
+            background: var(--accent-strong);
+        }
+
+        .btn.alt {
+            background: #2b385b;
+            color: #dce6ff;
+        }
+
+        .btn.alt:hover { background: #364b7d; }
+
+        .frame-wrap {
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        iframe {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 100%;
+            background: #000;
+        }
+
+        .note {
+            margin: 0;
+            padding: 0 14px 12px;
+            color: var(--muted);
+            font-size: 0.87rem;
+        }
+
+        .status {
+            margin: 10px 14px 0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.88rem;
+            display: none;
+        }
+
+        .status.warn {
+            display: block;
+            color: #ffd0d0;
+            background: #4f2525;
+            border: 1px solid #8f4545;
+        }
+
+        .status.ok {
+            display: block;
+            color: #d0ffe5;
+            background: #234737;
+            border: 1px solid #3a7f5d;
+        }
+
+        .note a {
+            color: #a9c7ff;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .note a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 700px) {
+            .frame-wrap { padding: 8px; }
+            .bar { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="bar">
+        <h1 id="gameTitle" class="title">Loading game...</h1>
+        <div class="actions">
+            <a class="btn alt" href="index.html">Back to Library</a>
+            <a id="openDirect" class="btn" href="#" target="_blank" rel="noopener noreferrer">Open Direct</a>
+        </div>
+    </header>
+
+    <section class="frame-wrap">
+        <iframe id="gameFrame" title="Game Player" loading="eager" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </section>
+
+    <p id="embedStatus" class="status" role="status" aria-live="polite"></p>
+
+    <p class="note">If a game does not embed due to browser framing rules, use Open Direct. See <a href="privacy.html">Privacy and Terms</a>.</p>
+
+    <script>
+        var RECENTS_KEY = "gamehub_recent";
+
+        function updateRecentGames(gameId) {
+            try {
+                var value = JSON.parse(localStorage.getItem(RECENTS_KEY));
+                var recent = Array.isArray(value) ? value : [];
+                var withoutCurrent = recent.filter(function (id) { return id !== gameId; });
+                withoutCurrent.unshift(gameId);
+                localStorage.setItem(RECENTS_KEY, JSON.stringify(withoutCurrent.slice(0, 8)));
+            } catch (error) {
+                localStorage.setItem(RECENTS_KEY, JSON.stringify([gameId]));
+            }
+        }
+
+        var titleEl = document.getElementById("gameTitle");
+        var frame = document.getElementById("gameFrame");
+        var direct = document.getElementById("openDirect");
+        var embedStatus = document.getElementById("embedStatus");
+        var loadTimer;
+
+        function setStatus(type, message) {
+            embedStatus.className = "status " + type;
+            embedStatus.textContent = message;
+        }
+
+        function buildFallbackGame() {
+            return {
+                id: "snow-rider",
+                title: "Snow Rider 3D",
+                source: "snow-rider.html",
+                direct: "snow-rider.html"
+            };
+        }
+
+        function applyEmbedPolicy(game) {
+            var sandbox = typeof game.sandbox === "string" ? game.sandbox.trim() : "";
+            if (sandbox) {
+                frame.setAttribute("sandbox", sandbox);
+            } else {
+                frame.removeAttribute("sandbox");
+            }
+        }
+
+        async function loadCatalog() {
+            try {
+                var response = await fetch("games.json", { cache: "no-cache" });
+                if (!response.ok) {
+                    throw new Error("Could not load games.json");
+                }
+                var data = await response.json();
+                return Array.isArray(data) ? data : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        async function initPlayer() {
+            var params = new URLSearchParams(window.location.search);
+            var key = params.get("game") || "snow-rider";
+            var games = await loadCatalog();
+
+            var game = games.find(function (item) { return item.id === key; }) ||
+                games.find(function (item) { return item.id === "snow-rider"; }) ||
+                buildFallbackGame();
+
+            titleEl.textContent = "Now Playing: " + game.title;
+            direct.href = game.direct;
+            updateRecentGames(game.id);
+            applyEmbedPolicy(game);
+
+            frame.style.display = "block";
+            frame.src = game.source;
+
+            clearTimeout(loadTimer);
+            setStatus("ok", "Trying embedded mode. If it fails, use Open Direct.");
+
+            frame.addEventListener("load", function () {
+                clearTimeout(loadTimer);
+                setStatus("ok", "Game loaded in player window.");
+            }, { once: true });
+
+            loadTimer = setTimeout(function () {
+                setStatus("warn", "This game may block embedding. Use Open Direct if it does not appear.");
+            }, 4000);
+        }
+
+        initPlayer();
+    </script>
+</body>
+</html>

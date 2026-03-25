@@ -1,26 +1,537 @@
 <!DOCTYPE html>
-<html lang="en-us">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Snow Rider 3D - Thrilling Skiing Adventure Game</title>
-    <meta name="description" content="Immerse yourself in Snow Rider 3D, a thrilling skiing adventure game set in breathtaking mountain landscapes. Ride your sleigh down snowy slopes, dodge obstacles, and collect gifts for an exhilarating experience.">
-    <meta name="theme-color" content="#007ACC">
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="author" content="Your Name">
-    <meta name="keywords" content="Snow Rider 3D, skiing game, winter sports, snowboarding, ski game, mountain landscapes, skiing adventure, snowboarding adventure, snowy mountain, sleigh ride, winter game">
-    <script src="TemplateData/UnityProgress.js"></script>
-    <script src="Build/UnityLoader.js"></script>
-    <script>
-        var gameInstance = UnityLoader.instantiate("gameContainer", "Build/SnowRider3D-gd-1.json", {onProgress: UnityProgress,Module:{onRuntimeInitialized: function() {UnityProgress(gameInstance, "complete")}}});
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Classroom-Style Game Hub</title>
+    <meta name="description" content="A classroom-style game portal with search, filters, favorites, and recently played.">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Classroom-Style Game Hub">
+    <meta property="og:description" content="Play Snow Rider 3D, PolyTrack, and more from one dashboard.">
+    <meta property="og:image" content="icon.svg">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Classroom-Style Game Hub">
+    <meta name="twitter:description" content="Play browser games from one organized dashboard.">
+    <meta name="twitter:image" content="icon.svg">
+    <link rel="icon" href="TemplateData/favicon.ico" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="manifest" href="manifest.json">
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="sitemap.xml">
+    <style>
+        :root {
+            --bg: #f5f7fc;
+            --ink: #1f2537;
+            --muted: #61708f;
+            --card: #ffffff;
+            --line: #dde4f3;
+            --brand: #0d57ff;
+            --brand-strong: #0039b8;
+            --chip: #ecf2ff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+            background:
+                radial-gradient(circle at 15% 0%, #dfe8ff 0, transparent 40%),
+                radial-gradient(circle at 85% 10%, #d7fff1 0, transparent 38%),
+                var(--bg);
+            min-height: 100vh;
+        }
+
+        .shell {
+            width: min(1140px, 94vw);
+            margin: 0 auto;
+            padding: 24px 0 40px;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #e9fff3;
+            color: #1f7b4c;
+            font-size: 0.82rem;
+            font-weight: 700;
+            border: 1px solid #bdeccf;
+        }
+
+        .panel {
+            background: linear-gradient(135deg, #ffffff 0%, #f1f5ff 100%);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 14px 30px rgba(24, 43, 89, 0.08);
+            margin-bottom: 14px;
+        }
+
+        .panel h1 {
+            margin: 0;
+            font-size: clamp(1.6rem, 3vw, 2.3rem);
+        }
+
+        .panel p {
+            margin: 7px 0 0;
+            color: var(--muted);
+            max-width: 78ch;
+            line-height: 1.45;
+        }
+
+        .toolbar {
+            display: grid;
+            grid-template-columns: 1fr 210px;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .section-title {
+            margin: 0 0 10px;
+            font-size: 1.08rem;
+            color: #27365f;
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .input,
+        .select {
+            width: 100%;
+            border: 1px solid #ccd8f0;
+            background: #fff;
+            border-radius: 12px;
+            padding: 11px 12px;
+            color: var(--ink);
+            font: inherit;
+        }
+
+        .input:focus,
+        .select:focus {
+            outline: 2px solid rgba(13, 87, 255, 0.2);
+            border-color: var(--brand);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(20, 37, 74, 0.06);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card.compact .thumb {
+            height: 82px;
+        }
+
+        .thumb {
+            height: 126px;
+            position: relative;
+        }
+
+        .thumb::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.2), transparent 60%);
+        }
+
+        .body {
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .title {
+            margin: 0;
+            font-size: 1.06rem;
+        }
+
+        .desc {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.4;
+            font-size: 0.94rem;
+            flex-grow: 1;
+        }
+
+        .chip {
+            width: fit-content;
+            font-size: 0.8rem;
+            border-radius: 100px;
+            background: var(--chip);
+            color: #2a4d9f;
+            padding: 4px 10px;
+            font-weight: 700;
+            letter-spacing: 0.1px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 2px;
+        }
+
+        .fav {
+            background: #fff5d9;
+            color: #8a6400;
+        }
+
+        .fav.active {
+            background: #ffd458;
+            color: #4d3600;
+        }
+
+        .btn {
+            border: 0;
+            text-decoration: none;
+            border-radius: 10px;
+            padding: 9px 12px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.12s ease, background-color 0.2s ease;
+        }
+
+        .btn.play {
+            background: var(--brand);
+            color: #fff;
+        }
+
+        .btn.play:hover {
+            background: var(--brand-strong);
+            transform: translateY(-1px);
+        }
+
+        .btn.alt {
+            background: #eef2ff;
+            color: #2f4582;
+        }
+
+        .btn.alt:hover { background: #e5ebff; }
+
+        .btn.warn {
+            background: #fff1f1;
+            color: #a12f2f;
+            border: 1px solid #f3c3c3;
+        }
+
+        .btn.warn:hover {
+            background: #ffe2e2;
+        }
+
+        .empty {
+            border: 1px dashed #bbcae6;
+            background: #f8faff;
+            border-radius: 12px;
+            color: var(--muted);
+            padding: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .site-footer {
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .site-footer a {
+            color: #2f4f9f;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .site-footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 680px) {
+            .toolbar {
+                grid-template-columns: 1fr;
+            }
+
+            .split {
+                grid-template-columns: 1fr;
+            }
+
+            .panel,
+            .body {
+                padding: 14px;
+            }
+        }
+    </style>
 </head>
-<body style="overflow:hidden;padding:0px;margin:0px;">
-    <div class="webgl-content">
-        <div id="gameContainer" style="width: 960px; height: 600px; margin: auto"></div>
-    </div>
+<body>
+    <main class="shell">
+        <header class="top">
+            <div class="logo">Classroom-Style Game Hub</div>
+            <div class="badge">Public Build Candidate</div>
+        </header>
+
+        <section class="panel">
+            <h1>Play from one dashboard</h1>
+            <p>Use search and category filters to quickly find games. Mark favorites, and the hub remembers your recently played list.</p>
+        </section>
+
+        <section class="split" aria-label="Personal sections">
+            <article class="panel">
+                <h2 class="section-title">Favorites</h2>
+                <section id="favoriteGrid" class="grid" aria-label="Favorite games"></section>
+                <p id="favoriteEmpty" class="empty" style="display:block;">No favorites yet. Click Favorite on any card.</p>
+            </article>
+            <article class="panel">
+                <h2 class="section-title">Recently Played</h2>
+                <section id="recentGrid" class="grid" aria-label="Recently played games"></section>
+                <p id="recentEmpty" class="empty" style="display:block;">No recent games yet. Launch one to start tracking.</p>
+            </article>
+        </section>
+
+        <section class="toolbar" aria-label="Game filters">
+            <label>
+                <span class="meta">Search games</span>
+                <input id="searchInput" class="input" type="search" placeholder="Try: rider, race, arcade">
+            </label>
+            <label>
+                <span class="meta">Category</span>
+                <select id="categorySelect" class="select">
+                    <option value="all">All categories</option>
+                    <option value="racing">Racing</option>
+                    <option value="arcade">Arcade</option>
+                    <option value="action">Action</option>
+                    <option value="puzzle">Puzzle</option>
+                </select>
+            </label>
+        </section>
+
+        <section class="controls" aria-label="Library controls">
+            <button id="clearFavoritesBtn" type="button" class="btn warn">Clear Favorites</button>
+            <button id="clearRecentBtn" type="button" class="btn warn">Clear Recently Played</button>
+            <span class="meta">Game list source: games.json</span>
+        </section>
+
+        <section id="gameGrid" class="grid" aria-label="Games list"></section>
+        <p id="emptyState" class="empty">No games match that search. Try a different term or select "All categories".</p>
+
+        <footer class="site-footer" aria-label="Site links">
+            <span>Public website build</span>
+            <span>
+                <a href="privacy.html">Privacy and Terms</a>
+                |
+                <a href="404.html">404 Page</a>
+            </span>
+        </footer>
+    </main>
+
+    <script>
+        var games = [];
+
+        var FAVORITES_KEY = "gamehub_favorites";
+        var RECENTS_KEY = "gamehub_recent";
+
+        var searchInput = document.getElementById("searchInput");
+        var categorySelect = document.getElementById("categorySelect");
+        var gameGrid = document.getElementById("gameGrid");
+        var emptyState = document.getElementById("emptyState");
+        var favoriteGrid = document.getElementById("favoriteGrid");
+        var favoriteEmpty = document.getElementById("favoriteEmpty");
+        var recentGrid = document.getElementById("recentGrid");
+        var recentEmpty = document.getElementById("recentEmpty");
+        var clearFavoritesBtn = document.getElementById("clearFavoritesBtn");
+        var clearRecentBtn = document.getElementById("clearRecentBtn");
+
+        function readArray(key) {
+            try {
+                var value = JSON.parse(localStorage.getItem(key));
+                return Array.isArray(value) ? value : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function writeArray(key, value) {
+            localStorage.setItem(key, JSON.stringify(value));
+        }
+
+        function getGameById(gameId) {
+            return games.find(function (game) { return game.id === gameId; });
+        }
+
+        function createCard(game, compact) {
+            var favorites = readArray(FAVORITES_KEY);
+            var isFavorite = favorites.indexOf(game.id) !== -1;
+            var favoriteClass = isFavorite ? "btn fav active" : "btn fav";
+            var favoriteLabel = isFavorite ? "Favorited" : "Favorite";
+            var cardClass = compact ? 'card compact' : 'card';
+            var launch = 'play.html?game=' + encodeURIComponent(game.id);
+
+            return '<article class="' + cardClass + '">' +
+                '<div class="thumb" style="background:' + game.gradient + '"></div>' +
+                '<div class="body">' +
+                '<span class="chip">' + game.category + '</span>' +
+                '<h2 class="title">' + game.title + '</h2>' +
+                '<p class="desc">' + game.description + '</p>' +
+                '<div class="actions">' +
+                '<a class="btn play" href="' + launch + '">Play</a>' +
+                '<a class="btn alt" href="' + game.direct + '" target="_blank" rel="noopener noreferrer">Open Direct</a>' +
+                '<button type="button" class="' + favoriteClass + '" data-favorite-id="' + game.id + '">' + favoriteLabel + '</button>' +
+                '</div>' +
+                '</div>' +
+                '</article>';
+        }
+
+        function renderFavoritesAndRecent() {
+            var favorites = readArray(FAVORITES_KEY);
+            var recents = readArray(RECENTS_KEY);
+
+            var favoriteGames = favorites.map(getGameById).filter(Boolean);
+            var recentGames = recents.map(getGameById).filter(Boolean);
+
+            favoriteGrid.innerHTML = favoriteGames.map(function (game) {
+                return createCard(game, true);
+            }).join("");
+
+            recentGrid.innerHTML = recentGames.map(function (game) {
+                return createCard(game, true);
+            }).join("");
+
+            favoriteEmpty.style.display = favoriteGames.length ? "none" : "block";
+            recentEmpty.style.display = recentGames.length ? "none" : "block";
+        }
+
+        function render() {
+            if (!games.length) {
+                gameGrid.innerHTML = "";
+                emptyState.textContent = "Game catalog is loading...";
+                emptyState.style.display = "block";
+                return;
+            }
+
+            var query = searchInput.value.trim().toLowerCase();
+            var category = categorySelect.value;
+
+            var filtered = games.filter(function (game) {
+                var matchesCategory = category === "all" || game.category === category;
+                var text = (game.title + " " + game.description + " " + game.category).toLowerCase();
+                var matchesQuery = query.length === 0 || text.indexOf(query) !== -1;
+                return matchesCategory && matchesQuery;
+            });
+
+            gameGrid.innerHTML = filtered.map(createCard).join("");
+            emptyState.style.display = filtered.length ? "none" : "block";
+            renderFavoritesAndRecent();
+        }
+
+        async function loadGames() {
+            try {
+                var response = await fetch("games.json", { cache: "no-cache" });
+                if (!response.ok) {
+                    throw new Error("Failed to load games.json");
+                }
+
+                var data = await response.json();
+                games = Array.isArray(data) ? data : [];
+                render();
+            } catch (error) {
+                games = [];
+                gameGrid.innerHTML = "";
+                emptyState.textContent = "Could not load games.json. Check that the file exists and is valid JSON.";
+                emptyState.style.display = "block";
+            }
+        }
+
+        document.addEventListener("click", function (event) {
+            var target = event.target;
+            if (!(target instanceof HTMLElement)) {
+                return;
+            }
+
+            var favoriteId = target.getAttribute("data-favorite-id");
+            if (!favoriteId) {
+                return;
+            }
+
+            var favorites = readArray(FAVORITES_KEY);
+            var index = favorites.indexOf(favoriteId);
+
+            if (index === -1) {
+                favorites.push(favoriteId);
+            } else {
+                favorites.splice(index, 1);
+            }
+
+            writeArray(FAVORITES_KEY, favorites);
+            render();
+        });
+
+        searchInput.addEventListener("input", render);
+        categorySelect.addEventListener("change", render);
+
+        clearFavoritesBtn.addEventListener("click", function () {
+            writeArray(FAVORITES_KEY, []);
+            render();
+        });
+
+        clearRecentBtn.addEventListener("click", function () {
+            writeArray(RECENTS_KEY, []);
+            render();
+        });
+
+        loadGames();
+    </script>
 </body>
 </html>
 
