@@ -3,29 +3,32 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Game Player</title>
-    <meta name="description" content="Fullscreen game player with back-to-library navigation.">
+    <title>Arcade Player</title>
+    <meta name="description" content="Fullscreen-style game player with local-first fallback behavior.">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Game Player">
-    <meta property="og:description" content="Launch games in a fullscreen-style player with quick navigation.">
+    <meta property="og:title" content="Arcade Player">
+    <meta property="og:description" content="Launch games with embed fallback and quick direct-open controls.">
     <meta property="og:image" content="icon.svg">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Game Player">
+    <meta name="twitter:title" content="Arcade Player">
     <meta name="twitter:description" content="Launch games in a fullscreen-style player.">
     <meta name="twitter:image" content="icon.svg">
     <link rel="icon" href="TemplateData/favicon.ico" sizes="any">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="manifest" href="manifest.json">
     <style>
+        @import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Nunito:wght@600;700;800&display=swap");
+
         :root {
-            --bg: #0d1426;
-            --surface: #111c35;
-            --line: #22345f;
-            --text: #e9eeff;
-            --muted: #9aabcf;
-            --accent: #3d8dff;
-            --accent-strong: #1f67ce;
+            --bg: #041a3d;
+            --line: #2058a5;
+            --text: #f5f9ff;
+            --muted: #b8ccf5;
+            --accent: #1388ff;
+            --accent-strong: #0062c5;
+            --alt: #ffd44a;
+            --alt-ink: #513600;
         }
 
         * { box-sizing: border-box; }
@@ -38,11 +41,11 @@
         body {
             margin: 0;
             height: 100vh;
-            font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+            font-family: "Nunito", "Trebuchet MS", sans-serif;
             color: var(--text);
             background:
-                radial-gradient(circle at 80% -20%, #21438f 0, transparent 40%),
-                radial-gradient(circle at 10% 100%, #1b6c80 0, transparent 35%),
+                radial-gradient(circle at 80% -20%, #217df4 0, transparent 42%),
+                radial-gradient(circle at 10% 100%, #0cb39c 0, transparent 35%),
                 var(--bg);
             display: flex;
             flex-direction: column;
@@ -56,13 +59,15 @@
             justify-content: space-between;
             padding: 12px 14px;
             border-bottom: 1px solid var(--line);
-            background: rgba(8, 17, 35, 0.85);
+            background: rgba(3, 18, 43, 0.88);
             backdrop-filter: blur(8px);
         }
 
         .title {
             margin: 0;
-            font-size: 1rem;
+            font-size: 1.05rem;
+            font-family: "Archivo Black", Impact, sans-serif;
+            letter-spacing: 0.2px;
             color: var(--muted);
         }
 
@@ -91,11 +96,11 @@
         }
 
         .btn.alt {
-            background: #2b385b;
-            color: #dce6ff;
+            background: var(--alt);
+            color: var(--alt-ink);
         }
 
-        .btn.alt:hover { background: #364b7d; }
+        .btn.alt:hover { background: #f2bf21; }
 
         .frame-wrap {
             flex: 1;
@@ -132,9 +137,9 @@
 
         .status.warn {
             display: block;
-            color: #ffd0d0;
-            background: #4f2525;
-            border: 1px solid #8f4545;
+            color: #fff4dd;
+            background: #6a3f00;
+            border: 1px solid #c68612;
         }
 
         .status.ok {
@@ -221,6 +226,14 @@
             }
         }
 
+        function shouldSkipEmbed(game) {
+            return game && game.embed === "blocked";
+        }
+
+        function shouldPreferDirect(game) {
+            return !!(game && game.preferDirect === true && typeof game.direct === "string" && game.direct.length > 0);
+        }
+
         async function loadCatalog() {
             try {
                 var response = await fetch("games.json", { cache: "no-cache" });
@@ -247,6 +260,19 @@
             direct.href = game.direct;
             updateRecentGames(game.id);
             applyEmbedPolicy(game);
+
+            if (shouldPreferDirect(game)) {
+                setStatus("warn", "Opening direct mode for better performance...");
+                window.location.replace(game.direct);
+                return;
+            }
+
+            if (shouldSkipEmbed(game)) {
+                frame.removeAttribute("src");
+                frame.style.display = "none";
+                setStatus("warn", "This game is marked as blocked in iframes. Use Open Direct.");
+                return;
+            }
 
             frame.style.display = "block";
             frame.src = game.source;

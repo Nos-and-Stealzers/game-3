@@ -3,10 +3,134 @@
     "id": "snow-rider",
     "title": "Snow Rider 3D",
     "category": "racing",
-    "description": "Unity WebGL build from this repository.",
+    "description": "Unity WebGL build bundled in this repository.",
     "gradient": "linear-gradient(135deg, #72d2ff, #1f62cf)",
     "source": "snow-rider.html",
-    "direct": "snow-rider.html"
+    "direct": "snow-rider.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
+  },
+  {
+    "id": "sweet-bakery-local",
+    "title": "Sweet Bakery Idle",
+    "category": "clicker",
+    "description": "Local idle clicker build hosted inside this project.",
+    "gradient": "linear-gradient(135deg, #f8ce7a, #d08c37)",
+    "source": "games/sweet-bakery/index.html",
+    "direct": "games/sweet-bakery/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
+  },
+  {
+    "id": "fnaf-1",
+    "title": "Five Nights at Freddy's 1",
+    "category": "horror",
+    "description": "Local HTML5 port from hd_fnaf pack.",
+    "gradient": "linear-gradient(135deg, #454545, #1b1b1b)",
+    "source": "games/fnaf/1/index.html",
+    "direct": "games/fnaf/1/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "medium"
+  },
+  {
+    "id": "fnaf-2",
+    "title": "Five Nights at Freddy's 2",
+    "category": "horror",
+    "description": "Local HTML5 port from hd_fnaf pack.",
+    "gradient": "linear-gradient(135deg, #536878, #222d38)",
+    "source": "games/fnaf/2/index.html",
+    "direct": "games/fnaf/2/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "medium"
+  },
+  {
+    "id": "fnaf-3",
+    "title": "Five Nights at Freddy's 3",
+    "category": "horror",
+    "description": "Local HTML5 port from hd_fnaf pack.",
+    "gradient": "linear-gradient(135deg, #6a7c4d, #324125)",
+    "source": "games/fnaf/3/index.html",
+    "direct": "games/fnaf/3/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "medium"
+  },
+  {
+    "id": "fnaf-4",
+    "title": "Five Nights at Freddy's 4",
+    "category": "horror",
+    "description": "Local HTML5 port from hd_fnaf pack.",
+    "gradient": "linear-gradient(135deg, #4a3f58, #1f1a28)",
+    "source": "games/fnaf/4/index.html",
+    "direct": "games/fnaf/4/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "medium"
+  },
+  {
+    "id": "fnaf-world",
+    "title": "FNAF World",
+    "category": "rpg",
+    "description": "Local HTML5 port from hd_fnaf pack.",
+    "gradient": "linear-gradient(135deg, #46a3c4, #1d4867)",
+    "source": "games/fnaf/w/index.html",
+    "direct": "games/fnaf/w/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "medium"
+  },
+  {
+    "id": "fnaf-sl",
+    "title": "FNAF Sister Location",
+    "category": "horror",
+    "description": "Local HTML5 port from hd_fnaf pack.",
+    "gradient": "linear-gradient(135deg, #6677a8, #252d47)",
+    "source": "games/fnaf/sl/index.html",
+    "direct": "games/fnaf/sl/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "medium"
+  },
+  {
+    "id": "fnaf-ps",
+    "title": "FNAF Pizzeria Simulator",
+    "category": "simulation",
+    "description": "Local HTML5 port from hd_fnaf pack.",
+    "gradient": "linear-gradient(135deg, #cf7f44, #6f3415)",
+    "source": "games/fnaf/ps/index.html",
+    "direct": "games/fnaf/ps/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "medium"
+  },
+  {
+    "id": "fnaf-ucn",
+    "title": "FNAF Ultimate Custom Night",
+    "category": "horror",
+    "description": "Local HTML5 port from hd_fnaf pack.",
+    "gradient": "linear-gradient(135deg, #7f4f9b, #301943)",
+    "source": "games/fnaf/ucn/index.html",
+    "direct": "games/fnaf/ucn/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "medium"
+  },
+  {
+    "id": "minecraft-eaglercraft",
+    "title": "Minecraft (Eaglercraft)",
+    "category": "sandbox",
+    "description": "Local Eaglercraft web client imported from LucasGrimm389/thing.",
+    "gradient": "linear-gradient(135deg, #8fbe5c, #2f5e2e)",
+    "source": "games/minecraft/eaglercraft/index.html",
+    "direct": "games/minecraft/eaglercraft/index.html",
+    "preferDirect": true,
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "medium"
   },
   {
     "id": "polytrack",
@@ -15,7 +139,10 @@
     "description": "External source: stuffed18.github.io/polytrack-0.4.1.",
     "gradient": "linear-gradient(135deg, #ffc262, #ff6d45)",
     "source": "https://stuffed18.github.io/polytrack-0.4.1/",
-    "direct": "https://stuffed18.github.io/polytrack-0.4.1/"
+    "direct": "https://stuffed18.github.io/polytrack-0.4.1/",
+    "platform": "external",
+    "embed": "allowed",
+    "schoolRisk": "medium"
   },
   {
     "id": "hextris",
@@ -24,7 +151,10 @@
     "description": "Fast-paced falling hex puzzle challenge.",
     "gradient": "linear-gradient(135deg, #b68cff, #5b42cc)",
     "source": "https://hextris.github.io/hextris/",
-    "direct": "https://hextris.github.io/hextris/"
+    "direct": "https://hextris.github.io/hextris/",
+    "platform": "external",
+    "embed": "allowed",
+    "schoolRisk": "medium"
   },
   {
     "id": "2048",
@@ -33,7 +163,10 @@
     "description": "Merge tiles and chase higher scores.",
     "gradient": "linear-gradient(135deg, #ffe39b, #f29b58)",
     "source": "https://play2048.co/",
-    "direct": "https://play2048.co/"
+    "direct": "https://play2048.co/",
+    "platform": "external",
+    "embed": "blocked",
+    "schoolRisk": "high"
   },
   {
     "id": "flappy",
@@ -42,7 +175,10 @@
     "description": "Arcade tapping challenge with tight timing.",
     "gradient": "linear-gradient(135deg, #7de48f, #2ca95f)",
     "source": "https://flappybird.io/",
-    "direct": "https://flappybird.io/"
+    "direct": "https://flappybird.io/",
+    "platform": "external",
+    "embed": "unknown",
+    "schoolRisk": "medium"
   },
   {
     "id": "dino",
@@ -51,7 +187,10 @@
     "description": "Offline-style endless runner in browser.",
     "gradient": "linear-gradient(135deg, #b5b5b5, #676767)",
     "source": "https://chromedino.com/",
-    "direct": "https://chromedino.com/"
+    "direct": "https://chromedino.com/",
+    "platform": "external",
+    "embed": "blocked",
+    "schoolRisk": "high"
   },
   {
     "id": "brotatofm",
@@ -61,6 +200,9 @@
     "gradient": "linear-gradient(135deg, #ff8e78, #b3362a)",
     "source": "https://youpopnets.online/",
     "direct": "https://youpopnets.online/",
-    "sandbox": "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-pointer-lock allow-downloads"
+    "sandbox": "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-pointer-lock allow-downloads",
+    "platform": "external",
+    "embed": "blocked",
+    "schoolRisk": "high"
   }
 ]
