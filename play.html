@@ -22,6 +22,8 @@
 
         :root {
             --bg: #041a3d;
+            --bg-layer-1: radial-gradient(circle at 80% -20%, #217df4 0, transparent 42%);
+            --bg-layer-2: radial-gradient(circle at 10% 100%, #0cb39c 0, transparent 35%);
             --line: #2058a5;
             --text: #f5f9ff;
             --muted: #b8ccf5;
@@ -29,6 +31,77 @@
             --accent-strong: #0062c5;
             --alt: #ffd44a;
             --alt-ink: #513600;
+            --bar-bg: rgba(3, 18, 43, 0.88);
+            --note-link: #a9c7ff;
+            --status-ok-bg: #234737;
+            --status-ok-line: #3a7f5d;
+            --status-ok-ink: #d0ffe5;
+            --status-warn-bg: #6a3f00;
+            --status-warn-line: #c68612;
+            --status-warn-ink: #fff4dd;
+        }
+
+        body[data-theme="light"] {
+            --bg: #edf2fa;
+            --bg-layer-1: radial-gradient(circle at 90% -10%, #c7dcff 0, transparent 40%);
+            --bg-layer-2: radial-gradient(circle at 0% 100%, #d7fff1 0, transparent 35%);
+            --line: #b7cceb;
+            --text: #16325f;
+            --muted: #3d5f93;
+            --accent: #0a74f0;
+            --accent-strong: #0358ba;
+            --alt: #f3ce4f;
+            --alt-ink: #533f05;
+            --bar-bg: rgba(244, 249, 255, 0.9);
+            --note-link: #225fca;
+            --status-ok-bg: #ddf6e9;
+            --status-ok-line: #7abf99;
+            --status-ok-ink: #1a4f33;
+            --status-warn-bg: #fff0d9;
+            --status-warn-line: #e0b366;
+            --status-warn-ink: #674400;
+        }
+
+        body[data-theme="gray"] {
+            --bg: #1a1d23;
+            --bg-layer-1: radial-gradient(circle at 88% -20%, #3f4653 0, transparent 40%);
+            --bg-layer-2: radial-gradient(circle at 12% 100%, #2d333e 0, transparent 35%);
+            --line: #4b5566;
+            --text: #ebeff7;
+            --muted: #b7bfce;
+            --accent: #8ea6ce;
+            --accent-strong: #6f86ae;
+            --alt: #b6a26a;
+            --alt-ink: #1f1808;
+            --bar-bg: rgba(34, 39, 48, 0.92);
+            --note-link: #b2c7f0;
+            --status-ok-bg: #24362d;
+            --status-ok-line: #486958;
+            --status-ok-ink: #c6f0d9;
+            --status-warn-bg: #4a3a2f;
+            --status-warn-line: #7e654d;
+            --status-warn-ink: #ffe2c7;
+        }
+
+        body[data-theme="black"] {
+            --bg: #080a0d;
+            --bg-layer-1: radial-gradient(circle at 88% -20%, #232730 0, transparent 40%);
+            --bg-layer-2: radial-gradient(circle at 0% 100%, #1a1f26 0, transparent 34%);
+            --line: #2f3745;
+            --text: #edf1f8;
+            --muted: #c1cbdb;
+            --accent: #7ea7ff;
+            --accent-strong: #5f87dc;
+            --alt: #d4b84f;
+            --alt-ink: #382c00;
+            --bar-bg: rgba(14, 17, 23, 0.88);
+            --note-link: #9bbcff;
+            --status-ok-bg: #23372d;
+            --status-ok-line: #3a7f5d;
+            --status-ok-ink: #d0ffe5;
+            --status-warn-bg: #4b3320;
+            --status-warn-line: #8d6234;
+            --status-warn-ink: #ffe3bf;
         }
 
         * { box-sizing: border-box; }
@@ -43,10 +116,7 @@
             height: 100vh;
             font-family: "Nunito", "Trebuchet MS", sans-serif;
             color: var(--text);
-            background:
-                radial-gradient(circle at 80% -20%, #217df4 0, transparent 42%),
-                radial-gradient(circle at 10% 100%, #0cb39c 0, transparent 35%),
-                var(--bg);
+            background: var(--bg-layer-1), var(--bg-layer-2), var(--bg);
             display: flex;
             flex-direction: column;
         }
@@ -59,7 +129,7 @@
             justify-content: space-between;
             padding: 12px 14px;
             border-bottom: 1px solid var(--line);
-            background: rgba(3, 18, 43, 0.88);
+            background: var(--bar-bg);
             backdrop-filter: blur(8px);
         }
 
@@ -137,26 +207,35 @@
 
         .status.warn {
             display: block;
-            color: #fff4dd;
-            background: #6a3f00;
-            border: 1px solid #c68612;
+            color: var(--status-warn-ink);
+            background: var(--status-warn-bg);
+            border: 1px solid var(--status-warn-line);
         }
 
         .status.ok {
             display: block;
-            color: #d0ffe5;
-            background: #234737;
-            border: 1px solid #3a7f5d;
+            color: var(--status-ok-ink);
+            background: var(--status-ok-bg);
+            border: 1px solid var(--status-ok-line);
         }
 
         .note a {
-            color: #a9c7ff;
+            color: var(--note-link);
             text-decoration: none;
             font-weight: 700;
         }
 
         .note a:hover {
             text-decoration: underline;
+        }
+
+        body.fast-mode * {
+            animation: none !important;
+            transition: none !important;
+        }
+
+        body.fast-mode .bar {
+            backdrop-filter: none;
         }
 
         @media (max-width: 700px) {
@@ -184,16 +263,36 @@
 
     <script>
         var RECENTS_KEY = "gamehub_recent";
+        var THEME_KEY = "gamehub_theme";
+        var FAST_MODE_KEY = "gamehub_fast_mode";
+
+        var storageFallback = {};
+
+        function storageGet(key) {
+            try {
+                return localStorage.getItem(key);
+            } catch (error) {
+                return Object.prototype.hasOwnProperty.call(storageFallback, key) ? storageFallback[key] : null;
+            }
+        }
+
+        function storageSet(key, value) {
+            try {
+                localStorage.setItem(key, value);
+            } catch (error) {
+                storageFallback[key] = value;
+            }
+        }
 
         function updateRecentGames(gameId) {
             try {
-                var value = JSON.parse(localStorage.getItem(RECENTS_KEY));
+                var value = JSON.parse(storageGet(RECENTS_KEY));
                 var recent = Array.isArray(value) ? value : [];
                 var withoutCurrent = recent.filter(function (id) { return id !== gameId; });
                 withoutCurrent.unshift(gameId);
-                localStorage.setItem(RECENTS_KEY, JSON.stringify(withoutCurrent.slice(0, 8)));
+                storageSet(RECENTS_KEY, JSON.stringify(withoutCurrent.slice(0, 8)));
             } catch (error) {
-                localStorage.setItem(RECENTS_KEY, JSON.stringify([gameId]));
+                storageSet(RECENTS_KEY, JSON.stringify([gameId]));
             }
         }
 
@@ -206,6 +305,24 @@
         function setStatus(type, message) {
             embedStatus.className = "status " + type;
             embedStatus.textContent = message;
+        }
+
+        function readSetting(key, fallback) {
+            var value = storageGet(key);
+            return value === null ? fallback : value;
+        }
+
+        function applyUiSettings() {
+            var theme = readSetting(THEME_KEY, "light");
+            if (["light", "gray", "black"].indexOf(theme) === -1) {
+                theme = "light";
+            }
+            document.body.setAttribute("data-theme", theme);
+            document.documentElement.style.colorScheme = theme === "black" ? "dark" : "light";
+
+            var fast = readSetting(FAST_MODE_KEY, "0") === "1";
+            document.body.classList.toggle("fast-mode", fast);
+            return fast;
         }
 
         function buildFallbackGame() {
@@ -248,6 +365,7 @@
         }
 
         async function initPlayer() {
+            var fastMode = applyUiSettings();
             var params = new URLSearchParams(window.location.search);
             var key = params.get("game") || "snow-rider";
             var games = await loadCatalog();
@@ -260,6 +378,12 @@
             direct.href = game.direct;
             updateRecentGames(game.id);
             applyEmbedPolicy(game);
+
+            if (fastMode && typeof game.direct === "string" && game.direct.length > 0) {
+                setStatus("warn", "Fast mode is active. Opening direct mode for speed...");
+                window.location.replace(game.direct);
+                return;
+            }
 
             if (shouldPreferDirect(game)) {
                 setStatus("warn", "Opening direct mode for better performance...");

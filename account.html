@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Account Cloud Save</title>
+  <meta name="description" content="Sign in to sync your Arcade Campus Hub save data with Supabase.">
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Nunito:wght@600;700;800&display=swap");
+
+    :root {
+      --bg: #f2f5fb;
+      --panel: #ffffff;
+      --line: #d7deea;
+      --ink: #1b2535;
+      --muted: #66748f;
+      --primary: #2e6bff;
+      --primary-strong: #1f56d7;
+      --soft: #f7f9fe;
+      --warn-bg: #fff1cd;
+      --warn-line: #f1d48d;
+      --warn-ink: #6e4d00;
+      --ok-bg: #e8fff2;
+      --ok-ink: #1f6f41;
+      --error-bg: #ffefec;
+      --error-ink: #8f2f2f;
+      --shadow: 0 14px 34px rgba(20, 36, 78, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Nunito", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px 14px;
+    }
+
+    .card {
+      width: min(460px, 96vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      animation: cardIn 0.35s ease-out both;
+    }
+
+    @keyframes cardIn {
+      from {
+        transform: translateY(12px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .body {
+      padding: 22px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.45rem;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .setup {
+      margin: 0;
+      background: var(--soft);
+      border: 1px dashed #adc8f4;
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #345a97;
+      font-size: 0.85rem;
+      line-height: 1.45;
+      display: none;
+    }
+
+    .setup.show {
+      display: block;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .label {
+      margin: 0 0 5px;
+      color: #4f5f7d;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+    }
+
+    .input {
+      width: 100%;
+      border: 1px solid #c9d3e5;
+      border-radius: 10px;
+      padding: 10px 11px;
+      font: inherit;
+      color: var(--ink);
+      font-weight: 600;
+      background: #ffffff;
+    }
+
+    .input:focus {
+      outline: 2px solid rgba(0, 109, 242, 0.24);
+      border-color: var(--primary);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 8px;
+    }
+
+    .actions.stack {
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8faff;
+      color: var(--ink);
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+    }
+
+    .btn:hover {
+      background: #edf6ff;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn.primary:hover {
+      background: var(--primary-strong);
+      border-color: var(--primary-strong);
+    }
+
+    .btn.warn {
+      background: var(--warn-bg);
+      border-color: var(--warn-line);
+      color: var(--warn-ink);
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: var(--soft);
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 800;
+      color: #364a70;
+      outline: none;
+    }
+
+    .config-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .status {
+      margin: 0;
+      background: #eef5ff;
+      border: 1px solid #c7daf6;
+      color: #284a82;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .status.ok {
+      background: var(--ok-bg);
+      border-color: #9fdab6;
+      color: var(--ok-ink);
+    }
+
+    .status.error {
+      background: var(--error-bg);
+      border-color: #f2c1b8;
+      color: var(--error-ink);
+    }
+
+    @media (max-width: 680px) {
+      .actions {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <section class="body">
+      <h1 class="title">Sign in</h1>
+      <p class="subtitle">Save and load your Arcade Hub data from your Supabase account.</p>
+      <p id="setupHelp" class="setup">Supabase is not configured yet. Open "Supabase setup" below and paste your project URL and anon key.</p>
+      <div class="inputs">
+        <div>
+          <p class="label">Email</p>
+          <input id="authEmail" class="input" type="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div>
+          <p class="label">Password</p>
+          <input id="authPassword" class="input" type="password" placeholder="Your password" autocomplete="current-password">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="authSignInBtn" type="button" class="btn primary">Sign In</button>
+        <button id="authSignUpBtn" type="button" class="btn">Create Account</button>
+      </div>
+
+      <div class="actions">
+        <button id="authSignOutBtn" type="button" class="btn warn">Sign Out</button>
+        <a href="index.html" class="btn">Back to Hub</a>
+      </div>
+
+      <div class="actions stack">
+        <button id="cloudPullBtn" type="button" class="btn">Cloud Load</button>
+        <button id="cloudPushBtn" type="button" class="btn">Cloud Save</button>
+      </div>
+
+      <details>
+        <summary>Supabase setup</summary>
+        <p class="meta" style="margin-top:8px;">Paste these from Supabase Project Settings -> API.</p>
+        <div class="inputs" style="margin-top:8px;">
+          <div>
+            <p class="label">Project URL</p>
+            <input id="setupUrl" class="input" type="url" placeholder="https://YOUR-PROJECT.supabase.co" autocomplete="off">
+          </div>
+          <div>
+            <p class="label">Anon Public Key</p>
+            <input id="setupAnonKey" class="input" type="password" placeholder="eyJ..." autocomplete="off">
+          </div>
+        </div>
+        <div class="config-actions">
+          <button id="saveSetupBtn" type="button" class="btn primary">Save Setup</button>
+          <button id="clearSetupBtn" type="button" class="btn">Clear Setup</button>
+        </div>
+      </details>
+
+      <p id="authStatus" class="status">Checking Supabase config...</p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.config.js"></script>
+  <script>
+    var FAVORITES_KEY = "gamehub_favorites";
+    var RECENTS_KEY = "gamehub_recent";
+    var THEME_KEY = "gamehub_theme";
+    var FAST_MODE_KEY = "gamehub_fast_mode";
+    var LIBRARY_VIEW_KEY = "gamehub_library_view";
+    var OPEN_SOURCE_ONLY_KEY = "gamehub_open_source_only";
+    var PLAYABLE_ONLY_KEY = "gamehub_playable_only";
+    var CLOUD_AUTO_SYNC_KEY = "gamehub_cloud_auto_sync";
+
+    var authEmail = document.getElementById("authEmail");
+    var authPassword = document.getElementById("authPassword");
+    var authSignInBtn = document.getElementById("authSignInBtn");
+    var authSignUpBtn = document.getElementById("authSignUpBtn");
+    var authSignOutBtn = document.getElementById("authSignOutBtn");
+    var cloudPullBtn = document.getElementById("cloudPullBtn");
+    var cloudPushBtn = document.getElementById("cloudPushBtn");
+    var setupUrl = document.getElementById("setupUrl");
+    var setupAnonKey = document.getElementById("setupAnonKey");
+    var saveSetupBtn = document.getElementById("saveSetupBtn");
+    var clearSetupBtn = document.getElementById("clearSetupBtn");
+    var authStatus = document.getElementById("authStatus");
+    var setupHelp = document.getElementById("setupHelp");
+
+    var supabaseClient = null;
+    var isConfigured = false;
+    var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
+
+    function storageGet(key) {
+      try {
+        return localStorage.getItem(key);
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function storageSet(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (error) {
+        // ignore storage exceptions
+      }
+    }
+
+    function storageRemove(key) {
+      try {
+        localStorage.removeItem(key);
+      } catch (error) {
+        // ignore storage exceptions
+      }
+    }
+
+    function readArray(key) {
+      try {
+        var value = JSON.parse(storageGet(key));
+        return Array.isArray(value) ? value : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function writeArray(key, value) {
+      storageSet(key, JSON.stringify(value));
+    }
+
+    function readSetting(key, fallback) {
+      var value = storageGet(key);
+      return value === null ? fallback : value;
+    }
+
+    function writeSetting(key, value) {
+      storageSet(key, value);
+    }
+
+    function snapshotSavedData() {
+      return {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        data: {
+          favorites: readArray(FAVORITES_KEY),
+          recent: readArray(RECENTS_KEY),
+          theme: readSetting(THEME_KEY, "light"),
+          fastMode: readSetting(FAST_MODE_KEY, "0"),
+          libraryView: readSetting(LIBRARY_VIEW_KEY, "cards"),
+          openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
+          playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
+          cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1")
+        }
+      };
+    }
+
+    function applySavedData(payload) {
+      if (!payload || typeof payload !== "object" || !payload.data || typeof payload.data !== "object") {
+        throw new Error("Invalid cloud payload.");
+      }
+
+      var data = payload.data;
+      writeArray(FAVORITES_KEY, Array.isArray(data.favorites) ? data.favorites : []);
+      writeArray(RECENTS_KEY, Array.isArray(data.recent) ? data.recent : []);
+      writeSetting(THEME_KEY, typeof data.theme === "string" ? data.theme : "light");
+      writeSetting(FAST_MODE_KEY, data.fastMode === "1" ? "1" : "0");
+      writeSetting(LIBRARY_VIEW_KEY, data.libraryView === "grouped" ? "grouped" : "cards");
+      writeSetting(OPEN_SOURCE_ONLY_KEY, data.openSourceOnly === "1" ? "1" : "0");
+      writeSetting(PLAYABLE_ONLY_KEY, data.playableOnly === "1" ? "1" : "0");
+      writeSetting(CLOUD_AUTO_SYNC_KEY, data.cloudAutoSync === "0" ? "0" : "1");
+    }
+
+    function getSupabaseConfig() {
+      var cfg = window.__GAMEHUB_SUPABASE__ || {};
+      var localCfg = {};
+      try {
+        localCfg = JSON.parse(storageGet(SUPABASE_CONFIG_KEY) || "{}") || {};
+      } catch (error) {
+        localCfg = {};
+      }
+
+      var localUrl = typeof localCfg.url === "string" ? localCfg.url.trim() : "";
+      var localAnon = typeof localCfg.anonKey === "string" ? localCfg.anonKey.trim() : "";
+      var fileUrl = typeof cfg.url === "string" ? cfg.url.trim() : "";
+      var fileAnon = typeof cfg.anonKey === "string" ? cfg.anonKey.trim() : "";
+      var url = localUrl || fileUrl;
+      var anonKey = localAnon || fileAnon;
+
+      setupUrl.value = localUrl || fileUrl;
+      setupAnonKey.value = localAnon || fileAnon;
+      return { url: url, anonKey: anonKey };
+    }
+
+    function setStatus(message, ok, isError) {
+      authStatus.textContent = message;
+      authStatus.classList.toggle("ok", ok === true);
+      authStatus.classList.toggle("error", isError === true);
+    }
+
+    function setAuthButtonsDisabled(disabled) {
+      authSignInBtn.disabled = disabled;
+      authSignUpBtn.disabled = disabled;
+      authSignOutBtn.disabled = disabled;
+      cloudPullBtn.disabled = disabled;
+      cloudPushBtn.disabled = disabled;
+    }
+
+    async function initSupabase() {
+      supabaseClient = null;
+      var cfg = getSupabaseConfig();
+      var hasFactory = !!(window.supabase && typeof window.supabase.createClient === "function");
+      if (!hasFactory || !cfg.url || !cfg.anonKey) {
+        isConfigured = false;
+        setupHelp.classList.add("show");
+        setAuthButtonsDisabled(true);
+        setStatus("Supabase is not configured yet.", false, true);
+        return;
+      }
+
+      try {
+        supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+        isConfigured = true;
+        setupHelp.classList.remove("show");
+        setAuthButtonsDisabled(false);
+        var auth = await supabaseClient.auth.getUser();
+        var user = auth && auth.data ? auth.data.user : null;
+        setStatus(user && user.email ? ("Signed in: " + user.email) : "Supabase ready. Sign in to save to cloud.", !!user, false);
+
+        supabaseClient.auth.onAuthStateChange(function (_event, session) {
+          var sessionUser = session && session.user ? session.user : null;
+          setStatus(sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Signed out.", !!sessionUser, false);
+        });
+      } catch (error) {
+        supabaseClient = null;
+        isConfigured = false;
+        setupHelp.classList.add("show");
+        setAuthButtonsDisabled(true);
+        setStatus("Supabase init failed.", false, true);
+      }
+    }
+
+    async function requireSupabaseUser() {
+      if (!supabaseClient) {
+        throw new Error("Supabase is not configured yet. Add url + anonKey in js/supabase.config.js.");
+      }
+      var auth = await supabaseClient.auth.getUser();
+      var user = auth && auth.data ? auth.data.user : null;
+      if (!user) {
+        throw new Error("Please sign in first.");
+      }
+      return user;
+    }
+
+    async function cloudPush() {
+      var user = await requireSupabaseUser();
+      var payload = snapshotSavedData();
+      var result = await supabaseClient.from("user_saves").upsert({ user_id: user.id, payload: payload }, { onConflict: "user_id" });
+      if (result.error) {
+        throw result.error;
+      }
+      setStatus("Cloud save synced.", true);
+    }
+
+    async function cloudPull() {
+      var user = await requireSupabaseUser();
+      var result = await supabaseClient.from("user_saves").select("payload").eq("user_id", user.id).maybeSingle();
+      if (result.error) {
+        throw result.error;
+      }
+      if (!result.data || !result.data.payload) {
+        setStatus("No cloud save found yet.", false);
+        return;
+      }
+      applySavedData(result.data.payload);
+      setStatus("Cloud data loaded to this browser.", true);
+    }
+
+    authSignInBtn.addEventListener("click", async function () {
+      try {
+        if (!supabaseClient) {
+          throw new Error("Supabase is not configured.");
+        }
+        var email = authEmail.value.trim();
+        var password = authPassword.value;
+        var signInResult = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+        if (signInResult.error) {
+          throw signInResult.error;
+        }
+        setStatus("Signed in: " + email, true, false);
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Sign in failed.", false, true);
+      }
+    });
+
+    authSignUpBtn.addEventListener("click", async function () {
+      try {
+        if (!supabaseClient) {
+          throw new Error("Supabase is not configured.");
+        }
+        var email = authEmail.value.trim();
+        var password = authPassword.value;
+        var signUpResult = await supabaseClient.auth.signUp({ email: email, password: password });
+        if (signUpResult.error) {
+          throw signUpResult.error;
+        }
+        setStatus("Sign-up submitted. Check email if confirmation is enabled.", false, false);
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Sign up failed.", false, true);
+      }
+    });
+
+    authSignOutBtn.addEventListener("click", async function () {
+      try {
+        if (!supabaseClient) {
+          throw new Error("Supabase is not configured.");
+        }
+        var signOutResult = await supabaseClient.auth.signOut();
+        if (signOutResult.error) {
+          throw signOutResult.error;
+        }
+        setStatus("Signed out.", false, false);
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Sign out failed.", false, true);
+      }
+    });
+
+    cloudPullBtn.addEventListener("click", async function () {
+      try {
+        await cloudPull();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Cloud load failed.", false, true);
+      }
+    });
+
+    cloudPushBtn.addEventListener("click", async function () {
+      try {
+        await cloudPush();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Cloud save failed.", false, true);
+      }
+    });
+
+    saveSetupBtn.addEventListener("click", function () {
+      var url = setupUrl.value.trim();
+      var anonKey = setupAnonKey.value.trim();
+      if (!url || !anonKey) {
+        setStatus("Enter both Project URL and Anon Key.", false, true);
+        return;
+      }
+      storageSet(SUPABASE_CONFIG_KEY, JSON.stringify({ url: url, anonKey: anonKey }));
+      setStatus("Supabase setup saved locally. Reconnecting...", false, false);
+      initSupabase();
+    });
+
+    clearSetupBtn.addEventListener("click", function () {
+      storageRemove(SUPABASE_CONFIG_KEY);
+      setupUrl.value = "";
+      setupAnonKey.value = "";
+      setStatus("Saved Supabase setup cleared.", false, false);
+      initSupabase();
+    });
+
+    initSupabase();
+  </script>
+</body>
+</html>

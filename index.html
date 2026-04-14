@@ -24,6 +24,11 @@
 
         :root {
             --bg: #f3f7ff;
+            --bg-layer-1: radial-gradient(circle at 10% -10%, #d5e8ff 0, transparent 35%);
+            --bg-layer-2: radial-gradient(circle at 95% 0%, #e0fff1 0, transparent 32%);
+            --bg-layer-3: linear-gradient(180deg, #f8fbff 0%, #eef4ff 42%, #f4f8ff 100%);
+            --hero-overlay: radial-gradient(circle at 10% 0%, rgba(255, 255, 255, 0.66) 0, transparent 60%);
+            --hero-grad: linear-gradient(130deg, #0a6bff 0%, #0d8fe1 44%, #0fb8a8 100%);
             --panel: #ffffff;
             --panel-2: #f8fbff;
             --ink: #0f2a52;
@@ -33,12 +38,113 @@
             --primary-strong: #0054bf;
             --accent: #ffcc23;
             --accent-strong: #f39a00;
+            --logo: #004aa7;
+            --badge-border: #9ad1ad;
+            --badge-ink: #1f6c3b;
+            --badge-bg: #ecffef;
+            --hero-line: #b8cff8;
+            --hero-shadow: 0 18px 34px rgba(10, 49, 112, 0.18);
+            --panel-shadow: 0 8px 18px rgba(25, 66, 127, 0.08);
+            --card-shadow: 0 9px 18px rgba(25, 66, 127, 0.08);
+            --card-hover-shadow: 0 14px 22px rgba(25, 66, 127, 0.12);
+            --panel-title: #1a3f7c;
+            --input-bg: #ffffff;
+            --input-border: #b9cef2;
+            --input-focus: rgba(0, 115, 255, 0.2);
             --ok-bg: #e6fff2;
             --ok-ink: #197244;
             --warn-bg: #fff1ef;
             --warn-ink: #9f3f2a;
             --mild-bg: #eef3ff;
             --mild-ink: #39589c;
+            --warn-btn-bg: #fff1cd;
+            --warn-btn-bg-hover: #ffe6a7;
+            --warn-btn-ink: #6e4d00;
+            --warn-btn-line: #f1d48d;
+            --empty-bg: #f7fbff;
+            --empty-line: #a7bfeb;
+        }
+
+        body[data-theme="gray"] {
+            --bg: #1b1e25;
+            --bg-layer-1: radial-gradient(circle at 8% -4%, #434955 0, transparent 36%);
+            --bg-layer-2: radial-gradient(circle at 100% 0%, #313741 0, transparent 35%);
+            --bg-layer-3: linear-gradient(180deg, #2a2f38 0%, #1f232b 48%, #181b22 100%);
+            --panel: #262b34;
+            --panel-2: #1f242d;
+            --ink: #ebeff7;
+            --muted: #b7c0cf;
+            --line: #414957;
+            --primary: #8ea6ce;
+            --primary-strong: #6f86ae;
+            --logo: #dce3f2;
+            --badge-border: #586276;
+            --badge-ink: #d0d8e6;
+            --badge-bg: #333a47;
+            --hero-line: #4e586b;
+            --hero-overlay: radial-gradient(circle at 10% 0%, rgba(179, 192, 212, 0.18) 0, transparent 58%);
+            --hero-grad: linear-gradient(130deg, #495267 0%, #394456 44%, #30444f 100%);
+            --hero-shadow: 0 14px 24px rgba(0, 0, 0, 0.28);
+            --panel-shadow: 0 8px 16px rgba(0, 0, 0, 0.22);
+            --card-shadow: 0 9px 16px rgba(0, 0, 0, 0.26);
+            --card-hover-shadow: 0 12px 22px rgba(0, 0, 0, 0.34);
+            --panel-title: #dde6f5;
+            --input-bg: #1a2029;
+            --input-border: #4d5667;
+            --input-focus: rgba(142, 166, 206, 0.25);
+            --ok-bg: #26392f;
+            --ok-ink: #b7f0cd;
+            --warn-bg: #43352d;
+            --warn-ink: #ffd9c9;
+            --mild-bg: #323944;
+            --mild-ink: #cedaf0;
+            --warn-btn-bg: #56452e;
+            --warn-btn-bg-hover: #655136;
+            --warn-btn-ink: #ffe6b9;
+            --warn-btn-line: #806746;
+            --empty-bg: #222831;
+            --empty-line: #596477;
+        }
+
+        body[data-theme="black"] {
+            --bg: #101216;
+            --bg-layer-1: radial-gradient(circle at 8% -10%, #2f3238 0, transparent 36%);
+            --bg-layer-2: radial-gradient(circle at 100% 0%, #1d2026 0, transparent 34%);
+            --bg-layer-3: linear-gradient(180deg, #171a20 0%, #101216 50%, #0a0c10 100%);
+            --panel: #1a1e24;
+            --panel-2: #15191f;
+            --ink: #e8ebf1;
+            --muted: #b4bccd;
+            --line: #313842;
+            --primary: #7aa2ff;
+            --primary-strong: #5f89e6;
+            --logo: #d7e2ff;
+            --badge-border: #505a68;
+            --badge-ink: #d3dae5;
+            --badge-bg: #2b323c;
+            --hero-line: #38424f;
+            --hero-overlay: radial-gradient(circle at 12% 0%, rgba(175, 194, 236, 0.14) 0, transparent 56%);
+            --hero-grad: linear-gradient(130deg, #29384f 0%, #1f2e42 44%, #1e3f46 100%);
+            --hero-shadow: 0 16px 28px rgba(0, 0, 0, 0.4);
+            --panel-shadow: 0 8px 16px rgba(0, 0, 0, 0.28);
+            --card-shadow: 0 10px 16px rgba(0, 0, 0, 0.3);
+            --card-hover-shadow: 0 14px 24px rgba(0, 0, 0, 0.42);
+            --panel-title: #d1def5;
+            --input-bg: #1a2029;
+            --input-border: #445062;
+            --input-focus: rgba(122, 162, 255, 0.24);
+            --ok-bg: #23372d;
+            --ok-ink: #abf0c8;
+            --warn-bg: #3e2e28;
+            --warn-ink: #ffd1c4;
+            --mild-bg: #29303a;
+            --mild-ink: #c7d4eb;
+            --warn-btn-bg: #4c3f2a;
+            --warn-btn-bg-hover: #5d4d34;
+            --warn-btn-ink: #ffe6ab;
+            --warn-btn-line: #756143;
+            --empty-bg: #171d26;
+            --empty-line: #4d5d74;
         }
 
         * { box-sizing: border-box; }
@@ -48,10 +154,8 @@
             color: var(--ink);
             font-family: "Nunito", "Trebuchet MS", sans-serif;
             min-height: 100vh;
-            background:
-                radial-gradient(circle at 10% -10%, #d5e8ff 0, transparent 35%),
-                radial-gradient(circle at 95% 0%, #e0fff1 0, transparent 32%),
-                linear-gradient(180deg, #f8fbff 0%, #eef4ff 42%, #f4f8ff 100%);
+            background: var(--bg-layer-1), var(--bg-layer-2), var(--bg-layer-3);
+            transition: background 0.22s ease, color 0.18s ease;
         }
 
         .shell {
@@ -72,14 +176,20 @@
             font-family: "Archivo Black", Impact, sans-serif;
             letter-spacing: 0.4px;
             font-size: clamp(1.28rem, 2.4vw, 1.7rem);
-            color: #004aa7;
+            color: var(--logo);
             text-transform: uppercase;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
         .badge {
-            border: 1px solid #9ad1ad;
-            color: #1f6c3b;
-            background: #ecffef;
+            border: 1px solid var(--badge-border);
+            color: var(--badge-ink);
+            background: var(--badge-bg);
             padding: 7px 11px;
             border-radius: 999px;
             font-weight: 800;
@@ -87,14 +197,27 @@
             white-space: nowrap;
         }
 
+        .icon-btn {
+            border: 1px solid var(--line);
+            color: var(--ink);
+            background: var(--panel);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .icon-btn:hover {
+            background: var(--panel-2);
+        }
+
         .hero {
             border-radius: 20px;
-            border: 1px solid #b8cff8;
-            background:
-                radial-gradient(circle at 10% 0%, rgba(255, 255, 255, 0.66) 0, transparent 60%),
-                linear-gradient(130deg, #0a6bff 0%, #0d8fe1 44%, #0fb8a8 100%);
+            border: 1px solid var(--hero-line);
+            background: var(--hero-overlay), var(--hero-grad);
             color: #ffffff;
-            box-shadow: 0 18px 34px rgba(10, 49, 112, 0.18);
+            box-shadow: var(--hero-shadow);
             padding: 22px;
             margin-bottom: 14px;
             animation: heroIn 0.45s ease-out both;
@@ -132,7 +255,7 @@
 
         .toolbar {
             display: grid;
-            grid-template-columns: 1fr 220px;
+            grid-template-columns: 1fr 220px 220px 220px;
             gap: 10px;
             margin-bottom: 12px;
         }
@@ -141,13 +264,97 @@
             background: var(--panel);
             border: 1px solid var(--line);
             border-radius: 16px;
-            box-shadow: 0 8px 18px rgba(25, 66, 127, 0.08);
+            box-shadow: var(--panel-shadow);
             padding: 16px;
+        }
+
+        .settings-panel {
+            margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            align-items: end;
+        }
+
+        .settings-panel.collapsed {
+            display: none;
+        }
+
+        .setting-block {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .check {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: var(--muted);
+        }
+
+        .save-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn.small {
+            padding: 7px 9px;
+            font-size: 0.78rem;
+            border: 1px solid var(--line);
+        }
+
+        .meta-note {
+            color: var(--muted);
+            font-size: 0.76rem;
+            font-weight: 700;
+            margin: 2px 0 0;
+        }
+
+        .auth-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .auth-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .auth-status {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .group-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .group {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 14px;
+            padding: 10px;
+        }
+
+        .group-title {
+            margin: 0 0 8px;
+            color: var(--panel-title);
+            font-weight: 800;
+            letter-spacing: 0.2px;
         }
 
         .panel-title {
             margin: 0 0 10px;
-            color: #1a3f7c;
+            color: var(--panel-title);
             font-size: 1.05rem;
             font-weight: 800;
         }
@@ -155,8 +362,8 @@
         .input,
         .select {
             width: 100%;
-            border: 1px solid #b9cef2;
-            background: #fff;
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
             border-radius: 12px;
             padding: 11px 12px;
             color: var(--ink);
@@ -166,7 +373,7 @@
 
         .input:focus,
         .select:focus {
-            outline: 2px solid rgba(0, 115, 255, 0.2);
+            outline: 2px solid var(--input-focus);
             border-color: var(--primary);
         }
 
@@ -196,12 +403,30 @@
             gap: 12px;
         }
 
+        .recent-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .recent-row .card {
+            min-width: 248px;
+            max-width: 248px;
+            flex: 0 0 248px;
+        }
+
+        #gameGrid.grouped {
+            display: block;
+        }
+
         .card {
             border-radius: 14px;
             overflow: hidden;
-            background: #fff;
+            background: var(--panel);
             border: 1px solid var(--line);
-            box-shadow: 0 9px 18px rgba(25, 66, 127, 0.08);
+            box-shadow: var(--card-shadow);
             display: flex;
             flex-direction: column;
             transition: transform 0.14s ease, box-shadow 0.14s ease;
@@ -210,7 +435,7 @@
 
         .card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 14px 22px rgba(25, 66, 127, 0.12);
+            box-shadow: var(--card-hover-shadow);
         }
 
         .card.compact .thumb {
@@ -266,10 +491,21 @@
             color: var(--warn-ink);
         }
 
+        .chip.source {
+            background: rgba(117, 217, 167, 0.14);
+            color: #2e7d5c;
+        }
+
+        body[data-theme="gray"] .chip.source,
+        body[data-theme="black"] .chip.source {
+            background: rgba(117, 217, 167, 0.2);
+            color: #bdf3d9;
+        }
+
         .title {
             margin: 0;
             font-size: 1.02rem;
-            color: #1b3d77;
+            color: var(--ink);
             line-height: 1.18;
         }
 
@@ -312,20 +548,20 @@
         }
 
         .btn.alt {
-            background: #eaf1ff;
-            color: #284a86;
+            background: var(--panel-2);
+            color: var(--mild-ink);
         }
 
-        .btn.alt:hover { background: #dce7ff; }
+        .btn.alt:hover { background: var(--mild-bg); }
 
         .btn.warn {
-            background: #fff1cd;
-            color: #6e4d00;
-            border: 1px solid #f1d48d;
+            background: var(--warn-btn-bg);
+            color: var(--warn-btn-ink);
+            border: 1px solid var(--warn-btn-line);
         }
 
         .btn.warn:hover {
-            background: #ffe6a7;
+            background: var(--warn-btn-bg-hover);
         }
 
         .fav.active {
@@ -334,8 +570,8 @@
         }
 
         .empty {
-            border: 1px dashed #a7bfeb;
-            background: #f7fbff;
+            border: 1px dashed var(--empty-line);
+            background: var(--empty-bg);
             border-radius: 12px;
             color: var(--muted);
             padding: 18px;
@@ -356,7 +592,7 @@
         }
 
         .site-footer a {
-            color: #20509b;
+            color: var(--primary-strong);
             text-decoration: none;
         }
 
@@ -374,29 +610,104 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        body.fast-mode * {
+            animation: none !important;
+            transition: none !important;
+        }
+
+        body.fast-mode .hero,
+        body.fast-mode .card,
+        body.fast-mode .panel {
+            box-shadow: none;
+        }
+
         @media (max-width: 760px) {
             .toolbar { grid-template-columns: 1fr; }
             .split { grid-template-columns: 1fr; }
             .panel { padding: 13px; }
             .hero { padding: 16px; }
+            .header-actions { width: 100%; justify-content: flex-start; }
         }
     </style>
 </head>
 <body>
     <main class="shell">
         <header class="header">
-            <div class="logo">Arcade Campus Hub</div>
-            <div class="badge">Local-First Mode</div>
+            <div class="logo">Classroom 6X Arcade</div>
+            <div class="header-actions">
+                <div id="modeBadge" class="badge">Local-First Mode</div>
+                <button id="settingsToggle" type="button" class="icon-btn" aria-expanded="false" aria-controls="settingsPanel">Settings</button>
+            </div>
         </header>
 
         <section class="hero">
             <h1>Fast Games. Fewer Blocks. Better Vibes.</h1>
-            <p>This hub is tuned for school-friendly reliability: local games first, direct-open fallback for blocked embeds, and live compatibility tags so you know what will run.</p>
+            <p>This hub is tuned for school-friendly reliability: local games first, direct-open fallback for blocked embeds, live compatibility tags, and profile-based UI settings.</p>
             <div class="pill-row">
                 <span class="pill">Favorites + recents</span>
                 <span class="pill">Embed warning labels</span>
-                <span class="pill">Coolmath-inspired UI</span>
+                <span class="pill">Light, Gray, Black themes</span>
+                <span class="pill">Fast mode for performance</span>
             </div>
+        </section>
+
+        <section id="settingsPanel" class="panel settings-panel" aria-label="UI settings">
+            <label class="setting-block">
+                <span class="meta">Theme</span>
+                <select id="themeSelect" class="select">
+                    <option value="light">Light mode</option>
+                    <option value="gray">Gray mode</option>
+                    <option value="black">Black mode</option>
+                </select>
+            </label>
+            <label class="setting-block">
+                <span class="meta">Library View</span>
+                <select id="libraryViewSelect" class="select">
+                    <option value="cards">Cards</option>
+                    <option value="grouped">Grouped (FNAF, Arcade, Custom...)</option>
+                </select>
+            </label>
+            <label class="setting-block">
+                <span class="meta">Performance</span>
+                <span class="check">
+                    <input id="fastModeToggle" type="checkbox">
+                    Fast mode (fewer effects, quicker launch)
+                </span>
+            </label>
+            <label class="setting-block">
+                <span class="meta">Session</span>
+                <span class="check">
+                    <input id="rememberSettings" type="checkbox" checked disabled>
+                    Saved in this browser profile
+                </span>
+            </label>
+            <section class="setting-block" aria-label="Saved data tools">
+                <span class="meta">Save Data</span>
+                <div class="save-actions">
+                    <button id="exportDataBtn" type="button" class="btn alt small">Export</button>
+                    <button id="importDataBtn" type="button" class="btn alt small">Import</button>
+                    <button id="resetDataBtn" type="button" class="btn warn small">Reset All</button>
+                </div>
+                <input id="importDataInput" type="file" accept="application/json" hidden>
+                <p class="meta-note">Backs up favorites, recents, theme, and performance mode.</p>
+            </section>
+            <section class="setting-block" aria-label="Supabase account tools">
+                <span class="meta">Account Cloud Save (Supabase)</span>
+                <span class="check">
+                    <input id="cloudAutoSyncToggle" type="checkbox" checked>
+                    Cloud Auto Sync
+                </span>
+                <div class="auth-actions">
+                    <a href="account.html" class="btn alt small">Save your data</a>
+                </div>
+                <p id="authStatus" class="auth-status">Checking account status...</p>
+            </section>
+        </section>
+
+        <section class="panel" aria-label="Open source picks" style="margin-bottom:12px;">
+            <h2 class="panel-title">Open Source Picks</h2>
+            <section id="openSourceGrid" class="grid" aria-label="Open source games"></section>
+            <p id="openSourceEmpty" class="empty" style="display:block;">No open-source entries are tagged yet.</p>
         </section>
 
         <section class="split" aria-label="Personal sections">
@@ -407,7 +718,7 @@
             </article>
             <article class="panel">
                 <h2 class="panel-title">Recently Played</h2>
-                <section id="recentGrid" class="grid" aria-label="Recently played games"></section>
+                <section id="recentGrid" class="recent-row" aria-label="Recently played games"></section>
                 <p id="recentEmpty" class="empty" style="display:block;">No recent games yet. Launch one to start tracking.</p>
             </article>
         </section>
@@ -423,6 +734,14 @@
                     <option value="all">All categories</option>
                 </select>
             </label>
+            <label class="panel" style="display:flex;align-items:center;gap:8px;">
+                <input id="openSourceOnlyToggle" type="checkbox">
+                <span class="meta">Open Source Only</span>
+            </label>
+            <label class="panel" style="display:flex;align-items:center;gap:8px;">
+                <input id="playableOnlyToggle" type="checkbox">
+                <span class="meta">Playable Only</span>
+            </label>
         </section>
 
         <section class="controls" aria-label="Library controls">
@@ -435,7 +754,7 @@
         <p id="emptyState" class="empty">No games match that search. Try another term or reset category.</p>
 
         <footer class="site-footer" aria-label="Site links">
-            <span>Arcade Campus Hub public build</span>
+            <span>Testing build. Users are responsible for their own use.</span>
             <span>
                 <a href="privacy.html">Privacy and Terms</a>
                 |
@@ -444,11 +763,21 @@
         </footer>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.config.js"></script>
     <script>
         var games = [];
 
         var FAVORITES_KEY = "gamehub_favorites";
         var RECENTS_KEY = "gamehub_recent";
+        var THEME_KEY = "gamehub_theme";
+        var FAST_MODE_KEY = "gamehub_fast_mode";
+        var LIBRARY_VIEW_KEY = "gamehub_library_view";
+        var OPEN_SOURCE_ONLY_KEY = "gamehub_open_source_only";
+        var PLAYABLE_ONLY_KEY = "gamehub_playable_only";
+        var CLOUD_AUTO_SYNC_KEY = "gamehub_cloud_auto_sync";
+        var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
+        var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, CLOUD_AUTO_SYNC_KEY];
 
         var searchInput = document.getElementById("searchInput");
         var categorySelect = document.getElementById("categorySelect");
@@ -456,14 +785,59 @@
         var emptyState = document.getElementById("emptyState");
         var favoriteGrid = document.getElementById("favoriteGrid");
         var favoriteEmpty = document.getElementById("favoriteEmpty");
+        var openSourceGrid = document.getElementById("openSourceGrid");
+        var openSourceEmpty = document.getElementById("openSourceEmpty");
         var recentGrid = document.getElementById("recentGrid");
         var recentEmpty = document.getElementById("recentEmpty");
         var clearFavoritesBtn = document.getElementById("clearFavoritesBtn");
         var clearRecentBtn = document.getElementById("clearRecentBtn");
+        var modeBadge = document.getElementById("modeBadge");
+        var settingsToggle = document.getElementById("settingsToggle");
+        var settingsPanel = document.getElementById("settingsPanel");
+        var themeSelect = document.getElementById("themeSelect");
+        var libraryViewSelect = document.getElementById("libraryViewSelect");
+        var openSourceOnlyToggle = document.getElementById("openSourceOnlyToggle");
+        var playableOnlyToggle = document.getElementById("playableOnlyToggle");
+        var fastModeToggle = document.getElementById("fastModeToggle");
+        var exportDataBtn = document.getElementById("exportDataBtn");
+        var importDataBtn = document.getElementById("importDataBtn");
+        var resetDataBtn = document.getElementById("resetDataBtn");
+        var importDataInput = document.getElementById("importDataInput");
+        var cloudAutoSyncToggle = document.getElementById("cloudAutoSyncToggle");
+        var authStatus = document.getElementById("authStatus");
+        var storageFallback = {};
+        var supabaseClient = null;
+        var cloudAutoSyncTimer = null;
+
+        var fastMode = false;
+
+        function storageGet(key) {
+            try {
+                return localStorage.getItem(key);
+            } catch (error) {
+                return Object.prototype.hasOwnProperty.call(storageFallback, key) ? storageFallback[key] : null;
+            }
+        }
+
+        function storageSet(key, value) {
+            try {
+                localStorage.setItem(key, value);
+            } catch (error) {
+                storageFallback[key] = value;
+            }
+        }
+
+        function storageRemove(key) {
+            try {
+                localStorage.removeItem(key);
+            } catch (error) {
+                delete storageFallback[key];
+            }
+        }
 
         function readArray(key) {
             try {
-                var value = JSON.parse(localStorage.getItem(key));
+                var value = JSON.parse(storageGet(key));
                 return Array.isArray(value) ? value : [];
             } catch (error) {
                 return [];
@@ -471,7 +845,199 @@
         }
 
         function writeArray(key, value) {
-            localStorage.setItem(key, JSON.stringify(value));
+            storageSet(key, JSON.stringify(value));
+        }
+
+        function readSetting(key, fallback) {
+            var value = storageGet(key);
+            return value === null ? fallback : value;
+        }
+
+        function writeSetting(key, value) {
+            storageSet(key, value);
+        }
+
+        function snapshotSavedData() {
+            return {
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                data: {
+                    favorites: readArray(FAVORITES_KEY),
+                    recent: readArray(RECENTS_KEY),
+                    theme: readSetting(THEME_KEY, "light"),
+                    fastMode: readSetting(FAST_MODE_KEY, "0"),
+                    libraryView: readSetting(LIBRARY_VIEW_KEY, "cards"),
+                    openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
+                    playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
+                    cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1")
+                }
+            };
+        }
+
+        function getSupabaseConfig() {
+            var cfg = window.__GAMEHUB_SUPABASE__ || {};
+            var localCfg = {};
+            try {
+                localCfg = JSON.parse(storageGet(SUPABASE_CONFIG_KEY) || "{}") || {};
+            } catch (error) {
+                localCfg = {};
+            }
+
+            var localUrl = typeof localCfg.url === "string" ? localCfg.url.trim() : "";
+            var localAnon = typeof localCfg.anonKey === "string" ? localCfg.anonKey.trim() : "";
+            var fileUrl = typeof cfg.url === "string" ? cfg.url.trim() : "";
+            var fileAnon = typeof cfg.anonKey === "string" ? cfg.anonKey.trim() : "";
+
+            var url = localUrl || fileUrl;
+            var anonKey = localAnon || fileAnon;
+            return {
+                url: url,
+                anonKey: anonKey
+            };
+        }
+
+        function updateAuthStatus(message) {
+            authStatus.textContent = message;
+        }
+
+        async function initSupabase() {
+            var cfg = getSupabaseConfig();
+            var hasFactory = !!(window.supabase && typeof window.supabase.createClient === "function");
+            if (!hasFactory || !cfg.url || !cfg.anonKey) {
+                updateAuthStatus("Supabase: not configured.");
+                return;
+            }
+
+            try {
+                supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+                var auth = await supabaseClient.auth.getUser();
+                var user = auth && auth.data ? auth.data.user : null;
+                updateAuthStatus(user && user.email ? ("Signed in: " + user.email) : "Supabase ready. Sign in to use cloud save.");
+
+                supabaseClient.auth.onAuthStateChange(function (_event, session) {
+                    var sessionUser = session && session.user ? session.user : null;
+                    updateAuthStatus(sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Supabase ready. Sign in to use cloud save.");
+                });
+            } catch (error) {
+                supabaseClient = null;
+                updateAuthStatus("Supabase init failed.");
+            }
+        }
+
+        async function requireSupabaseUser() {
+            if (!supabaseClient) {
+                throw new Error("Supabase is not configured.");
+            }
+            var auth = await supabaseClient.auth.getUser();
+            var user = auth && auth.data ? auth.data.user : null;
+            if (!user) {
+                throw new Error("Please sign in first.");
+            }
+            return user;
+        }
+
+        async function cloudPush(options) {
+            var opts = options || {};
+            var silent = opts.silent === true;
+            var user = await requireSupabaseUser();
+            var payload = snapshotSavedData();
+            var result = await supabaseClient
+                .from("user_saves")
+                .upsert({ user_id: user.id, payload: payload }, { onConflict: "user_id" });
+            if (result.error) {
+                throw result.error;
+            }
+            if (!silent) {
+                updateAuthStatus("Cloud save synced.");
+            }
+        }
+
+        function queueCloudAutoSync() {
+            if (!supabaseClient) {
+                return;
+            }
+
+            if (readSetting(CLOUD_AUTO_SYNC_KEY, "1") !== "1") {
+                return;
+            }
+
+            if (cloudAutoSyncTimer) {
+                clearTimeout(cloudAutoSyncTimer);
+            }
+
+            cloudAutoSyncTimer = setTimeout(async function () {
+                try {
+                    await cloudPush({ silent: true });
+                    updateAuthStatus("Cloud auto-synced.");
+                } catch (error) {
+                    if (error && error.message === "Please sign in first.") {
+                        return;
+                    }
+                    updateAuthStatus("Cloud sync pending. Use Cloud Save.");
+                }
+            }, 1200);
+        }
+
+        function applySavedData(payload) {
+            if (!payload || typeof payload !== "object" || !payload.data || typeof payload.data !== "object") {
+                throw new Error("Invalid save file format.");
+            }
+
+            var data = payload.data;
+            writeArray(FAVORITES_KEY, Array.isArray(data.favorites) ? data.favorites : []);
+            writeArray(RECENTS_KEY, Array.isArray(data.recent) ? data.recent : []);
+
+            var incomingTheme = typeof data.theme === "string" ? data.theme : "light";
+            writeSetting(THEME_KEY, incomingTheme);
+
+            var incomingFast = data.fastMode === "1" ? "1" : "0";
+            writeSetting(FAST_MODE_KEY, incomingFast);
+
+            var incomingView = data.libraryView === "grouped" ? "grouped" : "cards";
+            writeSetting(LIBRARY_VIEW_KEY, incomingView);
+
+            var incomingOpenSourceOnly = data.openSourceOnly === "1" ? "1" : "0";
+            writeSetting(OPEN_SOURCE_ONLY_KEY, incomingOpenSourceOnly);
+
+            var incomingPlayableOnly = data.playableOnly === "1" ? "1" : "0";
+            writeSetting(PLAYABLE_ONLY_KEY, incomingPlayableOnly);
+
+            var incomingCloudAutoSync = data.cloudAutoSync === "0" ? "0" : "1";
+            writeSetting(CLOUD_AUTO_SYNC_KEY, incomingCloudAutoSync);
+        }
+
+        function isLikelyPlayable(game) {
+            if (game && game.playable === false) {
+                return false;
+            }
+            var source = typeof game.source === "string" ? game.source.toLowerCase() : "";
+            var direct = typeof game.direct === "string" ? game.direct.toLowerCase() : "";
+            if (source.indexOf("github.com/") !== -1 || direct.indexOf("github.com/") !== -1) {
+                return false;
+            }
+            return true;
+        }
+
+        function exportSavedData() {
+            var payload = snapshotSavedData();
+            var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+            var url = URL.createObjectURL(blob);
+            var anchor = document.createElement("a");
+            var stamp = new Date().toISOString().slice(0, 10);
+            anchor.href = url;
+            anchor.download = "gamehub-save-" + stamp + ".json";
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetSavedData() {
+            SAVE_KEYS.forEach(function (key) {
+                storageRemove(key);
+            });
+            applySettings();
+            render();
         }
 
         function getGameById(gameId) {
@@ -505,13 +1071,31 @@
             return '<span class="chip type">School Risk: Medium</span>';
         }
 
+        function chipForSource(game) {
+            if (game.openSource === true) {
+                var label = typeof game.license === "string" && game.license.length > 0 ? game.license : "Open Source";
+                return '<span class="chip source">' + label + '</span>';
+            }
+            return '';
+        }
+
+        function groupNameForGame(game) {
+            if (game.id.indexOf("fnaf-") === 0 || game.title.toLowerCase().indexOf("fnaf") !== -1 || game.title.toLowerCase().indexOf("five nights") !== -1) {
+                return "FNAF";
+            }
+            if (game.category === "custom") {
+                return "Custom";
+            }
+            return capitalize(game.category);
+        }
+
         function createCard(game, compact) {
             var favorites = readArray(FAVORITES_KEY);
             var isFavorite = favorites.indexOf(game.id) !== -1;
             var favoriteClass = isFavorite ? "btn alt fav active" : "btn alt fav";
             var favoriteLabel = isFavorite ? "Favorited" : "Favorite";
             var cardClass = compact ? "card compact" : "card";
-            var openDirectFirst = game.preferDirect === true;
+            var openDirectFirst = game.preferDirect === true || (fastMode && game.platform === "external");
             var launch = openDirectFirst ? game.direct : ("play.html?game=" + encodeURIComponent(game.id));
             var playLabel = openDirectFirst ? "Play (Fast)" : "Play";
 
@@ -523,16 +1107,39 @@
                 '<span class="chip type">' + (game.platform === "local" ? "Local" : "External") + '</span>' +
                 chipForEmbed(game) +
                 chipForRisk(game) +
+                chipForSource(game) +
                 '</div>' +
                 '<h2 class="title">' + game.title + '</h2>' +
                 '<p class="desc">' + game.description + '</p>' +
                 '<div class="actions">' +
                 '<a class="btn play" href="' + launch + '">' + playLabel + '</a>' +
                 '<a class="btn alt" href="' + game.direct + '" target="_blank" rel="noopener noreferrer">Open Direct</a>' +
+                (game.repo ? '<a class="btn alt" href="' + game.repo + '" target="_blank" rel="noopener noreferrer">Source</a>' : '') +
                 '<button type="button" class="' + favoriteClass + '" data-favorite-id="' + game.id + '">' + favoriteLabel + '</button>' +
                 '</div>' +
                 '</div>' +
                 '</article>';
+        }
+
+        function applySettings() {
+            var theme = readSetting(THEME_KEY, "light");
+            if (["light", "gray", "black"].indexOf(theme) === -1) {
+                theme = "light";
+            }
+
+            fastMode = readSetting(FAST_MODE_KEY, "0") === "1";
+
+            document.body.setAttribute("data-theme", theme);
+            document.body.classList.toggle("fast-mode", fastMode);
+            document.documentElement.style.colorScheme = theme === "black" ? "dark" : "light";
+
+            themeSelect.value = theme;
+            fastModeToggle.checked = fastMode;
+            libraryViewSelect.value = readSetting(LIBRARY_VIEW_KEY, "cards") === "grouped" ? "grouped" : "cards";
+            openSourceOnlyToggle.checked = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
+            playableOnlyToggle.checked = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
+            cloudAutoSyncToggle.checked = readSetting(CLOUD_AUTO_SYNC_KEY, "1") === "1";
+            modeBadge.textContent = fastMode ? "Fast Mode Active" : "Local-First Mode";
         }
 
         function renderFavoritesAndRecent() {
@@ -554,6 +1161,20 @@
             recentEmpty.style.display = recentGames.length ? "none" : "block";
         }
 
+        function renderOpenSource() {
+            var openSourceGames = games.filter(function (game) {
+                return game.openSource === true;
+            }).sort(function (a, b) {
+                return a.title.localeCompare(b.title);
+            });
+
+            openSourceGrid.innerHTML = openSourceGames.slice(0, 6).map(function (game) {
+                return createCard(game, true);
+            }).join("");
+
+            openSourceEmpty.style.display = openSourceGames.length ? "none" : "block";
+        }
+
         function render() {
             if (!games.length) {
                 gameGrid.innerHTML = "";
@@ -564,20 +1185,60 @@
 
             var query = searchInput.value.trim().toLowerCase();
             var category = categorySelect.value;
+            var openSourceOnly = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
+            var playableOnly = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
 
             var filtered = games.filter(function (game) {
                 var matchesCategory = category === "all" || game.category === category;
                 var text = (game.title + " " + game.description + " " + game.category + " " + game.platform).toLowerCase();
                 var matchesQuery = query.length === 0 || text.indexOf(query) !== -1;
-                return matchesCategory && matchesQuery;
+                var matchesOpenSource = !openSourceOnly || game.openSource === true;
+                var matchesPlayable = !playableOnly || isLikelyPlayable(game);
+                return matchesCategory && matchesQuery && matchesOpenSource && matchesPlayable;
             });
 
-            gameGrid.innerHTML = filtered.map(function (game) {
-                return createCard(game, false);
-            }).join("");
+            filtered.sort(function (a, b) {
+                return a.title.localeCompare(b.title);
+            });
+
+            var libraryView = readSetting(LIBRARY_VIEW_KEY, "cards");
+            if (libraryView === "grouped") {
+                gameGrid.classList.add("grouped");
+                var groups = {};
+                filtered.forEach(function (game) {
+                    var key = groupNameForGame(game);
+                    if (!groups[key]) {
+                        groups[key] = [];
+                    }
+                    groups[key].push(game);
+                });
+
+                var groupOrder = Object.keys(groups).sort(function (a, b) {
+                    if (a === "FNAF") {
+                        return -1;
+                    }
+                    if (b === "FNAF") {
+                        return 1;
+                    }
+                    return a.localeCompare(b);
+                });
+
+                gameGrid.innerHTML = '<div class="group-stack">' + groupOrder.map(function (groupName) {
+                    var cards = groups[groupName].map(function (game) {
+                        return createCard(game, false);
+                    }).join("");
+                    return '<section class="group"><h3 class="group-title">' + groupName + '</h3><div class="grid">' + cards + '</div></section>';
+                }).join("") + '</div>';
+            } else {
+                gameGrid.classList.remove("grouped");
+                gameGrid.innerHTML = filtered.map(function (game) {
+                    return createCard(game, false);
+                }).join("");
+            }
 
             emptyState.style.display = filtered.length ? "none" : "block";
             renderFavoritesAndRecent();
+            renderOpenSource();
         }
 
         function populateCategoryFilter() {
@@ -636,22 +1297,115 @@
             }
 
             writeArray(FAVORITES_KEY, favorites);
+            queueCloudAutoSync();
             render();
         });
 
         searchInput.addEventListener("input", render);
         categorySelect.addEventListener("change", render);
 
+        settingsToggle.addEventListener("click", function () {
+            var willCollapse = !settingsPanel.classList.contains("collapsed");
+            settingsPanel.classList.toggle("collapsed", willCollapse);
+            settingsToggle.textContent = willCollapse ? "Show Settings" : "Hide Settings";
+            settingsToggle.setAttribute("aria-expanded", willCollapse ? "false" : "true");
+        });
+
+        themeSelect.addEventListener("change", function () {
+            writeSetting(THEME_KEY, themeSelect.value);
+            queueCloudAutoSync();
+            applySettings();
+            render();
+        });
+
+        fastModeToggle.addEventListener("change", function () {
+            writeSetting(FAST_MODE_KEY, fastModeToggle.checked ? "1" : "0");
+            queueCloudAutoSync();
+            applySettings();
+            render();
+        });
+
+        openSourceOnlyToggle.addEventListener("change", function () {
+            writeSetting(OPEN_SOURCE_ONLY_KEY, openSourceOnlyToggle.checked ? "1" : "0");
+            queueCloudAutoSync();
+            render();
+        });
+
+        playableOnlyToggle.addEventListener("change", function () {
+            writeSetting(PLAYABLE_ONLY_KEY, playableOnlyToggle.checked ? "1" : "0");
+            queueCloudAutoSync();
+            render();
+        });
+
+        libraryViewSelect.addEventListener("change", function () {
+            writeSetting(LIBRARY_VIEW_KEY, libraryViewSelect.value === "grouped" ? "grouped" : "cards");
+            queueCloudAutoSync();
+            render();
+        });
+
+        cloudAutoSyncToggle.addEventListener("change", function () {
+            writeSetting(CLOUD_AUTO_SYNC_KEY, cloudAutoSyncToggle.checked ? "1" : "0");
+            if (cloudAutoSyncToggle.checked) {
+                queueCloudAutoSync();
+            }
+        });
+
+        exportDataBtn.addEventListener("click", function () {
+            exportSavedData();
+        });
+
+        importDataBtn.addEventListener("click", function () {
+            importDataInput.click();
+        });
+
+        importDataInput.addEventListener("change", function () {
+            var file = importDataInput.files && importDataInput.files[0];
+            if (!file) {
+                return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = function () {
+                try {
+                    var payload = JSON.parse(String(reader.result || "{}"));
+                    applySavedData(payload);
+                    queueCloudAutoSync();
+                    applySettings();
+                    render();
+                    alert("Save data imported.");
+                } catch (error) {
+                    alert("Could not import save data. Use a valid export file.");
+                } finally {
+                    importDataInput.value = "";
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        resetDataBtn.addEventListener("click", function () {
+            var shouldReset = window.confirm("Reset favorites, recents, theme, and fast mode?");
+            if (!shouldReset) {
+                return;
+            }
+            resetSavedData();
+        });
+
         clearFavoritesBtn.addEventListener("click", function () {
             writeArray(FAVORITES_KEY, []);
+            queueCloudAutoSync();
             render();
         });
 
         clearRecentBtn.addEventListener("click", function () {
             writeArray(RECENTS_KEY, []);
+            queueCloudAutoSync();
             render();
         });
 
+        applySettings();
+        settingsToggle.textContent = "Hide Settings";
+        settingsToggle.setAttribute("aria-expanded", "true");
+        initSupabase();
         loadGames();
     </script>
 </body>
