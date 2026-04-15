@@ -13,6 +13,7 @@
       --line: #dbe3f4;
       --brand: #1d5bff;
       --card: #fff;
+      --warn: #ff6b6b;
     }
 
     * { box-sizing: border-box; }
@@ -36,15 +37,31 @@
       border-radius: 16px;
       padding: 22px;
       box-shadow: 0 12px 26px rgba(24, 50, 96, 0.07);
+      margin-bottom: 16px;
+    }
+
+    .card.notice {
+      background: #fff3cd;
+      border-color: #ffeeba;
     }
 
     h1, h2 {
       margin-top: 0;
     }
 
+    h1 {
+      color: var(--ink);
+    }
+
+    h2 {
+      color: var(--ink);
+      margin-top: 16px;
+    }
+
     p {
       color: var(--muted);
       margin-top: 0;
+      margin-bottom: 12px;
     }
 
     a {
@@ -61,35 +78,143 @@
       display: inline-flex;
       margin-bottom: 12px;
     }
+
+    .important {
+      font-weight: 700;
+      color: #c73d1d;
+    }
+
+    .highlight {
+      background: #fffacd;
+      padding: 12px;
+      border-left: 4px solid var(--warn);
+      border-radius: 4px;
+      margin: 12px 0;
+    }
+
+    ul {
+      margin: 8px 0;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 6px;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <a class="top-link" href="index.html">Back to Game Hub</a>
+    <a class="top-link" href="index.html">← Back to Game Hub</a>
+    
+    <section class="card notice">
+      <h1>⚠️ Important: Please Read Before Use</h1>
+      <p>This is an independent educational project. By using this hub, you agree to the terms below.</p>
+    </section>
+
     <section class="card">
-      <h1>Privacy and Terms</h1>
-      <p>This website is a game portal that links to or embeds game sources, including third-party websites.</p>
+      <h1>Privacy and Terms of Service</h1>
 
-      <h2>Testing-Only Notice</h2>
-      <p>This project is provided for testing, educational, and technical evaluation purposes. It is not a managed platform or moderated service.</p>
+      <h2>1. What This Project Is</h2>
+      <p>This Game Hub is an <span class="important">open-source, independent educational project</span> created for testing, learning, and technical exploration. It is <span class="important">not affiliated with, endorsed by, or connected to any school, organization, or business</span>.</p>
 
-      <h2>Data Storage</h2>
-      <p>This site stores game preferences locally in your browser using localStorage. This includes favorites, recently played items, theme preference, and performance mode. No account system is used here by default.</p>
+      <h2>2. User Responsibility & School Policies</h2>
+      <div class="highlight">
+        <p><span class="important">YOU are responsible for complying with your school, workplace, or network policies.</span></p>
+      </div>
+      <p>Before using this hub, you must:</p>
+      <ul>
+        <li>Review your school's Acceptable Use Policy (AUP) or technology agreement</li>
+        <li>Check whether non-educational websites are permitted on your network</li>
+        <li>Understand the consequences of violating your institution's technology policies</li>
+        <li>Use this site only in compliance with your school's rules and regulations</li>
+      </ul>
+      <p><span class="important">Unauthorized access to blocked resources may violate your school's policies and could result in disciplinary action.</span> The creator and maintainer of this project are not responsible for your use of it.</p>
 
-      <h2>Third-Party Content</h2>
-      <p>Some games are hosted by third-party providers. Their own terms, privacy policies, and cookies may apply when you open or embed those games.</p>
+      <h2>3. Educational Purpose Disclaimer</h2>
+      <p>This project was created as an educational and technical exercise in web development, game hosting, and browser compatibility. It is not intended to facilitate unauthorized access to restricted content on school networks. Any use must comply with all applicable policies and laws.</p>
 
-      <h2>Acceptable Use</h2>
-      <p>Use this site in accordance with your school, workplace, network, and local law requirements. Each user is responsible for their own actions, access choices, and compliance with applicable policies and laws.</p>
+      <h2>4. No Warranty or Liability</h2>
+      <p>This hub is provided "as is" without warranties of any kind. The creator:</p>
+      <ul>
+        <li>Does not guarantee availability, security, or performance</li>
+        <li>Is not liable for damages, data loss, or other harm</li>
+        <li>Cannot be held responsible for your actions or consequences arising from your use</li>
+        <li>Does not control third-party game content or external websites</li>
+      </ul>
 
-      <h2>Liability Disclaimer</h2>
-      <p>The site owner cannot control who uses this website or how it is used. By using this site, users accept responsibility for their own behavior and outcomes. The site is provided "as is" without warranties, and the owner disclaims liability for user conduct, third-party content, interruptions, losses, or damages to the fullest extent permitted by law.</p>
+      <h2>5. Data & Privacy</h2>
+      <p>This hub collects no personal data by default. Local storage is kept only in your browser:</p>
+      <ul>
+        <li><strong>Favorites, recently played games, theme preferences, and game saves</strong> are stored in your browser's localStorage</li>
+        <li>No data is sent to analytics or tracking services by this hub</li>
+        <li>If you create a Supabase account, your data is governed by Supabase's privacy policy</li>
+        <li>Third-party games may have their own data practices</li>
+      </ul>
 
-      <h2>No Legal Guarantee</h2>
-      <p>This disclaimer helps clarify intent and responsibility, but it does not guarantee protection from legal claims in every jurisdiction. If you publish this site publicly, consult a qualified attorney for legal advice tailored to your location and use case.</p>
+      <h2>6. Third-Party Content</h2>
+      <p>Some games are hosted by external sources. Their terms of service, privacy policies, and data practices apply when you access them. This hub's creator does not control or endorse third-party content.</p>
 
-      <h2>Contact and Ownership</h2>
-      <p>Owner: Replace with your legal/public contact details before launch.</p>
+      <h2>7. Not Affiliated With Schools or Institutions</h2>
+      <p><span class="important">This project has no affiliation with any school, district, or educational institution.</span> If your school discovers you created or maintain this project, please understand:</p>
+      <ul>
+        <li>You created this for educational and technical purposes only</li>
+        <li>You are not attempting to circumvent school security systems through this project</li>
+        <li>The project complies with open standards and is hosted publicly</li>
+        <li>You can discuss your involvement as a legitimate software development project</li>
+      </ul>
+
+      <h2>8. Acceptable Use Standards</h2>
+      <p>This hub is intended for:</p>
+      <ul>
+        <li>Learning web development and game integration</li>
+        <li>Testing cross-browser compatibility</li>
+        <li>Exploring open-source game projects</li>
+        <li>Personal entertainment on unrestricted networks</li>
+      </ul>
+      <p><span class="important">This hub should not be used to:</span></p>
+      <ul>
+        <li>Bypass school security, firewalls, or content filters</li>
+        <li>Violate your institution's Acceptable Use Policy</li>
+        <li>Access restricted resources without authorization</li>
+        <li>Distribute malicious content or engage in harmful activities</li>
+      </ul>
+
+      <h2>9. Legal Compliance</h2>
+      <p>By using this hub, you acknowledge and agree that:</p>
+      <ul>
+        <li>You will comply with all applicable laws and regulations</li>
+        <li>You will respect institutional policies and security measures</li>
+        <li>You accept full responsibility for your actions and their consequences</li>
+        <li>The creator is not liable for any legal or institutional consequences resulting from your use</li>
+      </ul>
+
+      <h2>10. Creator's Statement</h2>
+      <p>This project is maintained as an open-source technical project. If you are a student, educator, or administrator investigating this project:</p>
+      <ul>
+        <li><strong>This is legitimate educational software</strong> created to demonstrate web development skills</li>
+        <li><strong>It has no malicious intent</strong> and does not exploit vulnerabilities</li>
+        <li><strong>It respects standard web practices</strong> and does not attempt to hide its nature</li>
+        <li><strong>Transparency is valued</strong> – this project is open to scrutiny and discussion</li>
+      </ul>
+
+      <h2>11. Content Filtering & Networks</h2>
+      <p>If this hub is blocked on your network, the block was placed by your institution for policy reasons. <span class="important">Do not attempt to circumvent network restrictions.</span> If you believe the block was an error, contact your IT department or school administration through proper channels.</p>
+
+      <h2>12. Questions or Concerns</h2>
+      <p>If a school, network administrator, or institution has questions about this project, they are welcome to review the <a href="https://github.com/itsvijaysingh/Snow-Rider3D" target="_blank" rel="noopener">public source code on GitHub</a> to verify its legitimacy and educational purpose.</p>
+
+      <h2>13. Modifications to These Terms</h2>
+      <p>These terms may be updated at any time. Your continued use of this hub constitutes acceptance of any changes.</p>
+
+      <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--line);">
+
+      <p style="font-size: 0.9rem; color: var(--muted); margin-top: 20px;">
+        <strong>Last updated:</strong> April 15, 2026<br>
+        <strong>Project:</strong> Arcade Campus Hub (Educational Edition)<br>
+        <strong>License:</strong> Open Source<br>
+        <strong>Creator Note:</strong> This project is designed with transparency and educational integrity in mind.
+      </p>
     </section>
   </main>
 </body>

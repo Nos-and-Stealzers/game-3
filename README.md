@@ -174,4 +174,4 @@ This project is static, so it can be hosted on GitHub Pages, Netlify, Cloudflare
 - Confirm `play.html` fallback button (`Open Direct`) works for games that block embedding.
 - Review third-party game licensing and terms before public release.
 - Replace contact placeholder text in `privacy.html` with real owner contact details.
-- Replace `https://example.com` entries in `sitemap.xml` and `robots.txt` with your real domain.
+- Replace `https://www.arcadecampushub.online` entries in `sitemap.xml` and `robots.txt` if you move the site to a different domain.

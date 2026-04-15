@@ -212,6 +212,43 @@
             background: var(--panel-2);
         }
 
+        .settings-cta {
+            background: var(--panel);
+            border-color: var(--line);
+            color: var(--ink);
+            min-height: 40px;
+            min-width: 110px;
+            font-size: 0.88rem;
+            box-shadow: none;
+            gap: 7px;
+        }
+
+        .settings-cta:hover {
+            background: var(--panel-2);
+        }
+
+        .settings-icon {
+            width: 14px;
+            height: 14px;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            position: relative;
+            flex: 0 0 14px;
+            opacity: 0.85;
+        }
+
+        .settings-icon::after {
+            content: "";
+            position: absolute;
+            inset: 3px;
+            border-radius: 50%;
+            border: 1.5px solid currentColor;
+        }
+
+        .settings-label {
+            line-height: 1;
+        }
+
         .hero {
             border-radius: 20px;
             border: 1px solid var(--hero-line);
@@ -269,15 +306,81 @@
         }
 
         .settings-panel {
-            margin-bottom: 12px;
+            margin-bottom: 0;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 10px;
             align-items: end;
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: min(620px, 96vw);
+            overflow-y: auto;
+            z-index: 50;
+            border-radius: 0;
+            border-top: 0;
+            border-right: 0;
+            transform: translateX(0);
+            transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         .settings-panel.collapsed {
-            display: none;
+            transform: translateX(102%);
+        }
+
+        .settings-head {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .settings-title {
+            margin: 0;
+            color: var(--panel-title);
+            font-size: 1.08rem;
+            font-weight: 800;
+        }
+
+        .settings-close {
+            min-width: 88px;
+        }
+
+        .settings-group {
+            grid-column: 1 / -1;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .settings-group:last-child {
+            border-bottom: none;
+        }
+
+        .settings-group-title {
+            margin: 0 0 8px;
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .settings-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(6, 16, 37, 0.46);
+            z-index: 40;
+            opacity: 1;
+            transition: opacity 0.24s ease;
+        }
+
+        .settings-backdrop.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .setting-block {
@@ -313,6 +416,37 @@
             margin: 2px 0 0;
         }
 
+        .save-health-row {
+            display: flex;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .save-health-chip {
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            border: 1px solid transparent;
+            white-space: nowrap;
+            min-width: 116px;
+            text-align: center;
+        }
+
+        .save-health-chip.ok {
+            background: var(--ok-bg);
+            color: var(--ok-ink);
+            border-color: #8dc8a6;
+        }
+
+        .save-health-chip.warn {
+            background: var(--warn-bg);
+            color: var(--warn-ink);
+            border-color: #e2aa9e;
+        }
+
         .auth-inputs {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -330,6 +464,35 @@
             color: var(--muted);
             font-size: 0.8rem;
             font-weight: 700;
+        }
+
+        .save-sync-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 6px;
+        }
+
+        .save-sync-item {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--panel-2);
+            padding: 7px 9px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .save-sync-game {
+            color: var(--ink);
+        }
+
+        .save-sync-time {
+            color: var(--muted);
+            text-align: right;
         }
 
         .group-stack {
@@ -421,6 +584,20 @@
             display: block;
         }
 
+        #gameGrid.platform-grouped {
+            display: block;
+        }
+
+        #gameGrid.compact-view {
+            grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+            gap: 10px;
+        }
+
+        #gameGrid.compact-view .desc {
+            font-size: 0.84rem;
+            line-height: 1.3;
+        }
+
         .card {
             border-radius: 14px;
             overflow: hidden;
@@ -445,6 +622,12 @@
         .thumb {
             height: 112px;
             position: relative;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .thumb::after {
@@ -621,12 +804,49 @@
             box-shadow: none;
         }
 
+        body[data-performance="quick"] .hero,
+        body[data-performance="quick"] .panel,
+        body[data-performance="quick"] .card {
+            box-shadow: none;
+        }
+
+        body[data-performance="quick"] .card:hover {
+            transform: none;
+        }
+
+        body[data-performance="quick"] .hero {
+            animation: none;
+        }
+
+        body[data-performance="turbo"] * {
+            animation: none !important;
+            transition: none !important;
+        }
+
+        body[data-performance="turbo"] .bar,
+        body[data-performance="turbo"] .hero,
+        body[data-performance="turbo"] .panel,
+        body[data-performance="turbo"] .card {
+            box-shadow: none;
+        }
+
+        body[data-performance="turbo"] .thumb::after,
+        body[data-performance="turbo"] .chip.warn,
+        body[data-performance="turbo"] .chip.ok,
+        body[data-performance="turbo"] .chip.source {
+            display: none;
+        }
+
         @media (max-width: 760px) {
             .toolbar { grid-template-columns: 1fr; }
             .split { grid-template-columns: 1fr; }
             .panel { padding: 13px; }
             .hero { padding: 16px; }
             .header-actions { width: 100%; justify-content: flex-start; }
+            .settings-panel {
+                width: 100vw;
+                max-width: 100vw;
+            }
         }
     </style>
 </head>
@@ -636,7 +856,7 @@
             <div class="logo">Classroom 6X Arcade</div>
             <div class="header-actions">
                 <div id="modeBadge" class="badge">Local-First Mode</div>
-                <button id="settingsToggle" type="button" class="icon-btn" aria-expanded="false" aria-controls="settingsPanel">Settings</button>
+                <button id="settingsToggle" type="button" class="icon-btn settings-cta" aria-expanded="false" aria-controls="settingsPanel"><span class="settings-icon" aria-hidden="true"></span><span id="settingsToggleLabel" class="settings-label">Settings</span></button>
             </div>
         </header>
 
@@ -651,57 +871,91 @@
             </div>
         </section>
 
-        <section id="settingsPanel" class="panel settings-panel" aria-label="UI settings">
-            <label class="setting-block">
-                <span class="meta">Theme</span>
-                <select id="themeSelect" class="select">
-                    <option value="light">Light mode</option>
-                    <option value="gray">Gray mode</option>
-                    <option value="black">Black mode</option>
-                </select>
-            </label>
-            <label class="setting-block">
-                <span class="meta">Library View</span>
-                <select id="libraryViewSelect" class="select">
-                    <option value="cards">Cards</option>
-                    <option value="grouped">Grouped (FNAF, Arcade, Custom...)</option>
-                </select>
-            </label>
-            <label class="setting-block">
-                <span class="meta">Performance</span>
-                <span class="check">
-                    <input id="fastModeToggle" type="checkbox">
-                    Fast mode (fewer effects, quicker launch)
-                </span>
-            </label>
-            <label class="setting-block">
-                <span class="meta">Session</span>
-                <span class="check">
-                    <input id="rememberSettings" type="checkbox" checked disabled>
-                    Saved in this browser profile
-                </span>
-            </label>
-            <section class="setting-block" aria-label="Saved data tools">
-                <span class="meta">Save Data</span>
+        <div id="settingsBackdrop" class="settings-backdrop hidden" aria-hidden="true"></div>
+
+        <section id="settingsPanel" class="panel settings-panel collapsed" aria-label="UI settings">
+            <div class="settings-head">
+                <h2 class="settings-title">Settings</h2>
+                <button id="settingsCloseBtn" type="button" class="icon-btn settings-close">Close</button>
+            </div>
+            
+            <div class="settings-group">
+                <h3 class="settings-group-title">Appearance</h3>
+                <label class="setting-block">
+                    <span class="meta">Theme</span>
+                    <select id="themeSelect" class="select">
+                        <option value="light">Light mode</option>
+                        <option value="gray">Gray mode</option>
+                        <option value="black">Black mode</option>
+                    </select>
+                </label>
+                <label class="setting-block">
+                    <span class="meta">Library View</span>
+                    <select id="libraryViewSelect" class="select">
+                        <option value="cards">Cards</option>
+                        <option value="grouped">Grouped (FNAF, Arcade, Custom...)</option>
+                        <option value="platform">Platform Groups (Local, External)</option>
+                        <option value="compact">Compact Cards</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="settings-group">
+                <h3 class="settings-group-title">Performance</h3>
+                <label class="setting-block">
+                    <span class="meta">Performance Profile</span>
+                    <select id="performanceProfileSelect" class="select">
+                        <option value="normal">Normal (best visuals)</option>
+                        <option value="quick">Quick (lighter effects)</option>
+                        <option value="turbo">Turbo (minimum effects)</option>
+                    </select>
+                </label>
+                <label class="setting-block">
+                    <span class="check">
+                        <input id="fastModeToggle" type="checkbox">
+                        Fast mode (skip animations, direct launch)
+                    </span>
+                </label>
+            </div>
+
+            <div class="settings-group">
+                <h3 class="settings-group-title">Save Data</h3>
                 <div class="save-actions">
                     <button id="exportDataBtn" type="button" class="btn alt small">Export</button>
                     <button id="importDataBtn" type="button" class="btn alt small">Import</button>
                     <button id="resetDataBtn" type="button" class="btn warn small">Reset All</button>
                 </div>
                 <input id="importDataInput" type="file" accept="application/json" hidden>
-                <p class="meta-note">Backs up favorites, recents, theme, and performance mode.</p>
-            </section>
-            <section class="setting-block" aria-label="Supabase account tools">
-                <span class="meta">Account Cloud Save (Supabase)</span>
-                <span class="check">
-                    <input id="cloudAutoSyncToggle" type="checkbox" checked>
-                    Cloud Auto Sync
-                </span>
+                <p class="meta-note">Backs up: favorites, recents, theme, performance settings, FNAF saves.</p>
+                <div class="save-health-row">
+                    <span id="localSaveChip" class="save-health-chip warn">Local: Idle</span>
+                    <p id="saveDataStatus" class="meta-note">Local save: waiting for changes...</p>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <h3 class="settings-group-title">Cloud Sync (Supabase)</h3>
+                <label class="setting-block">
+                    <span class="check">
+                        <input id="cloudAutoSyncToggle" type="checkbox" checked>
+                        Auto sync enabled
+                    </span>
+                </label>
+                <div class="save-health-row">
+                    <span id="cloudSaveChip" class="save-health-chip warn">Cloud: Not synced</span>
+                    <p id="cloudDataStatus" class="meta-note">Cloud sync: not yet synced in this browser.</p>
+                </div>
                 <div class="auth-actions">
-                    <a href="account.html" class="btn alt small">Save your data</a>
+                    <a href="account.html" class="btn alt small">Manage Account</a>
                 </div>
                 <p id="authStatus" class="auth-status">Checking account status...</p>
-            </section>
+            </div>
+
+            <div class="settings-group">
+                <h3 class="settings-group-title">FNAF Save Status</h3>
+                <ul id="fnafSaveStatus" class="save-sync-list"></ul>
+                <p class="meta-note">Shows cloud sync timestamp for each FNAF game save.</p>
+            </div>
         </section>
 
         <section class="panel" aria-label="Open source picks" style="margin-bottom:12px;">
@@ -752,15 +1006,6 @@
 
         <section id="gameGrid" class="grid" aria-label="Games list"></section>
         <p id="emptyState" class="empty">No games match that search. Try another term or reset category.</p>
-
-        <footer class="site-footer" aria-label="Site links">
-            <span>Testing build. Users are responsible for their own use.</span>
-            <span>
-                <a href="privacy.html">Privacy and Terms</a>
-                |
-                <a href="404.html">404 Page</a>
-            </span>
-        </footer>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -772,12 +1017,30 @@
         var RECENTS_KEY = "gamehub_recent";
         var THEME_KEY = "gamehub_theme";
         var FAST_MODE_KEY = "gamehub_fast_mode";
+        var PERFORMANCE_PROFILE_KEY = "gamehub_performance_profile";
         var LIBRARY_VIEW_KEY = "gamehub_library_view";
         var OPEN_SOURCE_ONLY_KEY = "gamehub_open_source_only";
         var PLAYABLE_ONLY_KEY = "gamehub_playable_only";
         var CLOUD_AUTO_SYNC_KEY = "gamehub_cloud_auto_sync";
+        var GAME_SAVES_KEY = "gamehub_game_saves";
+        var LOCAL_SAVE_UPDATED_KEY = "gamehub_local_last_saved";
+        var CLOUD_LAST_SYNC_KEY = "gamehub_cloud_last_sync";
         var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
-        var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, CLOUD_AUTO_SYNC_KEY];
+        var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, PERFORMANCE_PROFILE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, CLOUD_AUTO_SYNC_KEY, GAME_SAVES_KEY, LOCAL_SAVE_UPDATED_KEY, CLOUD_LAST_SYNC_KEY];
+        var FNAF_SAVE_STATUS_ITEMS = [
+            { id: "fnaf-1", title: "FNAF 1" },
+            { id: "fnaf-2", title: "FNAF 2" },
+            { id: "fnaf-3", title: "FNAF 3" },
+            { id: "fnaf-4", title: "FNAF 4" },
+            { id: "fnaf-world", title: "FNAF World" },
+            { id: "fnaf-sl", title: "FNAF Sister Location" },
+            { id: "fnaf-ps", title: "FNAF Pizzeria Simulator" },
+            { id: "fnaf-ucn", title: "FNAF Ultimate Custom Night" }
+        ];
+        var GAME_SAVE_ALIASES = {
+            "fnaf-sl": ["fnaf-sister-location"],
+            "fnaf-ps": ["fnaf-pizzeria-simulator"]
+        };
 
         var searchInput = document.getElementById("searchInput");
         var categorySelect = document.getElementById("categorySelect");
@@ -793,9 +1056,13 @@
         var clearRecentBtn = document.getElementById("clearRecentBtn");
         var modeBadge = document.getElementById("modeBadge");
         var settingsToggle = document.getElementById("settingsToggle");
+        var settingsToggleLabel = document.getElementById("settingsToggleLabel");
+        var settingsCloseBtn = document.getElementById("settingsCloseBtn");
+        var settingsBackdrop = document.getElementById("settingsBackdrop");
         var settingsPanel = document.getElementById("settingsPanel");
         var themeSelect = document.getElementById("themeSelect");
         var libraryViewSelect = document.getElementById("libraryViewSelect");
+        var performanceProfileSelect = document.getElementById("performanceProfileSelect");
         var openSourceOnlyToggle = document.getElementById("openSourceOnlyToggle");
         var playableOnlyToggle = document.getElementById("playableOnlyToggle");
         var fastModeToggle = document.getElementById("fastModeToggle");
@@ -805,6 +1072,11 @@
         var importDataInput = document.getElementById("importDataInput");
         var cloudAutoSyncToggle = document.getElementById("cloudAutoSyncToggle");
         var authStatus = document.getElementById("authStatus");
+        var saveDataStatus = document.getElementById("saveDataStatus");
+        var cloudDataStatus = document.getElementById("cloudDataStatus");
+        var localSaveChip = document.getElementById("localSaveChip");
+        var cloudSaveChip = document.getElementById("cloudSaveChip");
+        var fnafSaveStatus = document.getElementById("fnafSaveStatus");
         var storageFallback = {};
         var supabaseClient = null;
         var cloudAutoSyncTimer = null;
@@ -835,6 +1107,22 @@
             }
         }
 
+        function touchLocalSave() {
+            var stamp = new Date().toISOString();
+            try {
+                localStorage.setItem(LOCAL_SAVE_UPDATED_KEY, stamp);
+            } catch (error) {
+                storageFallback[LOCAL_SAVE_UPDATED_KEY] = stamp;
+            }
+            renderSaveHealthStatus();
+        }
+
+        function markCloudSynced() {
+            var stamp = new Date().toISOString();
+            storageSet(CLOUD_LAST_SYNC_KEY, stamp);
+            renderSaveHealthStatus();
+        }
+
         function readArray(key) {
             try {
                 var value = JSON.parse(storageGet(key));
@@ -846,6 +1134,7 @@
 
         function writeArray(key, value) {
             storageSet(key, JSON.stringify(value));
+            touchLocalSave();
         }
 
         function readSetting(key, fallback) {
@@ -855,6 +1144,110 @@
 
         function writeSetting(key, value) {
             storageSet(key, value);
+            touchLocalSave();
+        }
+
+        function readObject(key) {
+            try {
+                var value = JSON.parse(storageGet(key) || "{}");
+                if (!value || typeof value !== "object" || Array.isArray(value)) {
+                    return {};
+                }
+                return value;
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function writeObject(key, value) {
+            storageSet(key, JSON.stringify(value || {}));
+            touchLocalSave();
+        }
+
+        function extractGradientColor(gradientStr) {
+            if (!gradientStr) return "#f3f7ff";
+            var colors = gradientStr.match(/#[0-9a-fA-F]{6}|rgb\([^)]+\)/g);
+            return colors && colors.length > 0 ? colors[0] : "#f3f7ff";
+        }
+
+        function formatSaveHealthTime(value, emptyLabel) {
+            if (typeof value !== "string" || !value) {
+                return emptyLabel;
+            }
+
+            var date = new Date(value);
+            if (isNaN(date.getTime())) {
+                return emptyLabel;
+            }
+
+            return date.toLocaleString();
+        }
+
+        function renderSaveHealthStatus() {
+            var localStamp = storageGet(LOCAL_SAVE_UPDATED_KEY);
+            var cloudStamp = storageGet(CLOUD_LAST_SYNC_KEY);
+
+            if (saveDataStatus) {
+                var localTime = formatSaveHealthTime(localStamp, "waiting for changes...");
+                saveDataStatus.textContent = "Local save: " + localTime;
+            }
+
+            if (cloudDataStatus) {
+                var cloudTime = formatSaveHealthTime(cloudStamp, "not yet synced in this browser.");
+                cloudDataStatus.textContent = "Cloud sync: " + cloudTime;
+            }
+
+            if (localSaveChip) {
+                localSaveChip.className = "save-health-chip " + (localStamp ? "ok" : "warn");
+                localSaveChip.textContent = localStamp ? "Local: Active" : "Local: Idle";
+            }
+
+            if (cloudSaveChip) {
+                cloudSaveChip.className = "save-health-chip " + (cloudStamp ? "ok" : "warn");
+                cloudSaveChip.textContent = cloudStamp ? "Cloud: Synced" : "Cloud: Not synced";
+            }
+        }
+
+        function formatSyncTime(value) {
+            if (typeof value !== "string" || !value) {
+                return "No local save yet";
+            }
+
+            var date = new Date(value);
+            if (isNaN(date.getTime())) {
+                return "Saved (unknown time)";
+            }
+
+            return "Saved " + date.toLocaleString();
+        }
+
+        function readGameSaveById(allSaves, gameId) {
+            if (allSaves[gameId] && typeof allSaves[gameId] === "object") {
+                return allSaves[gameId];
+            }
+
+            var aliases = GAME_SAVE_ALIASES[gameId] || [];
+            for (var i = 0; i < aliases.length; i++) {
+                var aliasId = aliases[i];
+                if (allSaves[aliasId] && typeof allSaves[aliasId] === "object") {
+                    return allSaves[aliasId];
+                }
+            }
+
+            return null;
+        }
+
+        function renderFnafSaveStatus() {
+            if (!fnafSaveStatus) {
+                return;
+            }
+
+            var allSaves = readObject(GAME_SAVES_KEY);
+            fnafSaveStatus.innerHTML = FNAF_SAVE_STATUS_ITEMS.map(function (item) {
+                var saveData = readGameSaveById(allSaves, item.id);
+                var updatedAt = saveData ? saveData.updatedAt : "";
+                return '<li class="save-sync-item"><span class="save-sync-game">' + item.title + '</span><span class="save-sync-time">' + formatSyncTime(updatedAt) + '</span></li>';
+            }).join("");
         }
 
         function snapshotSavedData() {
@@ -866,10 +1259,12 @@
                     recent: readArray(RECENTS_KEY),
                     theme: readSetting(THEME_KEY, "light"),
                     fastMode: readSetting(FAST_MODE_KEY, "0"),
+                    performanceProfile: readSetting(PERFORMANCE_PROFILE_KEY, "normal"),
                     libraryView: readSetting(LIBRARY_VIEW_KEY, "cards"),
                     openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
                     playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
-                    cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1")
+                    cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1"),
+                    gameSaves: readObject(GAME_SAVES_KEY)
                 }
             };
         }
@@ -947,6 +1342,7 @@
             if (result.error) {
                 throw result.error;
             }
+            markCloudSynced();
             if (!silent) {
                 updateAuthStatus("Cloud save synced.");
             }
@@ -993,7 +1389,10 @@
             var incomingFast = data.fastMode === "1" ? "1" : "0";
             writeSetting(FAST_MODE_KEY, incomingFast);
 
-            var incomingView = data.libraryView === "grouped" ? "grouped" : "cards";
+            var incomingProfile = (data.performanceProfile === "quick" || data.performanceProfile === "turbo") ? data.performanceProfile : "normal";
+            writeSetting(PERFORMANCE_PROFILE_KEY, incomingProfile);
+
+            var incomingView = ["cards", "grouped", "platform", "compact"].indexOf(data.libraryView) !== -1 ? data.libraryView : "cards";
             writeSetting(LIBRARY_VIEW_KEY, incomingView);
 
             var incomingOpenSourceOnly = data.openSourceOnly === "1" ? "1" : "0";
@@ -1004,6 +1403,37 @@
 
             var incomingCloudAutoSync = data.cloudAutoSync === "0" ? "0" : "1";
             writeSetting(CLOUD_AUTO_SYNC_KEY, incomingCloudAutoSync);
+
+            var rawGameSaves = (data.gameSaves && typeof data.gameSaves === "object" && !Array.isArray(data.gameSaves)) ? data.gameSaves : {};
+            var cleanGameSaves = {};
+
+            Object.keys(rawGameSaves).forEach(function (gameId) {
+                var gameSave = rawGameSaves[gameId];
+                if (!gameSave || typeof gameSave !== "object" || Array.isArray(gameSave)) {
+                    return;
+                }
+
+                var localData = gameSave.localStorage;
+                if (!localData || typeof localData !== "object" || Array.isArray(localData)) {
+                    return;
+                }
+
+                var cleanLocalData = {};
+                Object.keys(localData).forEach(function (key) {
+                    var value = localData[key];
+                    if (value === null || typeof value === "string") {
+                        cleanLocalData[key] = value;
+                    }
+                });
+
+                cleanGameSaves[gameId] = {
+                    updatedAt: typeof gameSave.updatedAt === "string" ? gameSave.updatedAt : new Date().toISOString(),
+                    localStorage: cleanLocalData
+                };
+            });
+
+            writeObject(GAME_SAVES_KEY, cleanGameSaves);
+            renderFnafSaveStatus();
         }
 
         function isLikelyPlayable(game) {
@@ -1037,11 +1467,23 @@
                 storageRemove(key);
             });
             applySettings();
+            renderFnafSaveStatus();
             render();
         }
 
         function getGameById(gameId) {
             return games.find(function (game) { return game.id === gameId; });
+        }
+
+        function pushRecentGame(gameId) {
+            if (!gameId) {
+                return;
+            }
+
+            var recent = readArray(RECENTS_KEY);
+            var withoutCurrent = recent.filter(function (id) { return id !== gameId; });
+            withoutCurrent.unshift(gameId);
+            writeArray(RECENTS_KEY, withoutCurrent.slice(0, 8));
         }
 
         function capitalize(text) {
@@ -1098,9 +1540,15 @@
             var openDirectFirst = game.preferDirect === true || (fastMode && game.platform === "external");
             var launch = openDirectFirst ? game.direct : ("play.html?game=" + encodeURIComponent(game.id));
             var playLabel = openDirectFirst ? "Play (Fast)" : "Play";
+            var directTrackingAttr = ' data-recent-id="' + game.id + '"';
+            var playTrackingAttr = openDirectFirst ? directTrackingAttr : '';
+            
+            var thumbStyle = game.pfp 
+                ? 'background-image: url(' + JSON.stringify(game.pfp) + '); background-color: ' + extractGradientColor(game.gradient)
+                : 'background: ' + game.gradient;
 
             return '<article class="' + cardClass + '">' +
-                '<div class="thumb" style="background:' + game.gradient + '"></div>' +
+                '<div class="thumb" style="' + thumbStyle + '"></div>' +
                 '<div class="body">' +
                 '<div class="chip-row">' +
                 '<span class="chip type">' + capitalize(game.category) + '</span>' +
@@ -1112,8 +1560,8 @@
                 '<h2 class="title">' + game.title + '</h2>' +
                 '<p class="desc">' + game.description + '</p>' +
                 '<div class="actions">' +
-                '<a class="btn play" href="' + launch + '">' + playLabel + '</a>' +
-                '<a class="btn alt" href="' + game.direct + '" target="_blank" rel="noopener noreferrer">Open Direct</a>' +
+                '<a class="btn play" href="' + launch + '"' + playTrackingAttr + '>' + playLabel + '</a>' +
+                '<a class="btn alt" href="' + game.direct + '" target="_blank" rel="noopener noreferrer"' + directTrackingAttr + '>Open Direct</a>' +
                 (game.repo ? '<a class="btn alt" href="' + game.repo + '" target="_blank" rel="noopener noreferrer">Source</a>' : '') +
                 '<button type="button" class="' + favoriteClass + '" data-favorite-id="' + game.id + '">' + favoriteLabel + '</button>' +
                 '</div>' +
@@ -1128,18 +1576,30 @@
             }
 
             fastMode = readSetting(FAST_MODE_KEY, "0") === "1";
+            var performanceProfile = readSetting(PERFORMANCE_PROFILE_KEY, "normal");
+            if (["normal", "quick", "turbo"].indexOf(performanceProfile) === -1) {
+                performanceProfile = "normal";
+            }
 
             document.body.setAttribute("data-theme", theme);
             document.body.classList.toggle("fast-mode", fastMode);
+            document.body.setAttribute("data-performance", performanceProfile);
             document.documentElement.style.colorScheme = theme === "black" ? "dark" : "light";
 
             themeSelect.value = theme;
             fastModeToggle.checked = fastMode;
-            libraryViewSelect.value = readSetting(LIBRARY_VIEW_KEY, "cards") === "grouped" ? "grouped" : "cards";
+            var savedLibraryView = readSetting(LIBRARY_VIEW_KEY, "cards");
+            if (["cards", "grouped", "platform", "compact"].indexOf(savedLibraryView) === -1) {
+                savedLibraryView = "cards";
+            }
+            libraryViewSelect.value = savedLibraryView;
+            performanceProfileSelect.value = performanceProfile;
             openSourceOnlyToggle.checked = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
             playableOnlyToggle.checked = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
             cloudAutoSyncToggle.checked = readSetting(CLOUD_AUTO_SYNC_KEY, "1") === "1";
-            modeBadge.textContent = fastMode ? "Fast Mode Active" : "Local-First Mode";
+            modeBadge.textContent = fastMode ? ("Fast Mode - " + performanceProfile.toUpperCase()) : ("Local-First - " + performanceProfile.toUpperCase());
+            renderFnafSaveStatus();
+            renderSaveHealthStatus();
         }
 
         function renderFavoritesAndRecent() {
@@ -1202,6 +1662,7 @@
             });
 
             var libraryView = readSetting(LIBRARY_VIEW_KEY, "cards");
+            gameGrid.classList.remove("grouped", "platform-grouped", "compact-view");
             if (libraryView === "grouped") {
                 gameGrid.classList.add("grouped");
                 var groups = {};
@@ -1229,8 +1690,22 @@
                     }).join("");
                     return '<section class="group"><h3 class="group-title">' + groupName + '</h3><div class="grid">' + cards + '</div></section>';
                 }).join("") + '</div>';
+            } else if (libraryView === "platform") {
+                gameGrid.classList.add("platform-grouped");
+                var localGames = filtered.filter(function (game) { return game.platform === "local"; });
+                var externalGames = filtered.filter(function (game) { return game.platform !== "local"; });
+                var localCards = localGames.map(function (game) { return createCard(game, false); }).join("");
+                var externalCards = externalGames.map(function (game) { return createCard(game, false); }).join("");
+                gameGrid.innerHTML = '<div class="group-stack">' +
+                    '<section class="group"><h3 class="group-title">Local Games</h3><div class="grid">' + localCards + '</div></section>' +
+                    '<section class="group"><h3 class="group-title">External Games</h3><div class="grid">' + externalCards + '</div></section>' +
+                    '</div>';
+            } else if (libraryView === "compact") {
+                gameGrid.classList.add("compact-view");
+                gameGrid.innerHTML = filtered.map(function (game) {
+                    return createCard(game, true);
+                }).join("");
             } else {
-                gameGrid.classList.remove("grouped");
                 gameGrid.innerHTML = filtered.map(function (game) {
                     return createCard(game, false);
                 }).join("");
@@ -1282,6 +1757,16 @@
                 return;
             }
 
+            var directTrigger = target.closest("a[data-recent-id]");
+            if (directTrigger instanceof HTMLElement) {
+                var recentId = directTrigger.getAttribute("data-recent-id");
+                if (recentId) {
+                    pushRecentGame(recentId);
+                    queueCloudAutoSync();
+                    renderFavoritesAndRecent();
+                }
+            }
+
             var favoriteId = target.getAttribute("data-favorite-id");
             if (!favoriteId) {
                 return;
@@ -1304,11 +1789,39 @@
         searchInput.addEventListener("input", render);
         categorySelect.addEventListener("change", render);
 
+        function setSettingsToggleLabel(text) {
+            if (settingsToggleLabel) {
+                settingsToggleLabel.textContent = text;
+                return;
+            }
+            settingsToggle.textContent = text;
+        }
+
+        function setSettingsOpen(isOpen) {
+            settingsPanel.classList.toggle("collapsed", !isOpen);
+            settingsBackdrop.classList.toggle("hidden", !isOpen);
+            setSettingsToggleLabel(isOpen ? "Hide Settings" : "Settings");
+            settingsToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+            document.body.style.overflow = isOpen ? "hidden" : "";
+        }
+
         settingsToggle.addEventListener("click", function () {
-            var willCollapse = !settingsPanel.classList.contains("collapsed");
-            settingsPanel.classList.toggle("collapsed", willCollapse);
-            settingsToggle.textContent = willCollapse ? "Show Settings" : "Hide Settings";
-            settingsToggle.setAttribute("aria-expanded", willCollapse ? "false" : "true");
+            var isOpen = settingsPanel.classList.contains("collapsed");
+            setSettingsOpen(isOpen);
+        });
+
+        settingsCloseBtn.addEventListener("click", function () {
+            setSettingsOpen(false);
+        });
+
+        settingsBackdrop.addEventListener("click", function () {
+            setSettingsOpen(false);
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !settingsPanel.classList.contains("collapsed")) {
+                setSettingsOpen(false);
+            }
         });
 
         themeSelect.addEventListener("change", function () {
@@ -1338,8 +1851,23 @@
         });
 
         libraryViewSelect.addEventListener("change", function () {
-            writeSetting(LIBRARY_VIEW_KEY, libraryViewSelect.value === "grouped" ? "grouped" : "cards");
+            var value = libraryViewSelect.value;
+            if (["cards", "grouped", "platform", "compact"].indexOf(value) === -1) {
+                value = "cards";
+            }
+            writeSetting(LIBRARY_VIEW_KEY, value);
             queueCloudAutoSync();
+            render();
+        });
+
+        performanceProfileSelect.addEventListener("change", function () {
+            var value = performanceProfileSelect.value;
+            if (["normal", "quick", "turbo"].indexOf(value) === -1) {
+                value = "normal";
+            }
+            writeSetting(PERFORMANCE_PROFILE_KEY, value);
+            queueCloudAutoSync();
+            applySettings();
             render();
         });
 
@@ -1383,7 +1911,7 @@
         });
 
         resetDataBtn.addEventListener("click", function () {
-            var shouldReset = window.confirm("Reset favorites, recents, theme, and fast mode?");
+            var shouldReset = window.confirm("Reset favorites, recents, theme, library view, and performance settings?");
             if (!shouldReset) {
                 return;
             }
@@ -1403,8 +1931,7 @@
         });
 
         applySettings();
-        settingsToggle.textContent = "Hide Settings";
-        settingsToggle.setAttribute("aria-expanded", "true");
+        setSettingsOpen(false);
         initSupabase();
         loadGames();
     </script>
