@@ -222,6 +222,12 @@
             flex-wrap: wrap;
         }
 
+        .preset-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 8px;
+        }
+
         .save-health-row {
             display: flex;
             align-items: flex-start;
@@ -377,6 +383,14 @@
                     <span class="check"><input id="cloudAutoSyncToggle" type="checkbox"> Cloud Auto Sync</span>
                     <span id="authStatus" class="meta">Checking account status...</span>
                 </label>
+                <section class="setting-block">
+                    <span class="meta">Quick Presets</span>
+                    <div class="preset-actions">
+                        <button id="presetChromebookBtn" type="button" class="btn alt">Optimize For Older School Chromebook</button>
+                        <button id="presetVisualsBtn" type="button" class="btn alt">Restore Best Visuals</button>
+                    </div>
+                    <span id="presetStatus" class="meta">Tip: presets instantly update all related toggles above.</span>
+                </section>
             </article>
 
             <article class="panel">
@@ -444,6 +458,9 @@
         var playableOnlyToggle = document.getElementById("playableOnlyToggle");
         var fastModeToggle = document.getElementById("fastModeToggle");
         var cloudAutoSyncToggle = document.getElementById("cloudAutoSyncToggle");
+        var presetChromebookBtn = document.getElementById("presetChromebookBtn");
+        var presetVisualsBtn = document.getElementById("presetVisualsBtn");
+        var presetStatus = document.getElementById("presetStatus");
         var exportDataBtn = document.getElementById("exportDataBtn");
         var importDataBtn = document.getElementById("importDataBtn");
         var resetDataBtn = document.getElementById("resetDataBtn");
@@ -755,6 +772,38 @@
         playableOnlyToggle.addEventListener("change", function () { writeSetting(PLAYABLE_ONLY_KEY, playableOnlyToggle.checked ? "1" : "0"); });
         fastModeToggle.addEventListener("change", function () { writeSetting(FAST_MODE_KEY, fastModeToggle.checked ? "1" : "0"); });
         cloudAutoSyncToggle.addEventListener("change", function () { writeSetting(CLOUD_AUTO_SYNC_KEY, cloudAutoSyncToggle.checked ? "1" : "0"); });
+
+        function applyPreset(type) {
+            if (type === "chromebook") {
+                writeSetting(THEME_KEY, "gray");
+                writeSetting(FAST_MODE_KEY, "1");
+                writeSetting(PERFORMANCE_PROFILE_KEY, "ultra");
+                writeSetting(LIBRARY_VIEW_KEY, "compact");
+                writeSetting(OPEN_SOURCE_ONLY_KEY, "0");
+                writeSetting(PLAYABLE_ONLY_KEY, "0");
+                writeSetting(CLOUD_AUTO_SYNC_KEY, "1");
+                presetStatus.textContent = "Applied Chromebook preset: gray theme, compact cards, Ultra Lite, fast mode.";
+            } else {
+                writeSetting(THEME_KEY, "light");
+                writeSetting(FAST_MODE_KEY, "0");
+                writeSetting(PERFORMANCE_PROFILE_KEY, "normal");
+                writeSetting(LIBRARY_VIEW_KEY, "cards");
+                writeSetting(OPEN_SOURCE_ONLY_KEY, "0");
+                writeSetting(PLAYABLE_ONLY_KEY, "0");
+                writeSetting(CLOUD_AUTO_SYNC_KEY, "1");
+                presetStatus.textContent = "Applied visual preset: full effects, normal profile, standard cards.";
+            }
+
+            applyFormState();
+        }
+
+        presetChromebookBtn.addEventListener("click", function () {
+            applyPreset("chromebook");
+        });
+
+        presetVisualsBtn.addEventListener("click", function () {
+            applyPreset("visuals");
+        });
 
         exportDataBtn.addEventListener("click", function () { exportSavedData(); });
         importDataBtn.addEventListener("click", function () { importDataInput.click(); });
