@@ -6,17 +6,20 @@
   <title>Account Center</title>
   <meta name="description" content="Sign in and keep game saves synced automatically.">
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
+    @import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Nunito:wght@600;700;800&display=swap");
 
     :root {
-      --bg: #eef3ff;
+      --bg: #f3f7ff;
+      --bg-layer-1: radial-gradient(circle at 10% -10%, #d5e8ff 0, transparent 35%);
+      --bg-layer-2: radial-gradient(circle at 95% 0%, #e0fff1 0, transparent 32%);
+      --bg-layer-3: linear-gradient(180deg, #f8fbff 0%, #eef4ff 42%, #f4f8ff 100%);
       --panel: #ffffff;
-      --line: #d3ddf5;
-      --text: #14213d;
-      --muted: #5a6a8f;
-      --primary: #0a66ff;
-      --primary-strong: #0049bd;
-      --soft: #f5f8ff;
+      --line: #c8daf7;
+      --text: #0f2a52;
+      --muted: #4d6693;
+      --primary: #0073ff;
+      --primary-strong: #0054bf;
+      --soft: #f8fbff;
       --ok-bg: #e8fff2;
       --ok-line: #9ee0ba;
       --ok-text: #1f6b41;
@@ -26,7 +29,7 @@
       --danger-bg: #ffefee;
       --danger-line: #f4c0bb;
       --danger-text: #8a2b2b;
-      --shadow: 0 16px 38px rgba(32, 53, 104, 0.14);
+      --shadow: 0 18px 34px rgba(10, 49, 112, 0.18);
     }
 
     * {
@@ -39,12 +42,9 @@
       padding: 26px 14px;
       display: grid;
       place-items: center;
-      font-family: "Sora", "Segoe UI", sans-serif;
+      font-family: "Nunito", "Trebuchet MS", sans-serif;
       color: var(--text);
-      background:
-        radial-gradient(circle at 0% 0%, rgba(10, 102, 255, 0.18) 0, rgba(10, 102, 255, 0) 36%),
-        radial-gradient(circle at 100% 100%, rgba(4, 84, 201, 0.14) 0, rgba(4, 84, 201, 0) 36%),
-        var(--bg);
+      background: var(--bg-layer-1), var(--bg-layer-2), var(--bg-layer-3);
     }
 
     .shell {
@@ -64,7 +64,7 @@
 
     .hero {
       padding: 24px 24px 14px;
-      background: linear-gradient(140deg, #f4f8ff 0%, #edf3ff 55%, #e8f0ff 100%);
+      background: linear-gradient(130deg, #0a6bff 0%, #0d8fe1 44%, #0fb8a8 100%);
       border-bottom: 1px solid var(--line);
     }
 
@@ -73,21 +73,22 @@
       font-size: .75rem;
       text-transform: uppercase;
       letter-spacing: .9px;
-      color: #48639b;
+      color: rgba(255, 255, 255, 0.92);
       font-weight: 800;
     }
 
     h1 {
       margin: 0;
-      font-family: "Space Grotesk", "Sora", sans-serif;
+      font-family: "Archivo Black", Impact, sans-serif;
       font-size: clamp(1.5rem, 2.7vw, 2rem);
       line-height: 1.12;
       letter-spacing: -.3px;
+      color: #fff;
     }
 
     .sub {
       margin: 9px 0 0;
-      color: var(--muted);
+      color: rgba(255, 255, 255, 0.92);
       font-size: .95rem;
       max-width: 66ch;
       line-height: 1.5;
@@ -237,33 +238,6 @@
       color: #755000;
     }
 
-    details {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #fbfcff;
-      padding: 10px;
-    }
-
-    summary {
-      cursor: pointer;
-      font-weight: 800;
-      color: #2e4a80;
-    }
-
-    .email-template {
-      border-radius: 10px;
-      border: 1px solid #c6d5f2;
-      background: #fff;
-      width: 100%;
-      min-height: 160px;
-      resize: vertical;
-      padding: 10px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 12px;
-      color: #20335f;
-      line-height: 1.4;
-    }
-
     .hidden {
       display: none !important;
     }
@@ -293,7 +267,7 @@
 <body>
   <main class="shell">
     <header class="hero">
-      <p class="eyebrow">Arcade Campus Hub</p>
+      <p class="eyebrow">Classroom 6X Arcade</p>
       <h1>Account Center</h1>
       <p class="sub">Sign in once and cloud sync runs automatically. Saves auto-load when your account is detected and auto-save when you close game tabs.</p>
     </header>
@@ -327,32 +301,7 @@
         </div>
       </section>
 
-      <details>
-        <summary>Supabase setup</summary>
-        <div style="display:grid;gap:8px;margin-top:10px;">
-          <label class="field">
-            <span class="label">Project URL</span>
-            <input id="setupUrl" class="input" type="url" placeholder="https://YOUR-PROJECT.supabase.co" autocomplete="off">
-          </label>
-          <label class="field">
-            <span class="label">Anon Public Key</span>
-            <input id="setupAnonKey" class="input" type="password" placeholder="eyJ..." autocomplete="off">
-          </label>
-          <div class="row">
-            <button id="saveSetupBtn" type="button" class="btn primary">Save Setup</button>
-            <button id="clearSetupBtn" type="button" class="btn">Clear Setup</button>
-          </div>
-        </div>
-      </details>
-
-      <details>
-        <summary>Better verification email template</summary>
-        <p class="muted" style="margin-top:8px;">Paste this into Supabase Dashboard -> Authentication -> Email Templates -> Confirm signup.</p>
-        <textarea id="emailTemplate" class="email-template" readonly></textarea>
-        <div class="row">
-          <button id="copyEmailTemplateBtn" type="button" class="btn">Copy Template</button>
-        </div>
-      </details>
+      <p class="muted">Need account help? Check <a href="privacy.html">Privacy and Terms</a> for usage rules and account notes.</p>
     </section>
   </main>
 
@@ -386,13 +335,7 @@
     var authSignOutBtn = document.getElementById("authSignOutBtn");
     var authStatus = document.getElementById("authStatus");
     var cloudAutoSyncStatus = document.getElementById("cloudAutoSyncStatus");
-    var setupUrl = document.getElementById("setupUrl");
-    var setupAnonKey = document.getElementById("setupAnonKey");
-    var saveSetupBtn = document.getElementById("saveSetupBtn");
-    var clearSetupBtn = document.getElementById("clearSetupBtn");
     var adminPortalBtn = document.getElementById("adminPortalBtn");
-    var emailTemplate = document.getElementById("emailTemplate");
-    var copyEmailTemplateBtn = document.getElementById("copyEmailTemplateBtn");
 
     var supabaseClient = null;
     var cloudPeriodicSyncTimer = null;
@@ -515,9 +458,6 @@
       var localAnon = typeof localCfg.anonKey === "string" ? localCfg.anonKey.trim() : "";
       var fileUrl = typeof cfg.url === "string" ? cfg.url.trim() : "";
       var fileAnon = typeof cfg.anonKey === "string" ? cfg.anonKey.trim() : "";
-
-      setupUrl.value = localUrl || fileUrl;
-      setupAnonKey.value = localAnon || fileAnon;
 
       return {
         url: localUrl || fileUrl,
@@ -690,7 +630,7 @@
       if (!hasFactory || !cfg.url || !cfg.anonKey) {
         setButtonsDisabled(true);
         setAdminPortalVisibility("");
-        setStatus("Supabase is not configured yet. Add Project URL and Anon Key.", "warn");
+        setStatus("Supabase is not configured yet. Add keys in js/supabase.config.js.", "warn");
         setHeartbeat("Autosave heartbeat: waiting for setup");
         return;
       }
@@ -773,7 +713,10 @@
           throw result.error;
         }
 
-        setStatus("Account created. Check inbox and spam for verification.", "ok");
+        setStatus("Account created. Redirecting to Privacy and Terms...", "ok");
+        setTimeout(function () {
+          window.location.href = "privacy.html";
+        }, 1200);
       } catch (error) {
         setStatus(error && error.message ? error.message : "Sign up failed.", "error");
       }
@@ -823,46 +766,6 @@
         setStatus(error && error.message ? error.message : "Sign out failed.", "error");
       }
     });
-
-    saveSetupBtn.addEventListener("click", function () {
-      var url = setupUrl.value.trim();
-      var anonKey = setupAnonKey.value.trim();
-      if (!url || !anonKey) {
-        setStatus("Enter both Project URL and Anon Key.", "error");
-        return;
-      }
-      storageSet(SUPABASE_CONFIG_KEY, JSON.stringify({ url: url, anonKey: anonKey }));
-      setStatus("Supabase setup saved. Reconnecting...", "warn");
-      initSupabase();
-    });
-
-    clearSetupBtn.addEventListener("click", function () {
-      storageRemove(SUPABASE_CONFIG_KEY);
-      setupUrl.value = "";
-      setupAnonKey.value = "";
-      setStatus("Saved Supabase setup cleared.", "warn");
-      initSupabase();
-    });
-
-    copyEmailTemplateBtn.addEventListener("click", async function () {
-      try {
-        await navigator.clipboard.writeText(emailTemplate.value);
-        setStatus("Email template copied.", "ok");
-      } catch (error) {
-        setStatus("Could not copy template. Select text and copy manually.", "warn");
-      }
-    });
-
-    emailTemplate.value = [
-      "<div style=\"font-family:Segoe UI,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#f5f9ff;color:#1b2d4d\">",
-      "  <div style=\"background:#ffffff;border:1px solid #d5e3ff;border-radius:12px;padding:20px\">",
-      "    <h2 style=\"margin:0 0 10px;font-size:22px;color:#0b4cc2\">Welcome to Arcade Campus Hub</h2>",
-      "    <p style=\"margin:0 0 14px;line-height:1.5\">Click the button below to verify your email and activate cloud saves.</p>",
-      "    <p style=\"margin:18px 0\"><a href=\"{{ .ConfirmationURL }}\" style=\"display:inline-block;background:#0a66ff;color:#ffffff;text-decoration:none;padding:11px 16px;border-radius:8px;font-weight:700\">Verify Email</a></p>",
-      "    <p style=\"margin:0;font-size:12px;color:#62749a\">If you did not request this, you can ignore this message.</p>",
-      "  </div>",
-      "</div>"
-    ].join("\n");
 
     var params = new URLSearchParams(window.location.search);
     if (params.get("verified") === "1") {

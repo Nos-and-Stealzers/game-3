@@ -366,6 +366,10 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
+            border: 1px solid var(--line);
+            background: var(--panel-2);
+            border-radius: 12px;
+            padding: 10px;
         }
 
         .check {
@@ -882,13 +886,6 @@
                     <option value="quick">Quick (lighter effects)</option>
                     <option value="turbo">Turbo (minimum effects)</option>
                 </select>
-            </label>
-            <label class="setting-block">
-                <span class="meta">Session</span>
-                <span class="check">
-                    <input id="rememberSettings" type="checkbox" checked disabled>
-                    Saved in this browser profile
-                </span>
             </label>
             <section class="setting-block" aria-label="Saved data tools">
                 <span class="meta">Save Data</span>
