@@ -196,6 +196,10 @@
             color: #b33939;
         }
 
+        .meta.ok {
+            color: #1f6b41;
+        }
+
         .btn {
             border: 0;
             text-decoration: none;
@@ -471,6 +475,7 @@
                         <span class="meta">Username</span>
                         <input id="userUsername" class="input" type="text" placeholder="username">
                         <span id="userUsernameHint" class="meta">Lowercase letters, numbers, and underscores only (3-24 chars).</span>
+                        <span id="userUsernameAvailability" class="meta">Sign in to check username availability.</span>
                     </label>
                     <label class="setting-block">
                         <span class="meta">Language</span>
@@ -560,6 +565,7 @@
         var userDisplayName = document.getElementById("userDisplayName");
         var userUsername = document.getElementById("userUsername");
         var userUsernameHint = document.getElementById("userUsernameHint");
+        var userUsernameAvailability = document.getElementById("userUsernameAvailability");
         var userLanguage = document.getElementById("userLanguage");
         var userTimeZone = document.getElementById("userTimeZone");
         var userEmailUpdates = document.getElementById("userEmailUpdates");
@@ -574,6 +580,13 @@
         var supabaseClient = null;
         var activeAccountUser = null;
         var USERNAME_REGEX = /^[a-z0-9_]{3,24}$/;
+        var usernameAvailabilityTimer = null;
+        var usernameAvailabilityRequestId = 0;
+        var usernameAvailabilitySnapshot = {
+            username: "",
+            known: false,
+            available: true
+        };
 
         function storageGet(key) {
             try { return localStorage.getItem(key); } catch (error) { return Object.prototype.hasOwnProperty.call(storageFallback, key) ? storageFallback[key] : null; }
@@ -842,7 +855,139 @@
             userUsername.classList.toggle("invalid", !validation.valid);
             userUsernameHint.classList.toggle("error", !validation.valid);
             userUsernameHint.textContent = validation.message;
+
+            if (!validation.valid) {
+                if (usernameAvailabilityTimer) {
+                    clearTimeout(usernameAvailabilityTimer);
+                    usernameAvailabilityTimer = null;
+                }
+                setUsernameAvailabilityUi("error", "Fix username format to check availability.");
+                usernameAvailabilitySnapshot = { username: normalized, known: false, available: true };
+                return false;
+            }
+
+            if (!normalized) {
+                if (usernameAvailabilityTimer) {
+                    clearTimeout(usernameAvailabilityTimer);
+                    usernameAvailabilityTimer = null;
+                }
+                setUsernameAvailabilityUi("", "Username optional.");
+                usernameAvailabilitySnapshot = { username: "", known: true, available: true };
+                return true;
+            }
+
+            if (!activeAccountUser || !supabaseClient) {
+                setUsernameAvailabilityUi("", "Sign in to check username availability.");
+                usernameAvailabilitySnapshot = { username: normalized, known: false, available: true };
+                return true;
+            }
+
+            scheduleUsernameAvailabilityCheck(normalized);
             return validation.valid;
+        }
+
+        function setUsernameAvailabilityUi(state, message) {
+            userUsernameAvailability.classList.remove("error", "ok");
+            if (state === "error") {
+                userUsernameAvailability.classList.add("error");
+            } else if (state === "ok") {
+                userUsernameAvailability.classList.add("ok");
+            }
+            userUsernameAvailability.textContent = message;
+        }
+
+        async function checkUsernameAvailabilityInCloud(username) {
+            if (!username || !supabaseClient || !activeAccountUser) {
+                return { known: false, available: true, message: "Sign in to check username availability." };
+            }
+
+            var result = await supabaseClient
+                .from("user_settings")
+                .select("user_id, username")
+                .ilike("username", username)
+                .limit(5);
+
+            if (result.error) {
+                if (isMissingTableError(result.error)) {
+                    return { known: false, available: true, message: "Availability check activates when cloud profile table is ready." };
+                }
+                return { known: false, available: true, message: "Availability check unavailable right now." };
+            }
+
+            var rows = Array.isArray(result.data) ? result.data : [];
+            if (!rows.length) {
+                return { known: true, available: true, message: "Username is available." };
+            }
+
+            var takenByOtherUser = rows.some(function (row) {
+                return row && row.user_id && row.user_id !== activeAccountUser.id;
+            });
+            if (takenByOtherUser) {
+                return { known: true, available: false, message: "Username is already taken." };
+            }
+
+            return { known: true, available: true, message: "That username is yours and available." };
+        }
+
+        function scheduleUsernameAvailabilityCheck(username) {
+            if (usernameAvailabilityTimer) {
+                clearTimeout(usernameAvailabilityTimer);
+            }
+
+            setUsernameAvailabilityUi("", "Checking username availability...");
+            usernameAvailabilityTimer = setTimeout(async function () {
+                var requestId = ++usernameAvailabilityRequestId;
+                var outcome = await checkUsernameAvailabilityInCloud(username);
+                if (requestId !== usernameAvailabilityRequestId) {
+                    return;
+                }
+
+                usernameAvailabilitySnapshot = {
+                    username: username,
+                    known: outcome.known,
+                    available: outcome.available
+                };
+                if (!outcome.known) {
+                    setUsernameAvailabilityUi("", outcome.message);
+                } else {
+                    setUsernameAvailabilityUi(outcome.available ? "ok" : "error", outcome.message);
+                }
+            }, 260);
+        }
+
+        async function ensureUsernameAvailableBeforeSave() {
+            var username = normalizeUsernameInput(userUsername.value);
+            if (!username) {
+                return true;
+            }
+
+            if (!activeAccountUser || !supabaseClient) {
+                return true;
+            }
+
+            if (usernameAvailabilityTimer) {
+                clearTimeout(usernameAvailabilityTimer);
+                usernameAvailabilityTimer = null;
+            }
+
+            if (usernameAvailabilitySnapshot.known && usernameAvailabilitySnapshot.username === username) {
+                return usernameAvailabilitySnapshot.available;
+            }
+
+            var outcome = await checkUsernameAvailabilityInCloud(username);
+            usernameAvailabilitySnapshot = {
+                username: username,
+                known: outcome.known,
+                available: outcome.available
+            };
+
+            if (!outcome.known) {
+                setUsernameAvailabilityUi("", outcome.message);
+                return true;
+            }
+
+            setUsernameAvailabilityUi(outcome.available ? "ok" : "error", outcome.message);
+            return outcome.available;
         }
 
         function setAccountVisibility(user) {
@@ -852,6 +997,7 @@
             userSettingsPanel.classList.toggle("hidden", !isSignedIn);
             if (!isSignedIn) {
                 userSettingsStatus.textContent = "Sign in to edit user settings.";
+                setUsernameAvailabilityUi("", "Sign in to check username availability.");
             }
         }
 
@@ -901,6 +1047,7 @@
                 writeUserSettings(fromCloud);
             }
             applyUserSettingsForm();
+            updateUsernameUiFeedback();
         }
 
         async function loadGamesCatalog() {
@@ -1106,6 +1253,11 @@
         saveUserSettingsBtn.addEventListener("click", async function () {
             if (!updateUsernameUiFeedback()) {
                 userSettingsStatus.textContent = "Fix username format before saving.";
+                return;
+            }
+            var isAvailable = await ensureUsernameAvailableBeforeSave();
+            if (!isAvailable) {
+                userSettingsStatus.textContent = "Choose a different username before saving.";
                 return;
             }
             var settings = normalizeUserSettings(collectUserSettingsForm());
