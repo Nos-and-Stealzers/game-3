@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Arcade Settings</title>
+    <meta name="description" content="Manage appearance, performance, save data, and security checklist settings.">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="icon" href="TemplateData/favicon.ico" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Nunito:wght@600;700;800&display=swap");
+
+        :root {
+            --bg-layer-1: radial-gradient(circle at 10% -10%, #d5e8ff 0, transparent 35%);
+            --bg-layer-2: radial-gradient(circle at 95% 0%, #e0fff1 0, transparent 32%);
+            --bg-layer-3: linear-gradient(180deg, #f8fbff 0%, #eef4ff 42%, #f4f8ff 100%);
+            --panel: #ffffff;
+            --panel-2: #f8fbff;
+            --ink: #0f2a52;
+            --muted: #4d6693;
+            --line: #c8daf7;
+            --primary: #0073ff;
+            --primary-strong: #0054bf;
+            --hero-overlay: radial-gradient(circle at 10% 0%, rgba(255, 255, 255, 0.66) 0, transparent 60%);
+            --hero-grad: linear-gradient(130deg, #0a6bff 0%, #0d8fe1 44%, #0fb8a8 100%);
+            --hero-line: #b8cff8;
+            --hero-shadow: 0 18px 34px rgba(10, 49, 112, 0.18);
+            --panel-shadow: 0 8px 18px rgba(25, 66, 127, 0.08);
+            --ok-bg: #e6fff2;
+            --ok-ink: #197244;
+            --warn-bg: #fff1ef;
+            --warn-ink: #9f3f2a;
+            --mild-bg: #eef3ff;
+            --mild-ink: #39589c;
+        }
+
+        body[data-theme="gray"] {
+            --bg-layer-1: radial-gradient(circle at 8% -4%, #434955 0, transparent 36%);
+            --bg-layer-2: radial-gradient(circle at 100% 0%, #313741 0, transparent 35%);
+            --bg-layer-3: linear-gradient(180deg, #2a2f38 0%, #1f232b 48%, #181b22 100%);
+            --panel: #262b34;
+            --panel-2: #1f242d;
+            --ink: #ebeff7;
+            --muted: #b7c0cf;
+            --line: #414957;
+            --primary: #8ea6ce;
+            --primary-strong: #6f86ae;
+            --hero-line: #4e586b;
+            --hero-overlay: radial-gradient(circle at 10% 0%, rgba(179, 192, 212, 0.18) 0, transparent 58%);
+            --hero-grad: linear-gradient(130deg, #495267 0%, #394456 44%, #30444f 100%);
+            --hero-shadow: 0 14px 24px rgba(0, 0, 0, 0.28);
+            --panel-shadow: 0 8px 16px rgba(0, 0, 0, 0.22);
+            --ok-bg: #26392f;
+            --ok-ink: #b7f0cd;
+            --warn-bg: #43352d;
+            --warn-ink: #ffd9c9;
+            --mild-bg: #323944;
+            --mild-ink: #cedaf0;
+        }
+
+        body[data-theme="black"] {
+            --bg-layer-1: radial-gradient(circle at 8% -10%, #2f3238 0, transparent 36%);
+            --bg-layer-2: radial-gradient(circle at 100% 0%, #1d2026 0, transparent 34%);
+            --bg-layer-3: linear-gradient(180deg, #171a20 0%, #101216 50%, #0a0c10 100%);
+            --panel: #1a1e24;
+            --panel-2: #15191f;
+            --ink: #e8ebf1;
+            --muted: #b4bccd;
+            --line: #313842;
+            --primary: #7aa2ff;
+            --primary-strong: #5f89e6;
+            --hero-line: #38424f;
+            --hero-overlay: radial-gradient(circle at 12% 0%, rgba(175, 194, 236, 0.14) 0, transparent 56%);
+            --hero-grad: linear-gradient(130deg, #29384f 0%, #1f2e42 44%, #1e3f46 100%);
+            --hero-shadow: 0 16px 28px rgba(0, 0, 0, 0.4);
+            --panel-shadow: 0 8px 16px rgba(0, 0, 0, 0.28);
+            --ok-bg: #23372d;
+            --ok-ink: #abf0c8;
+            --warn-bg: #3e2e28;
+            --warn-ink: #ffd1c4;
+            --mild-bg: #29303a;
+            --mild-ink: #c7d4eb;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Nunito", "Trebuchet MS", sans-serif;
+            min-height: 100vh;
+            background: var(--bg-layer-1), var(--bg-layer-2), var(--bg-layer-3);
+        }
+
+        .shell {
+            width: min(1100px, 94vw);
+            margin: 0 auto;
+            padding: 20px 0 34px;
+        }
+
+        .hero {
+            border-radius: 20px;
+            border: 1px solid var(--hero-line);
+            background: var(--hero-overlay), var(--hero-grad);
+            color: #fff;
+            box-shadow: var(--hero-shadow);
+            padding: 22px;
+            margin-bottom: 14px;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-family: "Archivo Black", Impact, sans-serif;
+            letter-spacing: 0.3px;
+            font-size: clamp(1.6rem, 3.8vw, 2.2rem);
+        }
+
+        .hero p {
+            margin: 10px 0 0;
+            line-height: 1.48;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        .top-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 12px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: var(--panel-shadow);
+            padding: 14px;
+            display: grid;
+            gap: 10px;
+            align-content: start;
+        }
+
+        .panel h2 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .setting-block {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            border: 1px solid var(--line);
+            background: var(--panel-2);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .check {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: var(--muted);
+        }
+
+        .input,
+        .select {
+            width: 100%;
+            border: 1px solid var(--line);
+            background: #fff;
+            border-radius: 12px;
+            padding: 11px 12px;
+            color: var(--ink);
+            font: inherit;
+            font-weight: 700;
+        }
+
+        .btn {
+            border: 0;
+            text-decoration: none;
+            border-radius: 10px;
+            padding: 9px 11px;
+            font-size: 0.86rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn:hover { background: var(--primary-strong); }
+
+        .btn.alt {
+            background: var(--panel-2);
+            color: var(--mild-ink);
+            border: 1px solid var(--line);
+        }
+
+        .btn.warn {
+            background: var(--warn-bg);
+            color: var(--warn-ink);
+            border: 1px solid #e2aa9e;
+        }
+
+        .save-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .save-health-row {
+            display: flex;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .save-health-chip {
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            border: 1px solid transparent;
+            min-width: 116px;
+            text-align: center;
+        }
+
+        .save-health-chip.ok {
+            background: var(--ok-bg);
+            color: var(--ok-ink);
+            border-color: #8dc8a6;
+        }
+
+        .save-health-chip.warn {
+            background: var(--warn-bg);
+            color: var(--warn-ink);
+            border-color: #e2aa9e;
+        }
+
+        .save-sync-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 6px;
+        }
+
+        .save-sync-item {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--panel-2);
+            padding: 7px 9px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .security-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+            border: 1px solid var(--line);
+            background: var(--panel-2);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .security-row strong {
+            display: block;
+            color: var(--ink);
+            font-size: 0.9rem;
+        }
+
+        .security-row span {
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 760px) {
+            .shell { width: 96vw; }
+        }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <section class="hero">
+            <h1>Settings</h1>
+            <p>Settings now live on their own page so everything stays organized and easy to use.</p>
+            <div class="top-actions">
+                <a class="btn alt" href="index.html">Back to Home</a>
+                <a class="btn alt" href="account.html">Open Account</a>
+            </div>
+        </section>
+
+        <section class="layout">
+            <article class="panel">
+                <h2>Appearance & Library</h2>
+                <label class="setting-block">
+                    <span class="meta">Theme</span>
+                    <select id="themeSelect" class="select">
+                        <option value="light">Light mode</option>
+                        <option value="gray">Gray mode</option>
+                        <option value="black">Black mode</option>
+                    </select>
+                </label>
+                <label class="setting-block">
+                    <span class="meta">Library View</span>
+                    <select id="libraryViewSelect" class="select">
+                        <option value="cards">Cards</option>
+                        <option value="grouped">Grouped</option>
+                        <option value="platform">Platform Groups</option>
+                        <option value="compact">Compact Cards</option>
+                    </select>
+                </label>
+                <label class="setting-block">
+                    <span class="check"><input id="openSourceOnlyToggle" type="checkbox"> Open Source Only</span>
+                </label>
+                <label class="setting-block">
+                    <span class="check"><input id="playableOnlyToggle" type="checkbox"> Playable Only</span>
+                </label>
+            </article>
+
+            <article class="panel">
+                <h2>Performance & Cloud</h2>
+                <label class="setting-block">
+                    <span class="check"><input id="fastModeToggle" type="checkbox"> Fast mode (fewer effects)</span>
+                </label>
+                <label class="setting-block">
+                    <span class="meta">Performance Profile</span>
+                    <select id="performanceProfileSelect" class="select">
+                        <option value="normal">Normal</option>
+                        <option value="quick">Quick</option>
+                        <option value="turbo">Turbo</option>
+                    </select>
+                </label>
+                <label class="setting-block">
+                    <span class="check"><input id="cloudAutoSyncToggle" type="checkbox"> Cloud Auto Sync</span>
+                    <span id="authStatus" class="meta">Checking account status...</span>
+                </label>
+            </article>
+
+            <article class="panel">
+                <h2>Save Data</h2>
+                <div class="save-actions">
+                    <button id="exportDataBtn" type="button" class="btn alt">Export</button>
+                    <button id="importDataBtn" type="button" class="btn alt">Import</button>
+                    <button id="resetDataBtn" type="button" class="btn warn">Reset All</button>
+                </div>
+                <input id="importDataInput" type="file" accept="application/json" hidden>
+                <div class="save-health-row">
+                    <span id="localSaveChip" class="save-health-chip warn">Local: Idle</span>
+                    <span id="saveDataStatus" class="meta">Local save: waiting for changes...</span>
+                </div>
+                <div class="save-health-row">
+                    <span id="cloudSaveChip" class="save-health-chip warn">Cloud: Not synced</span>
+                    <span id="cloudDataStatus" class="meta">Cloud sync: not yet synced in this browser.</span>
+                </div>
+            </article>
+
+            <article class="panel">
+                <h2>FNAF Save Sync Status</h2>
+                <ul id="fnafSaveStatus" class="save-sync-list"></ul>
+            </article>
+
+            <article class="panel" style="grid-column: 1 / -1;">
+                <h2>Supabase Security Checklist</h2>
+                <p class="meta">New stuff added from your screenshot: track which Auth + Security options you enabled in Supabase dashboard.</p>
+                <label class="security-row"><div><strong>Change email address</strong><span>Require verification for changed email addresses.</span></div><input data-security-key="changeEmailVerify" type="checkbox"></label>
+                <label class="security-row"><div><strong>Reset password flow</strong><span>Allow password reset emails and test the flow.</span></div><input data-security-key="resetPassword" type="checkbox"></label>
+                <label class="security-row"><div><strong>Reauthentication</strong><span>Require re-auth before sensitive account changes.</span></div><input data-security-key="reauth" type="checkbox"></label>
+                <label class="security-row"><div><strong>Password changed notification</strong><span>Notify users when password is changed.</span></div><input data-security-key="notifyPasswordChanged" type="checkbox"></label>
+                <label class="security-row"><div><strong>Email address changed notification</strong><span>Notify users when email is changed.</span></div><input data-security-key="notifyEmailChanged" type="checkbox"></label>
+                <label class="security-row"><div><strong>MFA method added / removed</strong><span>Notify users when MFA method changes happen.</span></div><input data-security-key="notifyMfaChanged" type="checkbox"></label>
+            </article>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.config.js"></script>
+    <script>
+        var FAVORITES_KEY = "gamehub_favorites";
+        var RECENTS_KEY = "gamehub_recent";
+        var THEME_KEY = "gamehub_theme";
+        var FAST_MODE_KEY = "gamehub_fast_mode";
+        var PERFORMANCE_PROFILE_KEY = "gamehub_performance_profile";
+        var LIBRARY_VIEW_KEY = "gamehub_library_view";
+        var OPEN_SOURCE_ONLY_KEY = "gamehub_open_source_only";
+        var PLAYABLE_ONLY_KEY = "gamehub_playable_only";
+        var CLOUD_AUTO_SYNC_KEY = "gamehub_cloud_auto_sync";
+        var GAME_SAVES_KEY = "gamehub_game_saves";
+        var LOCAL_SAVE_UPDATED_KEY = "gamehub_local_last_saved";
+        var CLOUD_LAST_SYNC_KEY = "gamehub_cloud_last_sync";
+        var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
+        var SECURITY_CHECKLIST_KEY = "gamehub_security_checklist";
+        var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, PERFORMANCE_PROFILE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, CLOUD_AUTO_SYNC_KEY, GAME_SAVES_KEY, LOCAL_SAVE_UPDATED_KEY, CLOUD_LAST_SYNC_KEY];
+
+        var FNAF_SAVE_STATUS_ITEMS = [
+            { id: "fnaf-1", title: "FNAF 1" },
+            { id: "fnaf-2", title: "FNAF 2" },
+            { id: "fnaf-3", title: "FNAF 3" },
+            { id: "fnaf-4", title: "FNAF 4" },
+            { id: "fnaf-world", title: "FNAF World" },
+            { id: "fnaf-sl", title: "Sister Location" },
+            { id: "fnaf-ps", title: "Pizzeria Sim" },
+            { id: "fnaf-ucn", title: "Ultimate Custom Night" }
+        ];
+
+        var themeSelect = document.getElementById("themeSelect");
+        var libraryViewSelect = document.getElementById("libraryViewSelect");
+        var performanceProfileSelect = document.getElementById("performanceProfileSelect");
+        var openSourceOnlyToggle = document.getElementById("openSourceOnlyToggle");
+        var playableOnlyToggle = document.getElementById("playableOnlyToggle");
+        var fastModeToggle = document.getElementById("fastModeToggle");
+        var cloudAutoSyncToggle = document.getElementById("cloudAutoSyncToggle");
+        var exportDataBtn = document.getElementById("exportDataBtn");
+        var importDataBtn = document.getElementById("importDataBtn");
+        var resetDataBtn = document.getElementById("resetDataBtn");
+        var importDataInput = document.getElementById("importDataInput");
+        var authStatus = document.getElementById("authStatus");
+        var saveDataStatus = document.getElementById("saveDataStatus");
+        var cloudDataStatus = document.getElementById("cloudDataStatus");
+        var localSaveChip = document.getElementById("localSaveChip");
+        var cloudSaveChip = document.getElementById("cloudSaveChip");
+        var fnafSaveStatus = document.getElementById("fnafSaveStatus");
+        var securityCheckboxes = Array.prototype.slice.call(document.querySelectorAll("[data-security-key]"));
+
+        var storageFallback = {};
+        var supabaseClient = null;
+
+        function storageGet(key) {
+            try { return localStorage.getItem(key); } catch (error) { return Object.prototype.hasOwnProperty.call(storageFallback, key) ? storageFallback[key] : null; }
+        }
+
+        function storageSet(key, value) {
+            try { localStorage.setItem(key, value); } catch (error) { storageFallback[key] = value; }
+        }
+
+        function storageRemove(key) {
+            try { localStorage.removeItem(key); } catch (error) { delete storageFallback[key]; }
+        }
+
+        function readArray(key) {
+            try { var value = JSON.parse(storageGet(key)); return Array.isArray(value) ? value : []; } catch (error) { return []; }
+        }
+
+        function writeArray(key, value) { storageSet(key, JSON.stringify(value)); touchLocalSave(); }
+
+        function readObject(key) {
+            try {
+                var value = JSON.parse(storageGet(key) || "{}");
+                if (!value || typeof value !== "object" || Array.isArray(value)) { return {}; }
+                return value;
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function writeObject(key, value) { storageSet(key, JSON.stringify(value || {})); touchLocalSave(); }
+
+        function readSetting(key, fallback) {
+            var value = storageGet(key);
+            return value === null ? fallback : value;
+        }
+
+        function writeSetting(key, value) { storageSet(key, value); touchLocalSave(); }
+
+        function touchLocalSave() {
+            storageSet(LOCAL_SAVE_UPDATED_KEY, new Date().toISOString());
+            renderSaveHealthStatus();
+        }
+
+        function markCloudSynced() {
+            storageSet(CLOUD_LAST_SYNC_KEY, new Date().toISOString());
+            renderSaveHealthStatus();
+        }
+
+        function formatSaveHealthTime(value, emptyLabel) {
+            if (typeof value !== "string" || !value) return emptyLabel;
+            var date = new Date(value);
+            if (isNaN(date.getTime())) return emptyLabel;
+            return date.toLocaleString();
+        }
+
+        function renderSaveHealthStatus() {
+            var localStamp = storageGet(LOCAL_SAVE_UPDATED_KEY);
+            var cloudStamp = storageGet(CLOUD_LAST_SYNC_KEY);
+            saveDataStatus.textContent = "Local save: " + formatSaveHealthTime(localStamp, "waiting for changes...");
+            cloudDataStatus.textContent = "Cloud sync: " + formatSaveHealthTime(cloudStamp, "not yet synced in this browser.");
+            localSaveChip.className = "save-health-chip " + (localStamp ? "ok" : "warn");
+            cloudSaveChip.className = "save-health-chip " + (cloudStamp ? "ok" : "warn");
+            localSaveChip.textContent = localStamp ? "Local: Active" : "Local: Idle";
+            cloudSaveChip.textContent = cloudStamp ? "Cloud: Synced" : "Cloud: Not synced";
+        }
+
+        function formatSyncTime(value) {
+            if (typeof value !== "string" || !value) return "No local save yet";
+            var date = new Date(value);
+            if (isNaN(date.getTime())) return "Saved (unknown time)";
+            return "Saved " + date.toLocaleString();
+        }
+
+        function readGameSaveById(allSaves, gameId) {
+            if (allSaves[gameId] && typeof allSaves[gameId] === "object") return allSaves[gameId];
+            return null;
+        }
+
+        function renderFnafSaveStatus() {
+            var allSaves = readObject(GAME_SAVES_KEY);
+            fnafSaveStatus.innerHTML = FNAF_SAVE_STATUS_ITEMS.map(function (item) {
+                var saveData = readGameSaveById(allSaves, item.id);
+                var updatedAt = saveData ? saveData.updatedAt : "";
+                return '<li class="save-sync-item"><span>' + item.title + '</span><span>' + formatSyncTime(updatedAt) + '</span></li>';
+            }).join("");
+        }
+
+        function getSupabaseConfig() {
+            var cfg = window.__GAMEHUB_SUPABASE__ || {};
+            var localCfg = {};
+            try { localCfg = JSON.parse(storageGet(SUPABASE_CONFIG_KEY) || "{}") || {}; } catch (error) { localCfg = {}; }
+            var localUrl = typeof localCfg.url === "string" ? localCfg.url.trim() : "";
+            var localAnon = typeof localCfg.anonKey === "string" ? localCfg.anonKey.trim() : "";
+            var fileUrl = typeof cfg.url === "string" ? cfg.url.trim() : "";
+            var fileAnon = typeof cfg.anonKey === "string" ? cfg.anonKey.trim() : "";
+            return { url: localUrl || fileUrl, anonKey: localAnon || fileAnon };
+        }
+
+        function applyThemeOnly() {
+            var theme = readSetting(THEME_KEY, "light");
+            if (["light", "gray", "black"].indexOf(theme) === -1) theme = "light";
+            document.body.setAttribute("data-theme", theme);
+            document.documentElement.style.colorScheme = theme === "black" ? "dark" : "light";
+        }
+
+        function applyFormState() {
+            applyThemeOnly();
+            themeSelect.value = readSetting(THEME_KEY, "light");
+            fastModeToggle.checked = readSetting(FAST_MODE_KEY, "0") === "1";
+            var view = readSetting(LIBRARY_VIEW_KEY, "cards");
+            if (["cards", "grouped", "platform", "compact"].indexOf(view) === -1) view = "cards";
+            libraryViewSelect.value = view;
+            var profile = readSetting(PERFORMANCE_PROFILE_KEY, "normal");
+            if (["normal", "quick", "turbo"].indexOf(profile) === -1) profile = "normal";
+            performanceProfileSelect.value = profile;
+            openSourceOnlyToggle.checked = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
+            playableOnlyToggle.checked = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
+            cloudAutoSyncToggle.checked = readSetting(CLOUD_AUTO_SYNC_KEY, "1") === "1";
+            renderSaveHealthStatus();
+            renderFnafSaveStatus();
+            applySecurityChecklistState();
+        }
+
+        function snapshotSavedData() {
+            return {
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                data: {
+                    favorites: readArray(FAVORITES_KEY),
+                    recent: readArray(RECENTS_KEY),
+                    theme: readSetting(THEME_KEY, "light"),
+                    fastMode: readSetting(FAST_MODE_KEY, "0"),
+                    performanceProfile: readSetting(PERFORMANCE_PROFILE_KEY, "normal"),
+                    libraryView: readSetting(LIBRARY_VIEW_KEY, "cards"),
+                    openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
+                    playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
+                    cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1"),
+                    gameSaves: readObject(GAME_SAVES_KEY)
+                }
+            };
+        }
+
+        function applySavedData(payload) {
+            if (!payload || typeof payload !== "object" || !payload.data || typeof payload.data !== "object") {
+                throw new Error("Invalid save file format.");
+            }
+
+            var data = payload.data;
+            writeArray(FAVORITES_KEY, Array.isArray(data.favorites) ? data.favorites : []);
+            writeArray(RECENTS_KEY, Array.isArray(data.recent) ? data.recent : []);
+            writeSetting(THEME_KEY, typeof data.theme === "string" ? data.theme : "light");
+            writeSetting(FAST_MODE_KEY, data.fastMode === "1" ? "1" : "0");
+            writeSetting(PERFORMANCE_PROFILE_KEY, (data.performanceProfile === "quick" || data.performanceProfile === "turbo") ? data.performanceProfile : "normal");
+            writeSetting(LIBRARY_VIEW_KEY, ["cards", "grouped", "platform", "compact"].indexOf(data.libraryView) !== -1 ? data.libraryView : "cards");
+            writeSetting(OPEN_SOURCE_ONLY_KEY, data.openSourceOnly === "1" ? "1" : "0");
+            writeSetting(PLAYABLE_ONLY_KEY, data.playableOnly === "1" ? "1" : "0");
+            writeSetting(CLOUD_AUTO_SYNC_KEY, data.cloudAutoSync === "0" ? "0" : "1");
+
+            var rawGameSaves = (data.gameSaves && typeof data.gameSaves === "object" && !Array.isArray(data.gameSaves)) ? data.gameSaves : {};
+            writeObject(GAME_SAVES_KEY, rawGameSaves);
+        }
+
+        function exportSavedData() {
+            var payload = snapshotSavedData();
+            var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+            var url = URL.createObjectURL(blob);
+            var anchor = document.createElement("a");
+            var stamp = new Date().toISOString().slice(0, 10);
+            anchor.href = url;
+            anchor.download = "gamehub-save-" + stamp + ".json";
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetSavedData() {
+            SAVE_KEYS.forEach(function (key) { storageRemove(key); });
+            applyFormState();
+        }
+
+        function readSecurityChecklist() {
+            return readObject(SECURITY_CHECKLIST_KEY);
+        }
+
+        function writeSecurityChecklist(nextValue) {
+            storageSet(SECURITY_CHECKLIST_KEY, JSON.stringify(nextValue || {}));
+        }
+
+        function applySecurityChecklistState() {
+            var state = readSecurityChecklist();
+            securityCheckboxes.forEach(function (checkbox) {
+                var key = checkbox.getAttribute("data-security-key");
+                checkbox.checked = state[key] === true;
+            });
+        }
+
+        async function initSupabase() {
+            var cfg = getSupabaseConfig();
+            var hasFactory = !!(window.supabase && typeof window.supabase.createClient === "function");
+            if (!hasFactory || !cfg.url || !cfg.anonKey) {
+                authStatus.textContent = "Supabase: not configured.";
+                return;
+            }
+
+            try {
+                supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+                var auth = await supabaseClient.auth.getUser();
+                var user = auth && auth.data ? auth.data.user : null;
+                authStatus.textContent = user && user.email ? ("Signed in: " + user.email) : "Supabase ready. Sign in on Account page.";
+                supabaseClient.auth.onAuthStateChange(function (_event, session) {
+                    var sessionUser = session && session.user ? session.user : null;
+                    authStatus.textContent = sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Supabase ready. Sign in on Account page.";
+                });
+            } catch (error) {
+                supabaseClient = null;
+                authStatus.textContent = "Supabase init failed.";
+            }
+        }
+
+        themeSelect.addEventListener("change", function () { writeSetting(THEME_KEY, themeSelect.value); applyThemeOnly(); });
+        libraryViewSelect.addEventListener("change", function () { writeSetting(LIBRARY_VIEW_KEY, libraryViewSelect.value); });
+        performanceProfileSelect.addEventListener("change", function () {
+            var value = performanceProfileSelect.value;
+            if (["normal", "quick", "turbo"].indexOf(value) === -1) value = "normal";
+            writeSetting(PERFORMANCE_PROFILE_KEY, value);
+        });
+        openSourceOnlyToggle.addEventListener("change", function () { writeSetting(OPEN_SOURCE_ONLY_KEY, openSourceOnlyToggle.checked ? "1" : "0"); });
+        playableOnlyToggle.addEventListener("change", function () { writeSetting(PLAYABLE_ONLY_KEY, playableOnlyToggle.checked ? "1" : "0"); });
+        fastModeToggle.addEventListener("change", function () { writeSetting(FAST_MODE_KEY, fastModeToggle.checked ? "1" : "0"); });
+        cloudAutoSyncToggle.addEventListener("change", function () { writeSetting(CLOUD_AUTO_SYNC_KEY, cloudAutoSyncToggle.checked ? "1" : "0"); });
+
+        exportDataBtn.addEventListener("click", function () { exportSavedData(); });
+        importDataBtn.addEventListener("click", function () { importDataInput.click(); });
+        importDataInput.addEventListener("change", function () {
+            var file = importDataInput.files && importDataInput.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function () {
+                try {
+                    var payload = JSON.parse(String(reader.result || "{}"));
+                    applySavedData(payload);
+                    applyFormState();
+                    alert("Save data imported.");
+                } catch (error) {
+                    alert("Could not import save data. Use a valid export file.");
+                } finally {
+                    importDataInput.value = "";
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        resetDataBtn.addEventListener("click", function () {
+            if (!window.confirm("Reset favorites, recents, theme, library view, and performance settings?")) return;
+            resetSavedData();
+        });
+
+        securityCheckboxes.forEach(function (checkbox) {
+            checkbox.addEventListener("change", function () {
+                var state = readSecurityChecklist();
+                var key = checkbox.getAttribute("data-security-key");
+                state[key] = checkbox.checked;
+                writeSecurityChecklist(state);
+            });
+        });
+
+        applyFormState();
+        initSupabase();
+    </script>
+</body>
+</html>

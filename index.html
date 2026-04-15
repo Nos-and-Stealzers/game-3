@@ -833,7 +833,7 @@
             <div class="logo">Classroom 6X Arcade</div>
             <div class="header-actions">
                 <div id="modeBadge" class="badge">Local-First Mode</div>
-                <button id="settingsToggle" type="button" class="icon-btn settings-cta" aria-expanded="false" aria-controls="settingsPanel"><span class="settings-icon" aria-hidden="true"></span><span id="settingsToggleLabel" class="settings-label">Settings</span></button>
+                <a href="settings.html" class="icon-btn settings-cta"><span class="settings-icon" aria-hidden="true"></span><span class="settings-label">Settings</span></a>
             </div>
         </header>
 
@@ -846,80 +846,6 @@
                 <span class="pill">Light, Gray, Black themes</span>
                 <span class="pill">Fast mode for performance</span>
             </div>
-        </section>
-
-        <div id="settingsBackdrop" class="settings-backdrop hidden" aria-hidden="true"></div>
-
-        <section id="settingsPanel" class="panel settings-panel collapsed" aria-label="UI settings">
-            <div class="settings-head">
-                <h2 class="settings-title">Settings</h2>
-                <button id="settingsCloseBtn" type="button" class="icon-btn settings-close">Close</button>
-            </div>
-            <label class="setting-block">
-                <span class="meta">Theme</span>
-                <select id="themeSelect" class="select">
-                    <option value="light">Light mode</option>
-                    <option value="gray">Gray mode</option>
-                    <option value="black">Black mode</option>
-                </select>
-            </label>
-            <label class="setting-block">
-                <span class="meta">Library View</span>
-                <select id="libraryViewSelect" class="select">
-                    <option value="cards">Cards</option>
-                    <option value="grouped">Grouped (FNAF, Arcade, Custom...)</option>
-                    <option value="platform">Platform Groups (Local, External)</option>
-                    <option value="compact">Compact Cards</option>
-                </select>
-            </label>
-            <label class="setting-block">
-                <span class="meta">Performance</span>
-                <span class="check">
-                    <input id="fastModeToggle" type="checkbox">
-                    Fast mode (fewer effects, quicker launch)
-                </span>
-            </label>
-            <label class="setting-block">
-                <span class="meta">Performance Profile</span>
-                <select id="performanceProfileSelect" class="select">
-                    <option value="normal">Normal (best visuals)</option>
-                    <option value="quick">Quick (lighter effects)</option>
-                    <option value="turbo">Turbo (minimum effects)</option>
-                </select>
-            </label>
-            <section class="setting-block" aria-label="Saved data tools">
-                <span class="meta">Save Data</span>
-                <div class="save-actions">
-                    <button id="exportDataBtn" type="button" class="btn alt small">Export</button>
-                    <button id="importDataBtn" type="button" class="btn alt small">Import</button>
-                    <button id="resetDataBtn" type="button" class="btn warn small">Reset All</button>
-                </div>
-                <input id="importDataInput" type="file" accept="application/json" hidden>
-                <p class="meta-note">Backs up favorites, recents, theme, performance mode, and FNAF game saves (including FNAF World).</p>
-                <div class="save-health-row">
-                    <span id="localSaveChip" class="save-health-chip warn">Local: Idle</span>
-                    <p id="saveDataStatus" class="meta-note">Local save: waiting for changes...</p>
-                </div>
-                <div class="save-health-row">
-                    <span id="cloudSaveChip" class="save-health-chip warn">Cloud: Not synced</span>
-                    <p id="cloudDataStatus" class="meta-note">Cloud sync: not yet synced in this browser.</p>
-                </div>
-            </section>
-            <section class="setting-block" aria-label="FNAF save sync status">
-                <span class="meta">FNAF Save Sync Status</span>
-                <ul id="fnafSaveStatus" class="save-sync-list"></ul>
-            </section>
-            <section class="setting-block" aria-label="Supabase account tools">
-                <span class="meta">Account Cloud Save (Supabase)</span>
-                <span class="check">
-                    <input id="cloudAutoSyncToggle" type="checkbox" checked>
-                    Cloud Auto Sync
-                </span>
-                <div class="auth-actions">
-                    <a href="account.html" class="btn alt small">Save your data</a>
-                </div>
-                <p id="authStatus" class="auth-status">Checking account status...</p>
-            </section>
         </section>
 
         <section class="panel" aria-label="Open source picks" style="margin-bottom:12px;">
@@ -1028,23 +954,8 @@
         var clearFavoritesBtn = document.getElementById("clearFavoritesBtn");
         var clearRecentBtn = document.getElementById("clearRecentBtn");
         var modeBadge = document.getElementById("modeBadge");
-        var settingsToggle = document.getElementById("settingsToggle");
-        var settingsToggleLabel = document.getElementById("settingsToggleLabel");
-        var settingsCloseBtn = document.getElementById("settingsCloseBtn");
-        var settingsBackdrop = document.getElementById("settingsBackdrop");
-        var settingsPanel = document.getElementById("settingsPanel");
-        var themeSelect = document.getElementById("themeSelect");
-        var libraryViewSelect = document.getElementById("libraryViewSelect");
-        var performanceProfileSelect = document.getElementById("performanceProfileSelect");
         var openSourceOnlyToggle = document.getElementById("openSourceOnlyToggle");
         var playableOnlyToggle = document.getElementById("playableOnlyToggle");
-        var fastModeToggle = document.getElementById("fastModeToggle");
-        var exportDataBtn = document.getElementById("exportDataBtn");
-        var importDataBtn = document.getElementById("importDataBtn");
-        var resetDataBtn = document.getElementById("resetDataBtn");
-        var importDataInput = document.getElementById("importDataInput");
-        var cloudAutoSyncToggle = document.getElementById("cloudAutoSyncToggle");
-        var authStatus = document.getElementById("authStatus");
         var saveDataStatus = document.getElementById("saveDataStatus");
         var cloudDataStatus = document.getElementById("cloudDataStatus");
         var localSaveChip = document.getElementById("localSaveChip");
@@ -1259,7 +1170,7 @@
         }
 
         function updateAuthStatus(message) {
-            authStatus.textContent = message;
+            return message;
         }
 
         async function initSupabase() {
@@ -1549,20 +1460,9 @@
             document.body.setAttribute("data-performance", performanceProfile);
             document.documentElement.style.colorScheme = theme === "black" ? "dark" : "light";
 
-            themeSelect.value = theme;
-            fastModeToggle.checked = fastMode;
-            var savedLibraryView = readSetting(LIBRARY_VIEW_KEY, "cards");
-            if (["cards", "grouped", "platform", "compact"].indexOf(savedLibraryView) === -1) {
-                savedLibraryView = "cards";
-            }
-            libraryViewSelect.value = savedLibraryView;
-            performanceProfileSelect.value = performanceProfile;
             openSourceOnlyToggle.checked = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
             playableOnlyToggle.checked = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
-            cloudAutoSyncToggle.checked = readSetting(CLOUD_AUTO_SYNC_KEY, "1") === "1";
             modeBadge.textContent = fastMode ? ("Fast Mode - " + performanceProfile.toUpperCase()) : ("Local-First - " + performanceProfile.toUpperCase());
-            renderFnafSaveStatus();
-            renderSaveHealthStatus();
         }
 
         function renderFavoritesAndRecent() {
@@ -1752,55 +1652,6 @@
         searchInput.addEventListener("input", render);
         categorySelect.addEventListener("change", render);
 
-        function setSettingsToggleLabel(text) {
-            if (settingsToggleLabel) {
-                settingsToggleLabel.textContent = text;
-                return;
-            }
-            settingsToggle.textContent = text;
-        }
-
-        function setSettingsOpen(isOpen) {
-            settingsPanel.classList.toggle("collapsed", !isOpen);
-            settingsBackdrop.classList.toggle("hidden", !isOpen);
-            setSettingsToggleLabel(isOpen ? "Hide Settings" : "Settings");
-            settingsToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-            document.body.style.overflow = isOpen ? "hidden" : "";
-        }
-
-        settingsToggle.addEventListener("click", function () {
-            var isOpen = settingsPanel.classList.contains("collapsed");
-            setSettingsOpen(isOpen);
-        });
-
-        settingsCloseBtn.addEventListener("click", function () {
-            setSettingsOpen(false);
-        });
-
-        settingsBackdrop.addEventListener("click", function () {
-            setSettingsOpen(false);
-        });
-
-        document.addEventListener("keydown", function (event) {
-            if (event.key === "Escape" && !settingsPanel.classList.contains("collapsed")) {
-                setSettingsOpen(false);
-            }
-        });
-
-        themeSelect.addEventListener("change", function () {
-            writeSetting(THEME_KEY, themeSelect.value);
-            queueCloudAutoSync();
-            applySettings();
-            render();
-        });
-
-        fastModeToggle.addEventListener("change", function () {
-            writeSetting(FAST_MODE_KEY, fastModeToggle.checked ? "1" : "0");
-            queueCloudAutoSync();
-            applySettings();
-            render();
-        });
-
         openSourceOnlyToggle.addEventListener("change", function () {
             writeSetting(OPEN_SOURCE_ONLY_KEY, openSourceOnlyToggle.checked ? "1" : "0");
             queueCloudAutoSync();
@@ -1811,74 +1662,6 @@
             writeSetting(PLAYABLE_ONLY_KEY, playableOnlyToggle.checked ? "1" : "0");
             queueCloudAutoSync();
             render();
-        });
-
-        libraryViewSelect.addEventListener("change", function () {
-            var value = libraryViewSelect.value;
-            if (["cards", "grouped", "platform", "compact"].indexOf(value) === -1) {
-                value = "cards";
-            }
-            writeSetting(LIBRARY_VIEW_KEY, value);
-            queueCloudAutoSync();
-            render();
-        });
-
-        performanceProfileSelect.addEventListener("change", function () {
-            var value = performanceProfileSelect.value;
-            if (["normal", "quick", "turbo"].indexOf(value) === -1) {
-                value = "normal";
-            }
-            writeSetting(PERFORMANCE_PROFILE_KEY, value);
-            queueCloudAutoSync();
-            applySettings();
-            render();
-        });
-
-        cloudAutoSyncToggle.addEventListener("change", function () {
-            writeSetting(CLOUD_AUTO_SYNC_KEY, cloudAutoSyncToggle.checked ? "1" : "0");
-            if (cloudAutoSyncToggle.checked) {
-                queueCloudAutoSync();
-            }
-        });
-
-        exportDataBtn.addEventListener("click", function () {
-            exportSavedData();
-        });
-
-        importDataBtn.addEventListener("click", function () {
-            importDataInput.click();
-        });
-
-        importDataInput.addEventListener("change", function () {
-            var file = importDataInput.files && importDataInput.files[0];
-            if (!file) {
-                return;
-            }
-
-            var reader = new FileReader();
-            reader.onload = function () {
-                try {
-                    var payload = JSON.parse(String(reader.result || "{}"));
-                    applySavedData(payload);
-                    queueCloudAutoSync();
-                    applySettings();
-                    render();
-                    alert("Save data imported.");
-                } catch (error) {
-                    alert("Could not import save data. Use a valid export file.");
-                } finally {
-                    importDataInput.value = "";
-                }
-            };
-            reader.readAsText(file);
-        });
-
-        resetDataBtn.addEventListener("click", function () {
-            var shouldReset = window.confirm("Reset favorites, recents, theme, library view, and performance settings?");
-            if (!shouldReset) {
-                return;
-            }
-            resetSavedData();
         });
 
         clearFavoritesBtn.addEventListener("click", function () {
@@ -1894,7 +1677,6 @@
         });
 
         applySettings();
-        setSettingsOpen(false);
         initSupabase();
         loadGames();
     </script>
