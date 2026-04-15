@@ -207,7 +207,7 @@
         .security-row input[type="checkbox"]:checked {
             background: var(--primary);
             border-color: var(--primary);
-            box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 24%, transparent);
+            box-shadow: 0 0 0 2px rgba(30, 111, 255, 0.22);
         }
 
         .check input[type="checkbox"]:checked::after,
@@ -436,6 +436,18 @@
             display: none !important;
         }
 
+        .auth-only {
+            display: none !important;
+        }
+
+        body.signed-in .auth-only {
+            display: grid !important;
+        }
+
+        body.signed-in .guest-only {
+            display: none !important;
+        }
+
         @media (max-width: 760px) {
             .shell { width: 96vw; }
             .save-status-toolbar {
@@ -542,13 +554,13 @@
                 <section id="allGameSaveStatus" class="save-status-groups"></section>
             </article>
 
-            <article id="userSettingsGuestPanel" class="panel" style="grid-column: 1 / -1;">
+            <article id="userSettingsGuestPanel" class="panel guest-only" style="grid-column: 1 / -1;">
                 <h2>User Settings</h2>
                 <p class="meta">Sign in on the account page to unlock personal user settings.</p>
                 <a class="btn alt" href="account.html">Go to Account Sign In</a>
             </article>
 
-            <article id="userSettingsPanel" class="panel hidden" style="grid-column: 1 / -1;" hidden>
+            <article id="userSettingsPanel" class="panel hidden auth-only" style="grid-column: 1 / -1;" hidden>
                 <h2>User Settings</h2>
                 <p class="meta">Common profile preferences similar to modern account settings pages.</p>
                 <div class="user-settings-grid">
@@ -590,7 +602,7 @@
                 </div>
             </article>
 
-            <article id="securityChecklistPanel" class="panel hidden" style="grid-column: 1 / -1;" hidden>
+            <article id="securityChecklistPanel" class="panel hidden auth-only" style="grid-column: 1 / -1;" hidden>
                 <h2>Cloud Security Checklist</h2>
                 <p class="meta">Track which Auth + Security options you enabled in your cloud dashboard.</p>
                 <label class="security-row"><div><strong>Change email address</strong><span>Require verification for changed email addresses.</span></div><input data-security-key="changeEmailVerify" type="checkbox"></label>
@@ -622,6 +634,7 @@
         var SECURITY_CHECKLIST_KEY = "gamehub_security_checklist";
         var USER_SETTINGS_KEY = "gamehub_user_settings";
         var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, PERFORMANCE_PROFILE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, CLOUD_AUTO_SYNC_KEY, GAME_SAVES_KEY, LOCAL_SAVE_UPDATED_KEY, CLOUD_LAST_SYNC_KEY];
+        var CATALOG_VERSION = "20260415-4";
 
         var gamesCatalog = [];
 
@@ -769,6 +782,31 @@
             }
 
             return null;
+        }
+
+        function isBlockedCatalogGame(game) {
+            if (!game || typeof game !== "object") {
+                return true;
+            }
+            var id = typeof game.id === "string" ? game.id.toLowerCase() : "";
+            var source = typeof game.source === "string" ? game.source.toLowerCase() : "";
+            var direct = typeof game.direct === "string" ? game.direct.toLowerCase() : "";
+            var repo = typeof game.repo === "string" ? game.repo.toLowerCase() : "";
+            var description = typeof game.description === "string" ? game.description.toLowerCase() : "";
+            return id.indexOf("help9-") === 0
+                || source.indexOf("mountain658.github.io") !== -1
+                || direct.indexOf("mountain658.github.io") !== -1
+                || repo.indexOf("/help9") !== -1
+                || description.indexOf("help9") !== -1;
+        }
+
+        function sanitizeCatalog(list) {
+            if (!Array.isArray(list)) {
+                return [];
+            }
+            return list.filter(function (game) {
+                return !isBlockedCatalogGame(game);
+            });
         }
 
         function groupNameForGame(game) {
@@ -1156,6 +1194,7 @@
         function setAccountVisibility(user) {
             activeAccountUser = user || null;
             var isSignedIn = !!(activeAccountUser && activeAccountUser.id);
+            document.body.classList.toggle("signed-in", isSignedIn);
             userSettingsGuestPanel.classList.toggle("hidden", isSignedIn);
             userSettingsPanel.classList.toggle("hidden", !isSignedIn);
             userSettingsPanel.hidden = !isSignedIn;
@@ -1219,12 +1258,12 @@
 
         async function loadGamesCatalog() {
             try {
-                var response = await fetch("games.json", { cache: "no-store" });
+                var response = await fetch("games.json?v=" + encodeURIComponent(CATALOG_VERSION), { cache: "no-store" });
                 if (!response.ok) {
                     throw new Error("Unable to load games catalog.");
                 }
                 var data = await response.json();
-                gamesCatalog = Array.isArray(data) ? data : [];
+                gamesCatalog = sanitizeCatalog(data);
             } catch (error) {
                 gamesCatalog = [];
             }

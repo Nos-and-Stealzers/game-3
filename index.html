@@ -1011,6 +1011,7 @@
             "fnaf-sl": ["fnaf-sister-location"],
             "fnaf-ps": ["fnaf-pizzeria-simulator"]
         };
+        var CATALOG_VERSION = "20260415-4";
 
         var searchInput = document.getElementById("searchInput");
         var categorySelect = document.getElementById("categorySelect");
@@ -1397,6 +1398,31 @@
             return true;
         }
 
+        function isBlockedCatalogGame(game) {
+            if (!game || typeof game !== "object") {
+                return true;
+            }
+            var id = typeof game.id === "string" ? game.id.toLowerCase() : "";
+            var source = typeof game.source === "string" ? game.source.toLowerCase() : "";
+            var direct = typeof game.direct === "string" ? game.direct.toLowerCase() : "";
+            var repo = typeof game.repo === "string" ? game.repo.toLowerCase() : "";
+            var description = typeof game.description === "string" ? game.description.toLowerCase() : "";
+            return id.indexOf("help9-") === 0
+                || source.indexOf("mountain658.github.io") !== -1
+                || direct.indexOf("mountain658.github.io") !== -1
+                || repo.indexOf("/help9") !== -1
+                || description.indexOf("help9") !== -1;
+        }
+
+        function sanitizeCatalog(list) {
+            if (!Array.isArray(list)) {
+                return [];
+            }
+            return list.filter(function (game) {
+                return !isBlockedCatalogGame(game);
+            });
+        }
+
         function exportSavedData() {
             var payload = snapshotSavedData();
             var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -1705,13 +1731,13 @@
 
         async function loadGames() {
             try {
-                var response = await fetch("games.json", { cache: "no-store" });
+                var response = await fetch("games.json?v=" + encodeURIComponent(CATALOG_VERSION), { cache: "no-store" });
                 if (!response.ok) {
                     throw new Error("Failed to load games.json");
                 }
 
                 var data = await response.json();
-                games = Array.isArray(data) ? data : [];
+                games = sanitizeCatalog(data);
                 populateCategoryFilter();
                 render();
             } catch (error) {
