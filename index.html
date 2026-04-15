@@ -335,8 +335,6 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 4px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--line);
         }
 
         .settings-title {
@@ -348,25 +346,6 @@
 
         .settings-close {
             min-width: 88px;
-        }
-
-        .settings-group {
-            grid-column: 1 / -1;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--line);
-        }
-
-        .settings-group:last-child {
-            border-bottom: none;
-        }
-
-        .settings-group-title {
-            margin: 0 0 8px;
-            font-size: 0.92rem;
-            font-weight: 800;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .settings-backdrop {
@@ -622,12 +601,6 @@
         .thumb {
             height: 112px;
             position: relative;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .thumb::after {
@@ -878,98 +851,78 @@
                 <h2 class="settings-title">Settings</h2>
                 <button id="settingsCloseBtn" type="button" class="icon-btn settings-close">Close</button>
             </div>
-            
-            <div class="settings-group">
-                <h3 class="settings-group-title">Appearance</h3>
-                <label class="setting-block">
-                    <span class="meta">Theme</span>
-                    <select id="themeSelect" class="select">
-                        <option value="light">Light mode</option>
-                        <option value="gray">Gray mode</option>
-                        <option value="black">Black mode</option>
-                    </select>
-                </label>
-                <label class="setting-block">
-                    <span class="meta">Library View</span>
-                    <select id="libraryViewSelect" class="select">
-                        <option value="cards">Cards</option>
-                        <option value="grouped">Grouped (FNAF, Arcade, Custom...)</option>
-                        <option value="platform">Platform Groups (Local, External)</option>
-                        <option value="compact">Compact Cards</option>
-                    </select>
-                </label>
-            </div>
-
-            <div class="settings-group">
-                <h3 class="settings-group-title">Performance</h3>
-                <label class="setting-block">
-                    <span class="meta">Performance Profile</span>
-                    <select id="performanceProfileSelect" class="select">
-                        <option value="normal">Normal (best visuals)</option>
-                        <option value="quick">Quick (lighter effects)</option>
-                        <option value="turbo">Turbo (minimum effects)</option>
-                    </select>
-                </label>
-                <label class="setting-block">
-                    <span class="check">
-                        <input id="fastModeToggle" type="checkbox">
-                        Fast mode (skip animations, direct launch)
-                    </span>
-                </label>
-                <label class="setting-block">
-                    <span class="check">
-                        <input id="hideHighRiskToggle" type="checkbox">
-                        Hide high-risk external games
-                    </span>
-                </label>
-            </div>
-
-            <div class="settings-group">
-                <h3 class="settings-group-title">Save Data</h3>
+            <label class="setting-block">
+                <span class="meta">Theme</span>
+                <select id="themeSelect" class="select">
+                    <option value="light">Light mode</option>
+                    <option value="gray">Gray mode</option>
+                    <option value="black">Black mode</option>
+                </select>
+            </label>
+            <label class="setting-block">
+                <span class="meta">Library View</span>
+                <select id="libraryViewSelect" class="select">
+                    <option value="cards">Cards</option>
+                    <option value="grouped">Grouped (FNAF, Arcade, Custom...)</option>
+                    <option value="platform">Platform Groups (Local, External)</option>
+                    <option value="compact">Compact Cards</option>
+                </select>
+            </label>
+            <label class="setting-block">
+                <span class="meta">Performance</span>
+                <span class="check">
+                    <input id="fastModeToggle" type="checkbox">
+                    Fast mode (fewer effects, quicker launch)
+                </span>
+            </label>
+            <label class="setting-block">
+                <span class="meta">Performance Profile</span>
+                <select id="performanceProfileSelect" class="select">
+                    <option value="normal">Normal (best visuals)</option>
+                    <option value="quick">Quick (lighter effects)</option>
+                    <option value="turbo">Turbo (minimum effects)</option>
+                </select>
+            </label>
+            <label class="setting-block">
+                <span class="meta">Session</span>
+                <span class="check">
+                    <input id="rememberSettings" type="checkbox" checked disabled>
+                    Saved in this browser profile
+                </span>
+            </label>
+            <section class="setting-block" aria-label="Saved data tools">
+                <span class="meta">Save Data</span>
                 <div class="save-actions">
                     <button id="exportDataBtn" type="button" class="btn alt small">Export</button>
                     <button id="importDataBtn" type="button" class="btn alt small">Import</button>
                     <button id="resetDataBtn" type="button" class="btn warn small">Reset All</button>
                 </div>
                 <input id="importDataInput" type="file" accept="application/json" hidden>
-                <p class="meta-note">Backs up: favorites, recents, theme, performance settings, FNAF saves.</p>
+                <p class="meta-note">Backs up favorites, recents, theme, performance mode, and FNAF game saves (including FNAF World).</p>
                 <div class="save-health-row">
                     <span id="localSaveChip" class="save-health-chip warn">Local: Idle</span>
                     <p id="saveDataStatus" class="meta-note">Local save: waiting for changes...</p>
                 </div>
-            </div>
-
-            <div class="settings-group">
-                <h3 class="settings-group-title">Cloud Sync (Supabase)</h3>
                 <div class="save-health-row">
                     <span id="cloudSaveChip" class="save-health-chip warn">Cloud: Not synced</span>
                     <p id="cloudDataStatus" class="meta-note">Cloud sync: not yet synced in this browser.</p>
                 </div>
+            </section>
+            <section class="setting-block" aria-label="FNAF save sync status">
+                <span class="meta">FNAF Save Sync Status</span>
+                <ul id="fnafSaveStatus" class="save-sync-list"></ul>
+            </section>
+            <section class="setting-block" aria-label="Supabase account tools">
+                <span class="meta">Account Cloud Save (Supabase)</span>
+                <span class="check">
+                    <input id="cloudAutoSyncToggle" type="checkbox" checked>
+                    Cloud Auto Sync
+                </span>
                 <div class="auth-actions">
-                    <a href="account.html" class="btn alt small">Manage Account</a>
-                    <a id="adminPanelBtn" href="admin.html" class="btn alt small" hidden>Admin Panel</a>
+                    <a href="account.html" class="btn alt small">Save your data</a>
                 </div>
                 <p id="authStatus" class="auth-status">Checking account status...</p>
-                <p id="cloudAutoSyncStatus" class="meta-note">Autosave heartbeat: always on (every 60s)</p>
-            </div>
-
-            <div class="settings-group">
-                <h3 class="settings-group-title">Game Save Status</h3>
-                <label class="setting-block">
-                    <span class="meta">Search Saved Games</span>
-                    <input id="gameSaveSearchInput" class="input" type="search" placeholder="Search by game title">
-                </label>
-                <label class="setting-block">
-                    <span class="meta">Show</span>
-                    <select id="gameSaveFilterSelect" class="select">
-                        <option value="saved">Games with saves</option>
-                        <option value="missing">Games without saves</option>
-                        <option value="all">All games</option>
-                    </select>
-                </label>
-                <ul id="gameSaveStatus" class="save-sync-list"></ul>
-                <p class="meta-note">Shows local/cloud sync timestamp for every game profile in this browser.</p>
-            </div>
+            </section>
         </section>
 
         <section class="panel" aria-label="Open source picks" style="margin-bottom:12px;">
@@ -1002,23 +955,6 @@
                     <option value="all">All categories</option>
                 </select>
             </label>
-            <label class="panel">
-                <div class="meta">Platform</div>
-                <select id="platformSelect" class="select">
-                    <option value="all">All platforms</option>
-                    <option value="local">Local only</option>
-                    <option value="external">External only</option>
-                </select>
-            </label>
-            <label class="panel">
-                <div class="meta">Risk</div>
-                <select id="riskSelect" class="select">
-                    <option value="all">All risk levels</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                </select>
-            </label>
             <label class="panel" style="display:flex;align-items:center;gap:8px;">
                 <input id="openSourceOnlyToggle" type="checkbox">
                 <span class="meta">Open Source Only</span>
@@ -1037,6 +973,15 @@
 
         <section id="gameGrid" class="grid" aria-label="Games list"></section>
         <p id="emptyState" class="empty">No games match that search. Try another term or reset category.</p>
+
+        <footer class="site-footer" aria-label="Site links">
+            <span>Testing build. Users are responsible for their own use.</span>
+            <span>
+                <a href="privacy.html">Privacy and Terms</a>
+                |
+                <a href="404.html">404 Page</a>
+            </span>
+        </footer>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1052,37 +997,29 @@
         var LIBRARY_VIEW_KEY = "gamehub_library_view";
         var OPEN_SOURCE_ONLY_KEY = "gamehub_open_source_only";
         var PLAYABLE_ONLY_KEY = "gamehub_playable_only";
-        var HIDE_HIGH_RISK_KEY = "gamehub_hide_high_risk";
+        var CLOUD_AUTO_SYNC_KEY = "gamehub_cloud_auto_sync";
         var GAME_SAVES_KEY = "gamehub_game_saves";
         var LOCAL_SAVE_UPDATED_KEY = "gamehub_local_last_saved";
         var CLOUD_LAST_SYNC_KEY = "gamehub_cloud_last_sync";
         var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
-        var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, PERFORMANCE_PROFILE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, HIDE_HIGH_RISK_KEY, GAME_SAVES_KEY, LOCAL_SAVE_UPDATED_KEY, CLOUD_LAST_SYNC_KEY];
-        var ADMIN_EMAILS = {
-            "9152@mail.cadott.k12.wi.us": true,
-            "lucasgrimm854@gmail.com": true,
-            "stealzers.com@gmail.com": true
-        };
+        var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, PERFORMANCE_PROFILE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, CLOUD_AUTO_SYNC_KEY, GAME_SAVES_KEY, LOCAL_SAVE_UPDATED_KEY, CLOUD_LAST_SYNC_KEY];
+        var FNAF_SAVE_STATUS_ITEMS = [
+            { id: "fnaf-1", title: "FNAF 1" },
+            { id: "fnaf-2", title: "FNAF 2" },
+            { id: "fnaf-3", title: "FNAF 3" },
+            { id: "fnaf-4", title: "FNAF 4" },
+            { id: "fnaf-world", title: "FNAF World" },
+            { id: "fnaf-sl", title: "FNAF Sister Location" },
+            { id: "fnaf-ps", title: "FNAF Pizzeria Simulator" },
+            { id: "fnaf-ucn", title: "FNAF Ultimate Custom Night" }
+        ];
         var GAME_SAVE_ALIASES = {
             "fnaf-sl": ["fnaf-sister-location"],
             "fnaf-ps": ["fnaf-pizzeria-simulator"]
         };
-        var GAME_SAVE_CANONICAL_BY_ALIAS = (function () {
-            var out = {};
-            Object.keys(GAME_SAVE_ALIASES).forEach(function (canonicalId) {
-                out[canonicalId] = canonicalId;
-                var aliases = GAME_SAVE_ALIASES[canonicalId] || [];
-                for (var i = 0; i < aliases.length; i++) {
-                    out[aliases[i]] = canonicalId;
-                }
-            });
-            return out;
-        })();
 
         var searchInput = document.getElementById("searchInput");
         var categorySelect = document.getElementById("categorySelect");
-        var platformSelect = document.getElementById("platformSelect");
-        var riskSelect = document.getElementById("riskSelect");
         var gameGrid = document.getElementById("gameGrid");
         var emptyState = document.getElementById("emptyState");
         var favoriteGrid = document.getElementById("favoriteGrid");
@@ -1104,50 +1041,23 @@
         var performanceProfileSelect = document.getElementById("performanceProfileSelect");
         var openSourceOnlyToggle = document.getElementById("openSourceOnlyToggle");
         var playableOnlyToggle = document.getElementById("playableOnlyToggle");
-        var hideHighRiskToggle = document.getElementById("hideHighRiskToggle");
         var fastModeToggle = document.getElementById("fastModeToggle");
         var exportDataBtn = document.getElementById("exportDataBtn");
         var importDataBtn = document.getElementById("importDataBtn");
         var resetDataBtn = document.getElementById("resetDataBtn");
         var importDataInput = document.getElementById("importDataInput");
-        var adminPanelBtn = document.getElementById("adminPanelBtn");
+        var cloudAutoSyncToggle = document.getElementById("cloudAutoSyncToggle");
         var authStatus = document.getElementById("authStatus");
-        var cloudAutoSyncStatus = document.getElementById("cloudAutoSyncStatus");
         var saveDataStatus = document.getElementById("saveDataStatus");
         var cloudDataStatus = document.getElementById("cloudDataStatus");
         var localSaveChip = document.getElementById("localSaveChip");
         var cloudSaveChip = document.getElementById("cloudSaveChip");
-        var gameSaveStatus = document.getElementById("gameSaveStatus");
-        var gameSaveSearchInput = document.getElementById("gameSaveSearchInput");
-        var gameSaveFilterSelect = document.getElementById("gameSaveFilterSelect");
+        var fnafSaveStatus = document.getElementById("fnafSaveStatus");
         var storageFallback = {};
         var supabaseClient = null;
         var cloudAutoSyncTimer = null;
-        var cloudPeriodicSyncTimer = null;
-        var cloudPeriodicSyncInFlight = false;
-        var cloudPullInFlight = false;
-        var autoCloudLoadedUserId = "";
-        var AUTO_SYNC_INTERVAL_MS = 60000;
-        var INDEXED_DB_SYNC_MAX_DATABASES = 6;
-        var INDEXED_DB_SYNC_MAX_STORES_PER_DB = 12;
-        var INDEXED_DB_SYNC_MAX_RECORDS_PER_STORE = 200;
-        var INDEXED_DB_SYNC_MAX_VALUE_CHARS = 120000;
 
         var fastMode = false;
-
-        function isAdminEmail(email) {
-            if (typeof email !== "string") {
-                return false;
-            }
-            return !!ADMIN_EMAILS[email.trim().toLowerCase()];
-        }
-
-        function setAdminPanelVisibility(email) {
-            if (!adminPanelBtn) {
-                return;
-            }
-            adminPanelBtn.hidden = !isAdminEmail(email);
-        }
 
         function storageGet(key) {
             try {
@@ -1226,522 +1136,8 @@
         }
 
         function writeObject(key, value) {
-            var safeValue = value || {};
-            if (key === GAME_SAVES_KEY) {
-                safeValue = normalizeGameSaveMap(safeValue);
-            }
-            storageSet(key, JSON.stringify(safeValue));
+            storageSet(key, JSON.stringify(value || {}));
             touchLocalSave();
-        }
-
-        function getCanonicalGameSaveId(gameId) {
-            if (typeof gameId !== "string" || !gameId) {
-                return "";
-            }
-            return GAME_SAVE_CANONICAL_BY_ALIAS[gameId] || gameId;
-        }
-
-        function sanitizeGameSaveEntry(gameSave) {
-            if (!gameSave || typeof gameSave !== "object" || Array.isArray(gameSave)) {
-                return null;
-            }
-
-            var localData = gameSave.localStorage;
-            if (!localData || typeof localData !== "object" || Array.isArray(localData)) {
-                return null;
-            }
-
-            var cleanLocalData = {};
-            Object.keys(localData).forEach(function (key) {
-                var value = localData[key];
-                if (value === null || typeof value === "string") {
-                    cleanLocalData[key] = value;
-                }
-            });
-
-            return {
-                updatedAt: typeof gameSave.updatedAt === "string" ? gameSave.updatedAt : new Date().toISOString(),
-                localStorage: cleanLocalData
-            };
-        }
-
-        function normalizeGameSaveMap(rawGameSaves) {
-            if (!rawGameSaves || typeof rawGameSaves !== "object" || Array.isArray(rawGameSaves)) {
-                return {};
-            }
-
-            var out = {};
-            Object.keys(rawGameSaves).forEach(function (gameId) {
-                var canonicalId = getCanonicalGameSaveId(gameId);
-                if (!canonicalId) {
-                    return;
-                }
-
-                var incoming = sanitizeGameSaveEntry(rawGameSaves[gameId]);
-                if (!incoming) {
-                    return;
-                }
-
-                var existing = out[canonicalId];
-                if (!existing) {
-                    out[canonicalId] = incoming;
-                    return;
-                }
-
-                var existingTime = Date.parse(existing.updatedAt || "") || 0;
-                var incomingTime = Date.parse(incoming.updatedAt || "") || 0;
-                var incomingWins = incomingTime >= existingTime;
-                var mergedLocalStorage = incomingWins
-                    ? Object.assign({}, existing.localStorage, incoming.localStorage)
-                    : Object.assign({}, incoming.localStorage, existing.localStorage);
-
-                out[canonicalId] = {
-                    updatedAt: incomingWins ? incoming.updatedAt : existing.updatedAt,
-                    localStorage: mergedLocalStorage
-                };
-            });
-
-            return out;
-        }
-
-        function shouldSyncExtraLocalStorageKey(key) {
-            if (typeof key !== "string" || !key) {
-                return false;
-            }
-            if (SAVE_KEYS.indexOf(key) !== -1 || key === SUPABASE_CONFIG_KEY) {
-                return false;
-            }
-            if (/^sb-.*-auth-token$/i.test(key) || key === "supabase.auth.token") {
-                return false;
-            }
-            return true;
-        }
-
-        function snapshotExtraLocalStorage() {
-            var out = {};
-            try {
-                for (var i = 0; i < localStorage.length; i++) {
-                    var key = localStorage.key(i);
-                    if (!shouldSyncExtraLocalStorageKey(key)) {
-                        continue;
-                    }
-                    var value = localStorage.getItem(key);
-                    if (typeof value === "string") {
-                        out[key] = value;
-                    }
-                }
-            } catch (error) {
-                return out;
-            }
-            return out;
-        }
-
-        function isAuthTokenStorageKey(key) {
-            return /^sb-.*-auth-token$/i.test(key) || key === "supabase.auth.token";
-        }
-
-        function snapshotAuthTokens() {
-            var out = {};
-            try {
-                for (var i = 0; i < localStorage.length; i++) {
-                    var key = localStorage.key(i);
-                    if (!isAuthTokenStorageKey(key)) {
-                        continue;
-                    }
-                    var value = localStorage.getItem(key);
-                    if (typeof value === "string" && value) {
-                        out[key] = value;
-                    }
-                }
-            } catch (error) {
-                return out;
-            }
-            return out;
-        }
-
-        function applyAuthTokens(authTokens) {
-            if (!authTokens || typeof authTokens !== "object" || Array.isArray(authTokens)) {
-                return;
-            }
-            Object.keys(authTokens).forEach(function (key) {
-                if (!isAuthTokenStorageKey(key)) {
-                    return;
-                }
-                var value = authTokens[key];
-                if (typeof value === "string" && value) {
-                    storageSet(key, value);
-                }
-            });
-        }
-
-        function snapshotSessionStorage() {
-            var out = {};
-            try {
-                if (!window.sessionStorage) {
-                    return out;
-                }
-                for (var i = 0; i < sessionStorage.length; i++) {
-                    var key = sessionStorage.key(i);
-                    var value = sessionStorage.getItem(key);
-                    if (typeof key === "string" && key && typeof value === "string") {
-                        out[key] = value;
-                    }
-                }
-            } catch (error) {
-                return out;
-            }
-            return out;
-        }
-
-        function applySessionStorage(sessionData) {
-            if (!sessionData || typeof sessionData !== "object" || Array.isArray(sessionData)) {
-                return;
-            }
-            try {
-                if (!window.sessionStorage) {
-                    return;
-                }
-                Object.keys(sessionData).forEach(function (key) {
-                    var value = sessionData[key];
-                    if (typeof value === "string") {
-                        sessionStorage.setItem(key, value);
-                    }
-                });
-            } catch (error) {
-            }
-        }
-
-        function snapshotCookies() {
-            var out = {};
-            try {
-                var raw = document.cookie || "";
-                if (!raw) {
-                    return out;
-                }
-                raw.split(";").forEach(function (part) {
-                    var section = part.trim();
-                    if (!section) {
-                        return;
-                    }
-                    var eqIndex = section.indexOf("=");
-                    if (eqIndex <= 0) {
-                        return;
-                    }
-                    var key = section.slice(0, eqIndex).trim();
-                    var value = section.slice(eqIndex + 1);
-                    if (key) {
-                        out[key] = value;
-                    }
-                });
-            } catch (error) {
-                return out;
-            }
-            return out;
-        }
-
-        function applyCookies(cookies) {
-            if (!cookies || typeof cookies !== "object" || Array.isArray(cookies)) {
-                return;
-            }
-            Object.keys(cookies).forEach(function (key) {
-                var value = cookies[key];
-                if (typeof key !== "string" || !key || typeof value !== "string") {
-                    return;
-                }
-                try {
-                    document.cookie = key + "=" + value + "; path=/; max-age=2592000; SameSite=Lax";
-                } catch (error) {
-                }
-            });
-        }
-
-        function applyExtraLocalStorage(extraLocalStorage) {
-            if (!extraLocalStorage || typeof extraLocalStorage !== "object" || Array.isArray(extraLocalStorage)) {
-                return;
-            }
-            Object.keys(extraLocalStorage).forEach(function (key) {
-                if (!shouldSyncExtraLocalStorageKey(key)) {
-                    return;
-                }
-                var value = extraLocalStorage[key];
-                if (typeof value === "string") {
-                    storageSet(key, value);
-                }
-            });
-        }
-
-        function toJsonSafeValue(value, maxChars) {
-            try {
-                var json = JSON.stringify(value);
-                if (typeof json !== "string" || json.length > maxChars) {
-                    return null;
-                }
-                return JSON.parse(json);
-            } catch (error) {
-                return null;
-            }
-        }
-
-        function shouldSyncIndexedDbName(name) {
-            if (typeof name !== "string" || !name) {
-                return false;
-            }
-            if (/supabase|firebase|auth|workbox|service ?worker|cache/i.test(name)) {
-                return false;
-            }
-            return true;
-        }
-
-        function idbRequestToPromise(request) {
-            return new Promise(function (resolve, reject) {
-                request.onsuccess = function () {
-                    resolve(request.result);
-                };
-                request.onerror = function () {
-                    reject(request.error || new Error("IndexedDB request failed"));
-                };
-            });
-        }
-
-        function getIndexedDbDatabaseList() {
-            try {
-                if (!window.indexedDB || typeof window.indexedDB.databases !== "function") {
-                    return Promise.resolve([]);
-                }
-                return window.indexedDB.databases().then(function (list) {
-                    return Array.isArray(list) ? list : [];
-                }).catch(function () {
-                    return [];
-                });
-            } catch (error) {
-                return Promise.resolve([]);
-            }
-        }
-
-        function openIndexedDb(name, version, onUpgradeNeeded) {
-            return new Promise(function (resolve, reject) {
-                var request;
-                try {
-                    request = (typeof version === "number" && version > 0)
-                        ? window.indexedDB.open(name, version)
-                        : window.indexedDB.open(name);
-                } catch (error) {
-                    reject(error);
-                    return;
-                }
-
-                if (typeof onUpgradeNeeded === "function") {
-                    request.onupgradeneeded = function (event) {
-                        onUpgradeNeeded(event);
-                    };
-                }
-
-                request.onsuccess = function () {
-                    resolve(request.result);
-                };
-                request.onerror = function () {
-                    reject(request.error || new Error("Unable to open IndexedDB"));
-                };
-            });
-        }
-
-        function deleteIndexedDb(name) {
-            return new Promise(function (resolve) {
-                var request;
-                try {
-                    request = window.indexedDB.deleteDatabase(name);
-                } catch (error) {
-                    resolve();
-                    return;
-                }
-                request.onsuccess = function () { resolve(); };
-                request.onerror = function () { resolve(); };
-                request.onblocked = function () { resolve(); };
-            });
-        }
-
-        function readIndexedDbStoreSnapshot(db, storeName) {
-            return new Promise(function (resolve, reject) {
-                var tx;
-                try {
-                    tx = db.transaction(storeName, "readonly");
-                } catch (error) {
-                    resolve(null);
-                    return;
-                }
-
-                var store = tx.objectStore(storeName);
-                var out = {
-                    keyPath: typeof store.keyPath === "string" ? store.keyPath : null,
-                    autoIncrement: store.autoIncrement === true,
-                    records: []
-                };
-
-                var cursorRequest = store.openCursor();
-                cursorRequest.onsuccess = function () {
-                    var cursor = cursorRequest.result;
-                    if (!cursor) {
-                        resolve(out);
-                        return;
-                    }
-
-                    if (out.records.length >= INDEXED_DB_SYNC_MAX_RECORDS_PER_STORE) {
-                        resolve(out);
-                        return;
-                    }
-
-                    var safeValue = toJsonSafeValue(cursor.value, INDEXED_DB_SYNC_MAX_VALUE_CHARS);
-                    var safeKey = toJsonSafeValue(cursor.key, 4000);
-                    if (safeValue !== null && safeKey !== null) {
-                        out.records.push({ key: safeKey, value: safeValue });
-                    }
-                    cursor.continue();
-                };
-                cursorRequest.onerror = function () {
-                    reject(cursorRequest.error || new Error("Unable to read IndexedDB store"));
-                };
-            });
-        }
-
-        async function snapshotIndexedDb() {
-            if (!window.indexedDB) {
-                return {};
-            }
-
-            var out = {};
-            var dbList = await getIndexedDbDatabaseList();
-            var names = dbList
-                .map(function (db) { return db && typeof db.name === "string" ? db.name : ""; })
-                .filter(function (name) { return shouldSyncIndexedDbName(name); })
-                .slice(0, INDEXED_DB_SYNC_MAX_DATABASES);
-
-            for (var i = 0; i < names.length; i++) {
-                var name = names[i];
-                var info = dbList.find(function (db) { return db && db.name === name; }) || {};
-                var version = typeof info.version === "number" && info.version > 0 ? Math.floor(info.version) : 1;
-                var db = null;
-                try {
-                    db = await openIndexedDb(name, version);
-                    var storeNames = Array.from(db.objectStoreNames || []).slice(0, INDEXED_DB_SYNC_MAX_STORES_PER_DB);
-                    var stores = {};
-                    for (var s = 0; s < storeNames.length; s++) {
-                        var storeName = storeNames[s];
-                        var storeSnapshot = await readIndexedDbStoreSnapshot(db, storeName);
-                        if (storeSnapshot) {
-                            stores[storeName] = storeSnapshot;
-                        }
-                    }
-                    if (Object.keys(stores).length > 0) {
-                        out[name] = { version: version, stores: stores };
-                    }
-                } catch (error) {
-                } finally {
-                    if (db) {
-                        db.close();
-                    }
-                }
-            }
-
-            return out;
-        }
-
-        function writeIndexedDbStore(db, storeName, storeData) {
-            return new Promise(function (resolve) {
-                var tx;
-                try {
-                    tx = db.transaction(storeName, "readwrite");
-                } catch (error) {
-                    resolve();
-                    return;
-                }
-                var store = tx.objectStore(storeName);
-                var records = Array.isArray(storeData.records) ? storeData.records : [];
-
-                try {
-                    store.clear();
-                } catch (error) {
-                }
-
-                records.forEach(function (entry) {
-                    if (!entry || typeof entry !== "object") {
-                        return;
-                    }
-                    try {
-                        if (store.keyPath) {
-                            store.put(entry.value);
-                        } else {
-                            store.put(entry.value, entry.key);
-                        }
-                    } catch (error) {
-                    }
-                });
-
-                tx.oncomplete = function () { resolve(); };
-                tx.onerror = function () { resolve(); };
-                tx.onabort = function () { resolve(); };
-            });
-        }
-
-        async function applyIndexedDbSnapshot(indexedDbSnapshot) {
-            if (!window.indexedDB || !indexedDbSnapshot || typeof indexedDbSnapshot !== "object" || Array.isArray(indexedDbSnapshot)) {
-                return;
-            }
-
-            var dbNames = Object.keys(indexedDbSnapshot)
-                .filter(function (name) { return shouldSyncIndexedDbName(name); })
-                .slice(0, INDEXED_DB_SYNC_MAX_DATABASES);
-
-            for (var i = 0; i < dbNames.length; i++) {
-                var dbName = dbNames[i];
-                var dbData = indexedDbSnapshot[dbName];
-                if (!dbData || typeof dbData !== "object" || Array.isArray(dbData)) {
-                    continue;
-                }
-                var stores = dbData.stores;
-                if (!stores || typeof stores !== "object" || Array.isArray(stores)) {
-                    continue;
-                }
-
-                await deleteIndexedDb(dbName);
-                var version = typeof dbData.version === "number" && dbData.version > 0 ? Math.floor(dbData.version) : 1;
-
-                var db = null;
-                try {
-                    db = await openIndexedDb(dbName, version, function (event) {
-                        var upgradeDb = event.target.result;
-                        Object.keys(stores).slice(0, INDEXED_DB_SYNC_MAX_STORES_PER_DB).forEach(function (storeName) {
-                            if (upgradeDb.objectStoreNames.contains(storeName)) {
-                                return;
-                            }
-                            var storeData = stores[storeName] || {};
-                            var options = { autoIncrement: storeData.autoIncrement === true };
-                            if (typeof storeData.keyPath === "string" && storeData.keyPath) {
-                                options.keyPath = storeData.keyPath;
-                            }
-                            try {
-                                upgradeDb.createObjectStore(storeName, options);
-                            } catch (error) {
-                            }
-                        });
-                    });
-
-                    var storeNames = Object.keys(stores).slice(0, INDEXED_DB_SYNC_MAX_STORES_PER_DB);
-                    for (var s = 0; s < storeNames.length; s++) {
-                        await writeIndexedDbStore(db, storeNames[s], stores[storeNames[s]] || {});
-                    }
-                } catch (error) {
-                } finally {
-                    if (db) {
-                        db.close();
-                    }
-                }
-            }
-        }
-
-        function extractGradientColor(gradientStr) {
-            if (!gradientStr) return "#f3f7ff";
-            var colors = gradientStr.match(/#[0-9a-fA-F]{6}|rgb\([^)]+\)/g);
-            return colors && colors.length > 0 ? colors[0] : "#f3f7ff";
         }
 
         function formatSaveHealthTime(value, emptyLabel) {
@@ -1811,92 +1207,16 @@
             return null;
         }
 
-        function getGameTitle(gameId) {
-            var game = getGameById(gameId);
-            if (game && game.title) {
-                return game.title;
-            }
-
-            var aliases = GAME_SAVE_ALIASES[gameId] || [];
-            for (var i = 0; i < aliases.length; i++) {
-                var aliasGame = getGameById(aliases[i]);
-                if (aliasGame && aliasGame.title) {
-                    return aliasGame.title;
-                }
-            }
-
-            return gameId;
-        }
-
-        function buildGameSaveStatusItems() {
-            var allSaves = normalizeGameSaveMap(readObject(GAME_SAVES_KEY));
-            var catalogIds = games.map(function (game) { return game.id; });
-            var knownIds = {};
-            var out = [];
-
-            catalogIds.forEach(function (gameId) {
-                knownIds[gameId] = true;
-                var saveData = readGameSaveById(allSaves, gameId);
-                out.push({
-                    id: gameId,
-                    title: getGameTitle(gameId),
-                    updatedAt: saveData && typeof saveData.updatedAt === "string" ? saveData.updatedAt : "",
-                    hasSave: !!saveData
-                });
-            });
-
-            Object.keys(allSaves).forEach(function (gameId) {
-                if (knownIds[gameId]) {
-                    return;
-                }
-
-                out.push({
-                    id: gameId,
-                    title: getGameTitle(gameId),
-                    updatedAt: allSaves[gameId] && typeof allSaves[gameId].updatedAt === "string" ? allSaves[gameId].updatedAt : "",
-                    hasSave: true
-                });
-            });
-
-            out.sort(function (a, b) {
-                if (a.hasSave !== b.hasSave) {
-                    return a.hasSave ? -1 : 1;
-                }
-                return a.title.localeCompare(b.title);
-            });
-
-            return out;
-        }
-
-        function renderGameSaveStatus() {
-            if (!gameSaveStatus) {
+        function renderFnafSaveStatus() {
+            if (!fnafSaveStatus) {
                 return;
             }
 
-            var query = gameSaveSearchInput ? gameSaveSearchInput.value.trim().toLowerCase() : "";
-            var filter = gameSaveFilterSelect ? gameSaveFilterSelect.value : "saved";
-            var items = buildGameSaveStatusItems();
-
-            if (filter === "saved") {
-                items = items.filter(function (item) { return item.hasSave; });
-            } else if (filter === "missing") {
-                items = items.filter(function (item) { return !item.hasSave; });
-            }
-
-            if (query) {
-                items = items.filter(function (item) {
-                    var haystack = (item.title + " " + item.id).toLowerCase();
-                    return haystack.indexOf(query) !== -1;
-                });
-            }
-
-            if (!items.length) {
-                gameSaveStatus.innerHTML = '<li class="save-sync-item"><span class="save-sync-game">No games match this filter.</span><span class="save-sync-time">-</span></li>';
-                return;
-            }
-
-            gameSaveStatus.innerHTML = items.map(function (item) {
-                return '<li class="save-sync-item"><span class="save-sync-game">' + item.title + '</span><span class="save-sync-time">' + formatSyncTime(item.updatedAt) + '</span></li>';
+            var allSaves = readObject(GAME_SAVES_KEY);
+            fnafSaveStatus.innerHTML = FNAF_SAVE_STATUS_ITEMS.map(function (item) {
+                var saveData = readGameSaveById(allSaves, item.id);
+                var updatedAt = saveData ? saveData.updatedAt : "";
+                return '<li class="save-sync-item"><span class="save-sync-game">' + item.title + '</span><span class="save-sync-time">' + formatSyncTime(updatedAt) + '</span></li>';
             }).join("");
         }
 
@@ -1913,21 +1233,10 @@
                     libraryView: readSetting(LIBRARY_VIEW_KEY, "cards"),
                     openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
                     playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
-                    hideHighRisk: readSetting(HIDE_HIGH_RISK_KEY, "0"),
-                    cloudAutoSync: "1",
-                    gameSaves: readObject(GAME_SAVES_KEY),
-                    extraLocalStorage: snapshotExtraLocalStorage(),
-                    authTokens: snapshotAuthTokens(),
-                    sessionStorage: snapshotSessionStorage(),
-                    cookies: snapshotCookies()
+                    cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1"),
+                    gameSaves: readObject(GAME_SAVES_KEY)
                 }
             };
-        }
-
-        async function snapshotSavedDataAsync() {
-            var payload = snapshotSavedData();
-            payload.data.indexedDb = await snapshotIndexedDb();
-            return payload;
         }
 
         function getSupabaseConfig() {
@@ -1956,13 +1265,6 @@
             authStatus.textContent = message;
         }
 
-        function updateCloudAutoSyncStatus(message) {
-            if (!cloudAutoSyncStatus) {
-                return;
-            }
-            cloudAutoSyncStatus.textContent = message;
-        }
-
         async function initSupabase() {
             var cfg = getSupabaseConfig();
             var hasFactory = !!(window.supabase && typeof window.supabase.createClient === "function");
@@ -1976,27 +1278,13 @@
                 var auth = await supabaseClient.auth.getUser();
                 var user = auth && auth.data ? auth.data.user : null;
                 updateAuthStatus(user && user.email ? ("Signed in: " + user.email) : "Supabase ready. Sign in to use cloud save.");
-                setAdminPanelVisibility(user && user.email ? user.email : "");
-                if (user) {
-                    await autoLoadCloudForUser(user);
-                }
 
                 supabaseClient.auth.onAuthStateChange(function (_event, session) {
                     var sessionUser = session && session.user ? session.user : null;
                     updateAuthStatus(sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Supabase ready. Sign in to use cloud save.");
-                    setAdminPanelVisibility(sessionUser && sessionUser.email ? sessionUser.email : "");
-                    if (!sessionUser) {
-                        autoCloudLoadedUserId = "";
-                    } else {
-                        autoLoadCloudForUser(sessionUser);
-                    }
-                    restartCloudPeriodicSync();
                 });
-
-                restartCloudPeriodicSync();
             } catch (error) {
                 supabaseClient = null;
-                setAdminPanelVisibility("");
                 updateAuthStatus("Supabase init failed.");
             }
         }
@@ -2017,7 +1305,7 @@
             var opts = options || {};
             var silent = opts.silent === true;
             var user = await requireSupabaseUser();
-            var payload = await snapshotSavedDataAsync();
+            var payload = snapshotSavedData();
             var result = await supabaseClient
                 .from("user_saves")
                 .upsert({ user_id: user.id, payload: payload }, { onConflict: "user_id" });
@@ -2030,71 +1318,12 @@
             }
         }
 
-        async function cloudPull(options) {
-            var opts = options || {};
-            var silent = opts.silent === true;
-
-            if (cloudPullInFlight) {
-                return false;
-            }
-
-            cloudPullInFlight = true;
-            try {
-                var user = await requireSupabaseUser();
-                var result = await supabaseClient
-                    .from("user_saves")
-                    .select("payload")
-                    .eq("user_id", user.id)
-                    .maybeSingle();
-
-                if (result.error) {
-                    throw result.error;
-                }
-
-                if (!result.data || !result.data.payload) {
-                    if (!silent) {
-                        updateAuthStatus("No cloud save found yet.");
-                    }
-                    return false;
-                }
-
-                applySavedData(result.data.payload);
-                markCloudSynced();
-                applySettings();
-                render();
-
-                if (!silent) {
-                    updateAuthStatus("Cloud data loaded to this browser.");
-                }
-                return true;
-            } finally {
-                cloudPullInFlight = false;
-            }
-        }
-
-        async function autoLoadCloudForUser(user) {
-            if (!user || !user.id || autoCloudLoadedUserId === user.id) {
+        function queueCloudAutoSync() {
+            if (!supabaseClient) {
                 return;
             }
 
-            try {
-                var loaded = await cloudPull({ silent: true });
-                autoCloudLoadedUserId = user.id;
-                if (loaded) {
-                    updateAuthStatus("Signed in: " + (user.email || "account") + " (cloud data loaded)");
-                } else {
-                    updateAuthStatus("Signed in: " + (user.email || "account") + " (no cloud save yet)");
-                }
-            } catch (error) {
-                if (error && error.message === "Please sign in first.") {
-                    return;
-                }
-                console.warn("Auto cloud load skipped:", error);
-            }
-        }
-
-        function queueCloudAutoSync() {
-            if (!supabaseClient) {
+            if (readSetting(CLOUD_AUTO_SYNC_KEY, "1") !== "1") {
                 return;
             }
 
@@ -2113,37 +1342,6 @@
                     updateAuthStatus("Cloud sync pending. Use Cloud Save.");
                 }
             }, 1200);
-        }
-
-        function restartCloudPeriodicSync() {
-            if (cloudPeriodicSyncTimer) {
-                clearInterval(cloudPeriodicSyncTimer);
-                cloudPeriodicSyncTimer = null;
-            }
-
-            cloudPeriodicSyncTimer = setInterval(async function () {
-                if (!supabaseClient || cloudPeriodicSyncInFlight) {
-                    return;
-                }
-
-                cloudPeriodicSyncInFlight = true;
-                updateCloudAutoSyncStatus("Autosave heartbeat: syncing now...");
-                try {
-                    await cloudPush({ silent: true });
-                    updateCloudAutoSyncStatus("Autosave heartbeat: synced at " + new Date().toLocaleTimeString());
-                } catch (error) {
-                    if (!(error && error.message === "Please sign in first.")) {
-                        console.warn("Periodic cloud sync skipped:", error);
-                        updateCloudAutoSyncStatus("Autosave heartbeat: retrying in 60s (last sync failed)");
-                    } else {
-                        updateCloudAutoSyncStatus("Autosave heartbeat: sign in required");
-                    }
-                } finally {
-                    cloudPeriodicSyncInFlight = false;
-                }
-            }, AUTO_SYNC_INTERVAL_MS);
-
-            updateCloudAutoSyncStatus("Autosave heartbeat: active (every 60s)");
         }
 
         function applySavedData(payload) {
@@ -2173,21 +1371,39 @@
             var incomingPlayableOnly = data.playableOnly === "1" ? "1" : "0";
             writeSetting(PLAYABLE_ONLY_KEY, incomingPlayableOnly);
 
-            var incomingHideHighRisk = data.hideHighRisk === "1" ? "1" : "0";
-            writeSetting(HIDE_HIGH_RISK_KEY, incomingHideHighRisk);
+            var incomingCloudAutoSync = data.cloudAutoSync === "0" ? "0" : "1";
+            writeSetting(CLOUD_AUTO_SYNC_KEY, incomingCloudAutoSync);
 
             var rawGameSaves = (data.gameSaves && typeof data.gameSaves === "object" && !Array.isArray(data.gameSaves)) ? data.gameSaves : {};
-            var cleanGameSaves = normalizeGameSaveMap(rawGameSaves);
+            var cleanGameSaves = {};
+
+            Object.keys(rawGameSaves).forEach(function (gameId) {
+                var gameSave = rawGameSaves[gameId];
+                if (!gameSave || typeof gameSave !== "object" || Array.isArray(gameSave)) {
+                    return;
+                }
+
+                var localData = gameSave.localStorage;
+                if (!localData || typeof localData !== "object" || Array.isArray(localData)) {
+                    return;
+                }
+
+                var cleanLocalData = {};
+                Object.keys(localData).forEach(function (key) {
+                    var value = localData[key];
+                    if (value === null || typeof value === "string") {
+                        cleanLocalData[key] = value;
+                    }
+                });
+
+                cleanGameSaves[gameId] = {
+                    updatedAt: typeof gameSave.updatedAt === "string" ? gameSave.updatedAt : new Date().toISOString(),
+                    localStorage: cleanLocalData
+                };
+            });
 
             writeObject(GAME_SAVES_KEY, cleanGameSaves);
-            applyExtraLocalStorage(data.extraLocalStorage);
-            applyAuthTokens(data.authTokens);
-            applySessionStorage(data.sessionStorage);
-            applyCookies(data.cookies);
-            applyIndexedDbSnapshot(data.indexedDb).catch(function (error) {
-                console.warn("IndexedDB restore skipped:", error);
-            });
-            renderGameSaveStatus();
+            renderFnafSaveStatus();
         }
 
         function isLikelyPlayable(game) {
@@ -2202,8 +1418,8 @@
             return true;
         }
 
-        async function exportSavedData() {
-            var payload = await snapshotSavedDataAsync();
+        function exportSavedData() {
+            var payload = snapshotSavedData();
             var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
             var url = URL.createObjectURL(blob);
             var anchor = document.createElement("a");
@@ -2221,7 +1437,7 @@
                 storageRemove(key);
             });
             applySettings();
-            renderGameSaveStatus();
+            renderFnafSaveStatus();
             render();
         }
 
@@ -2296,13 +1512,9 @@
             var playLabel = openDirectFirst ? "Play (Fast)" : "Play";
             var directTrackingAttr = ' data-recent-id="' + game.id + '"';
             var playTrackingAttr = openDirectFirst ? directTrackingAttr : '';
-            
-            var thumbStyle = game.pfp 
-                ? 'background-image: url(' + JSON.stringify(game.pfp) + '); background-color: ' + extractGradientColor(game.gradient)
-                : 'background: ' + game.gradient;
 
             return '<article class="' + cardClass + '">' +
-                '<div class="thumb" style="' + thumbStyle + '"></div>' +
+                '<div class="thumb" style="background:' + game.gradient + '"></div>' +
                 '<div class="body">' +
                 '<div class="chip-row">' +
                 '<span class="chip type">' + capitalize(game.category) + '</span>' +
@@ -2350,11 +1562,9 @@
             performanceProfileSelect.value = performanceProfile;
             openSourceOnlyToggle.checked = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
             playableOnlyToggle.checked = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
-            hideHighRiskToggle.checked = readSetting(HIDE_HIGH_RISK_KEY, "0") === "1";
-            platformSelect.value = "all";
-            riskSelect.value = "all";
+            cloudAutoSyncToggle.checked = readSetting(CLOUD_AUTO_SYNC_KEY, "1") === "1";
             modeBadge.textContent = fastMode ? ("Fast Mode - " + performanceProfile.toUpperCase()) : ("Local-First - " + performanceProfile.toUpperCase());
-            renderGameSaveStatus();
+            renderFnafSaveStatus();
             renderSaveHealthStatus();
         }
 
@@ -2401,23 +1611,16 @@
 
             var query = searchInput.value.trim().toLowerCase();
             var category = categorySelect.value;
-            var platform = platformSelect.value;
-            var risk = riskSelect.value;
             var openSourceOnly = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
             var playableOnly = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
-            var hideHighRisk = readSetting(HIDE_HIGH_RISK_KEY, "0") === "1";
 
             var filtered = games.filter(function (game) {
                 var matchesCategory = category === "all" || game.category === category;
-                var matchesPlatform = platform === "all" || (platform === "local" ? game.platform === "local" : game.platform !== "local");
-                var gameRisk = typeof game.schoolRisk === "string" ? game.schoolRisk : "medium";
-                var matchesRiskSelection = risk === "all" || gameRisk === risk;
                 var text = (game.title + " " + game.description + " " + game.category + " " + game.platform).toLowerCase();
                 var matchesQuery = query.length === 0 || text.indexOf(query) !== -1;
                 var matchesOpenSource = !openSourceOnly || game.openSource === true;
                 var matchesPlayable = !playableOnly || isLikelyPlayable(game);
-                var matchesRisk = !hideHighRisk || game.schoolRisk !== "high";
-                return matchesCategory && matchesPlatform && matchesRiskSelection && matchesQuery && matchesOpenSource && matchesPlayable && matchesRisk;
+                return matchesCategory && matchesQuery && matchesOpenSource && matchesPlayable;
             });
 
             filtered.sort(function (a, b) {
@@ -2477,7 +1680,6 @@
             emptyState.style.display = filtered.length ? "none" : "block";
             renderFavoritesAndRecent();
             renderOpenSource();
-            renderGameSaveStatus();
         }
 
         function populateCategoryFilter() {
@@ -2552,10 +1754,6 @@
 
         searchInput.addEventListener("input", render);
         categorySelect.addEventListener("change", render);
-        platformSelect.addEventListener("change", render);
-        riskSelect.addEventListener("change", render);
-        gameSaveSearchInput.addEventListener("input", renderGameSaveStatus);
-        gameSaveFilterSelect.addEventListener("change", renderGameSaveStatus);
 
         function setSettingsToggleLabel(text) {
             if (settingsToggleLabel) {
@@ -2618,12 +1816,6 @@
             render();
         });
 
-        hideHighRiskToggle.addEventListener("change", function () {
-            writeSetting(HIDE_HIGH_RISK_KEY, hideHighRiskToggle.checked ? "1" : "0");
-            queueCloudAutoSync();
-            render();
-        });
-
         libraryViewSelect.addEventListener("change", function () {
             var value = libraryViewSelect.value;
             if (["cards", "grouped", "platform", "compact"].indexOf(value) === -1) {
@@ -2645,12 +1837,15 @@
             render();
         });
 
-        exportDataBtn.addEventListener("click", async function () {
-            try {
-                await exportSavedData();
-            } catch (error) {
-                alert("Could not export save data right now.");
+        cloudAutoSyncToggle.addEventListener("change", function () {
+            writeSetting(CLOUD_AUTO_SYNC_KEY, cloudAutoSyncToggle.checked ? "1" : "0");
+            if (cloudAutoSyncToggle.checked) {
+                queueCloudAutoSync();
             }
+        });
+
+        exportDataBtn.addEventListener("click", function () {
+            exportSavedData();
         });
 
         importDataBtn.addEventListener("click", function () {
@@ -2664,7 +1859,7 @@
             }
 
             var reader = new FileReader();
-            reader.onload = async function () {
+            reader.onload = function () {
                 try {
                     var payload = JSON.parse(String(reader.result || "{}"));
                     applySavedData(payload);
@@ -2702,7 +1897,6 @@
         });
 
         applySettings();
-        restartCloudPeriodicSync();
         setSettingsOpen(false);
         initSupabase();
         loadGames();
