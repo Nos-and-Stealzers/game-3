@@ -1393,8 +1393,18 @@
 
             try {
                 var rpcResult = await supabaseClient.rpc("upsert_my_user_settings", {
+                    target_user_id: activeAccountUser.id,
                     payload: settings
                 });
+                if (rpcResult.error) {
+                    var errorMessage = String(rpcResult.error.message || "").toLowerCase();
+                    var maybeSignatureMismatch = errorMessage.indexOf("function") !== -1 || errorMessage.indexOf("parameter") !== -1;
+                    if (maybeSignatureMismatch) {
+                        rpcResult = await supabaseClient.rpc("upsert_my_user_settings", {
+                            payload: settings
+                        });
+                    }
+                }
                 if (rpcResult.error) {
                     var tableWrite = await supabaseClient
                         .from("user_settings")
