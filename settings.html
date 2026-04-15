@@ -200,6 +200,27 @@
             color: #1f6b41;
         }
 
+        .meta.pending {
+            color: #785722;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .meta.pending::before {
+            content: "";
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid rgba(120, 87, 34, 0.25);
+            border-top-color: #785722;
+            animation: spin 0.75s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .btn {
             border: 0;
             text-decoration: none;
@@ -347,6 +368,30 @@
             gap: 8px;
         }
 
+        .username-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .username-suggestion-btn {
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--mild-ink);
+            border-radius: 999px;
+            font: inherit;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 5px 9px;
+            cursor: pointer;
+        }
+
+        .username-suggestion-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
         .hidden {
             display: none !important;
         }
@@ -476,6 +521,7 @@
                         <input id="userUsername" class="input" type="text" placeholder="username">
                         <span id="userUsernameHint" class="meta">Lowercase letters, numbers, and underscores only (3-24 chars).</span>
                         <span id="userUsernameAvailability" class="meta">Sign in to check username availability.</span>
+                        <div id="usernameSuggestions" class="username-suggestions hidden"></div>
                     </label>
                     <label class="setting-block">
                         <span class="meta">Language</span>
@@ -566,6 +612,7 @@
         var userUsername = document.getElementById("userUsername");
         var userUsernameHint = document.getElementById("userUsernameHint");
         var userUsernameAvailability = document.getElementById("userUsernameAvailability");
+        var usernameSuggestions = document.getElementById("usernameSuggestions");
         var userLanguage = document.getElementById("userLanguage");
         var userTimeZone = document.getElementById("userTimeZone");
         var userEmailUpdates = document.getElementById("userEmailUpdates");
@@ -862,6 +909,7 @@
                     usernameAvailabilityTimer = null;
                 }
                 setUsernameAvailabilityUi("error", "Fix username format to check availability.");
+                renderUsernameSuggestions([]);
                 usernameAvailabilitySnapshot = { username: normalized, known: false, available: true };
                 return false;
             }
@@ -872,12 +920,14 @@
                     usernameAvailabilityTimer = null;
                 }
                 setUsernameAvailabilityUi("", "Username optional.");
+                renderUsernameSuggestions([]);
                 usernameAvailabilitySnapshot = { username: "", known: true, available: true };
                 return true;
             }
 
             if (!activeAccountUser || !supabaseClient) {
                 setUsernameAvailabilityUi("", "Sign in to check username availability.");
+                renderUsernameSuggestions([]);
                 usernameAvailabilitySnapshot = { username: normalized, known: false, available: true };
                 return true;
             }
@@ -887,13 +937,81 @@
         }
 
         function setUsernameAvailabilityUi(state, message) {
-            userUsernameAvailability.classList.remove("error", "ok");
+            userUsernameAvailability.classList.remove("error", "ok", "pending");
             if (state === "error") {
                 userUsernameAvailability.classList.add("error");
             } else if (state === "ok") {
                 userUsernameAvailability.classList.add("ok");
+            } else if (state === "pending") {
+                userUsernameAvailability.classList.add("pending");
             }
             userUsernameAvailability.textContent = message;
+        }
+
+        function buildUsernameSuggestions(base) {
+            var normalizedBase = normalizeUsernameInput(base).replace(/^_+/, "");
+            if (!normalizedBase) {
+                normalizedBase = "player";
+            }
+            if (normalizedBase.length < 3) {
+                normalizedBase += "player";
+            }
+
+            var seed = normalizedBase.slice(0, 16);
+            var date = new Date();
+            var mm = String(date.getUTCMonth() + 1).padStart(2, "0");
+            var dd = String(date.getUTCDate()).padStart(2, "0");
+            var shortYear = String(date.getUTCFullYear()).slice(-2);
+            var random2 = Math.floor(Math.random() * 90 + 10);
+            var random3 = Math.floor(Math.random() * 900 + 100);
+
+            var raw = [
+                seed + shortYear,
+                seed + "_" + mm + dd,
+                seed + "_" + random2,
+                seed + random3,
+                seed.slice(0, 10) + "_" + mm + shortYear
+            ];
+
+            var seen = {};
+            return raw
+                .map(function (item) { return normalizeUsernameInput(item).slice(0, 24); })
+                .filter(function (item) {
+                    if (!USERNAME_REGEX.test(item)) {
+                        return false;
+                    }
+                    if (seen[item]) {
+                        return false;
+                    }
+                    seen[item] = true;
+                    return true;
+                })
+                .slice(0, 4);
+        }
+
+        function renderUsernameSuggestions(list) {
+            if (!usernameSuggestions) {
+                return;
+            }
+
+            usernameSuggestions.innerHTML = "";
+            if (!Array.isArray(list) || !list.length) {
+                usernameSuggestions.classList.add("hidden");
+                return;
+            }
+
+            list.forEach(function (candidate) {
+                var btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "username-suggestion-btn";
+                btn.textContent = candidate;
+                btn.addEventListener("click", function () {
+                    userUsername.value = candidate;
+                    updateUsernameUiFeedback();
+                });
+                usernameSuggestions.appendChild(btn);
+            });
+            usernameSuggestions.classList.remove("hidden");
         }
 
         async function checkUsernameAvailabilityInCloud(username) {
@@ -934,7 +1052,7 @@
                 clearTimeout(usernameAvailabilityTimer);
             }
 
-            setUsernameAvailabilityUi("", "Checking username availability...");
+            setUsernameAvailabilityUi("pending", "Checking username availability...");
             usernameAvailabilityTimer = setTimeout(async function () {
                 var requestId = ++usernameAvailabilityRequestId;
                 var outcome = await checkUsernameAvailabilityInCloud(username);
@@ -949,8 +1067,10 @@
                 };
                 if (!outcome.known) {
                     setUsernameAvailabilityUi("", outcome.message);
+                    renderUsernameSuggestions([]);
                 } else {
                     setUsernameAvailabilityUi(outcome.available ? "ok" : "error", outcome.message);
+                    renderUsernameSuggestions(outcome.available ? [] : buildUsernameSuggestions(username));
                 }
             }, 260);
         }
@@ -983,10 +1103,12 @@
 
             if (!outcome.known) {
                 setUsernameAvailabilityUi("", outcome.message);
+                renderUsernameSuggestions([]);
                 return true;
             }
 
             setUsernameAvailabilityUi(outcome.available ? "ok" : "error", outcome.message);
+            renderUsernameSuggestions(outcome.available ? [] : buildUsernameSuggestions(username));
             return outcome.available;
         }
 
@@ -998,6 +1120,7 @@
             if (!isSignedIn) {
                 userSettingsStatus.textContent = "Sign in to edit user settings.";
                 setUsernameAvailabilityUi("", "Sign in to check username availability.");
+                renderUsernameSuggestions([]);
             }
         }
 
