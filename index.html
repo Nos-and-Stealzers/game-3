@@ -380,6 +380,42 @@
             color: var(--muted);
         }
 
+        .check input[type="checkbox"] {
+            appearance: none;
+            width: 17px;
+            height: 17px;
+            border: 1.5px solid var(--line);
+            border-radius: 5px;
+            background: #fff;
+            display: inline-grid;
+            place-items: center;
+            margin: 0;
+            cursor: pointer;
+            transition: border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
+        }
+
+        .check input[type="checkbox"]::after {
+            content: "";
+            width: 9px;
+            height: 5px;
+            border-left: 2px solid #fff;
+            border-bottom: 2px solid #fff;
+            transform: rotate(-45deg) scale(0);
+            transform-origin: center;
+            transition: transform 0.12s ease;
+            margin-top: -1px;
+        }
+
+        .check input[type="checkbox"]:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        .check input[type="checkbox"]:checked::after {
+            transform: rotate(-45deg) scale(1);
+        }
+
         .save-actions {
             display: flex;
             gap: 8px;
@@ -1444,6 +1480,29 @@
             return capitalize(game.category);
         }
 
+        function buildThumbIconDataUrl(game) {
+            var label = typeof game.title === "string" ? game.title.trim() : "";
+            var initial = label ? label.charAt(0).toUpperCase() : "G";
+            if (!/^[A-Z0-9]$/.test(initial)) {
+                initial = "G";
+            }
+            var categoryLabel = capitalize(game.category || "game").slice(0, 12);
+            var safeCategory = categoryLabel
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+            var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">' +
+                '<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">' +
+                '<stop offset="0%" stop-color="#eff4ff"/><stop offset="100%" stop-color="#d9e4fb"/>' +
+                '</linearGradient></defs>' +
+                '<rect width="320" height="180" rx="0" fill="url(#bg)"/>' +
+                '<circle cx="62" cy="60" r="34" fill="#bed0f7"/>' +
+                '<text x="62" y="72" font-size="40" text-anchor="middle" fill="#2b4c86" font-family="Verdana, Arial, sans-serif" font-weight="700">' + initial + '</text>' +
+                '<text x="20" y="154" font-size="22" fill="#49679d" font-family="Verdana, Arial, sans-serif" font-weight="700">' + safeCategory + '</text>' +
+                '</svg>';
+            return 'url("data:image/svg+xml;utf8,' + encodeURIComponent(svg) + '")';
+        }
+
         function createCard(game, compact) {
             var favorites = readArray(FAVORITES_KEY);
             var isFavorite = favorites.indexOf(game.id) !== -1;
@@ -1455,12 +1514,17 @@
             var playLabel = openDirectFirst ? "Play (Fast)" : "Play";
             var directTrackingAttr = ' data-recent-id="' + game.id + '"';
             var playTrackingAttr = openDirectFirst ? directTrackingAttr : '';
+            var hasPfp = typeof game.pfp === "string" && game.pfp.length > 0;
+            var gameGradient = typeof game.gradient === "string" && game.gradient.length > 0
+                ? game.gradient
+                : "linear-gradient(135deg, #edf2fb, #d7e2f7)";
             var thumbParts = [];
-            if (typeof game.pfp === "string" && game.pfp.length > 0) {
+            thumbParts.push(buildThumbIconDataUrl(game));
+            if (hasPfp) {
                 thumbParts.push('url(' + JSON.stringify(game.pfp) + ')');
             }
-            thumbParts.push(game.gradient);
-            var thumbStyle = 'background:' + thumbParts.join(',');
+            thumbParts.push(hasPfp ? gameGradient : 'linear-gradient(135deg, rgba(237,242,251,0.9), rgba(215,226,247,0.9))');
+            var thumbStyle = 'background-image:' + thumbParts.join(',');
 
             return '<article class="' + cardClass + '">' +
                 '<div class="thumb" style="' + thumbStyle + '"></div>' +
