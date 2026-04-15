@@ -175,10 +175,27 @@
     window.onload = function () {
         const map = new Map();
 
+        function normalizePercent(percent) {
+            if (!Number.isFinite(percent)) return 0;
+            return Math.max(0, Math.min(100, Math.floor(percent)));
+        }
+
+        function calculateHalfProgress(loaded, total, offset = 0) {
+            if (!Number.isFinite(total) || total <= 0) {
+                return normalizePercent(offset);
+            }
+            return normalizePercent((loaded / total) * 50 + offset);
+        }
+
+        function progressLabel(text, isEstimated) {
+            return isEstimated ? text + ' (estimating...)' : text;
+        }
+
         function updateProgress(text, percent) {
-            document.title = percent + '% ' + gametitle
-            document.getElementById('percentage').innerHTML = percent + '%';
-            document.getElementById('bar').style.width = percent + '%';
+            const safePercent = normalizePercent(percent);
+            document.title = safePercent + '% ' + gametitle
+            document.getElementById('percentage').innerHTML = safePercent + '%';
+            document.getElementById('bar').style.width = safePercent + '%';
             document.getElementById('stage').innerHTML = text;
         }
 
@@ -232,6 +249,7 @@
 
             const contentLength = res.headers.get("Content-Length");
             const total = parseInt(contentLength, 10);
+            const isDownloadSizeEstimated = !Number.isFinite(total) || total <= 0;
             const reader = res.body.getReader();
             let loaded = 0;
             const chunks = [];
@@ -241,7 +259,7 @@
                 if (done) break;
                 chunks.push(value);
                 loaded += value.length;
-                updateProgress('RETURNING GEARS...', Math.floor((loaded / total / 2) * 100));
+                updateProgress(progressLabel('RETURNING GEARS...', isDownloadSizeEstimated), calculateHalfProgress(loaded, total));
             }
 
             const arrayBuffer = await new Blob(chunks).arrayBuffer();
@@ -254,7 +272,7 @@
                 const blob = await file.async("blob");
                 const url = URL.createObjectURL(blob);
                 map.set(files[i], url);
-                updateProgress('BOOTING UP ARCHIVE...', Math.floor(((i + 1) / totalFiles / 2) * 100 + 50));
+                updateProgress('BOOTING UP ARCHIVE...', calculateHalfProgress(i + 1, totalFiles, 50));
             }
         }
 
@@ -284,11 +302,13 @@
                     fetch(part, { method: 'HEAD' }).then(res => {
                         try {
                             if (!res.ok) throw new Error("Missing part: " + part);
-                            return parseInt(res.headers.get("Content-Length") || "0", 10);
+                            const partSize = parseInt(res.headers.get("Content-Length") || "0", 10);
+                            return Number.isFinite(partSize) && partSize > 0 ? partSize : 0;
                         } catch (error) { document.getElementById('stage').innerHTML = "ERROR: MISSING FILE(S)..." }
                     })
                 )).then(sizes => {
                     totalSize = sizes.reduce((a, b) => a + b, 0);
+                    const isArchiveSizeEstimated = !Number.isFinite(totalSize) || totalSize <= 0;
                     function fetchPart(index) {
                         if (index >= fileParts.length) {
                             let mergedBlob = new Blob(buffers);
@@ -303,7 +323,7 @@
                         }).then((data) => {
                             buffers.push(data);
                             loadedSize += data.byteLength;
-                            updateProgress('LOCATING ARCHIVE...', Math.floor((loadedSize / totalSize / 2) * 100));
+                            updateProgress(progressLabel('LOCATING ARCHIVE...', isArchiveSizeEstimated), calculateHalfProgress(loadedSize, totalSize));
                             fetchPart(index + 1);
                         }).catch(reject);
                     }
