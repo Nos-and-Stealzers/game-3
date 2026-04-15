@@ -605,6 +605,9 @@
         .thumb {
             height: 112px;
             position: relative;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
         }
 
         .thumb::after {
@@ -1420,9 +1423,15 @@
             var playLabel = openDirectFirst ? "Play (Fast)" : "Play";
             var directTrackingAttr = ' data-recent-id="' + game.id + '"';
             var playTrackingAttr = openDirectFirst ? directTrackingAttr : '';
+            var thumbParts = [];
+            if (typeof game.pfp === "string" && game.pfp.length > 0) {
+                thumbParts.push('url(' + JSON.stringify(game.pfp) + ')');
+            }
+            thumbParts.push(game.gradient);
+            var thumbStyle = 'background:' + thumbParts.join(',');
 
             return '<article class="' + cardClass + '">' +
-                '<div class="thumb" style="background:' + game.gradient + '"></div>' +
+                '<div class="thumb" style="' + thumbStyle + '"></div>' +
                 '<div class="body">' +
                 '<div class="chip-row">' +
                 '<span class="chip type">' + capitalize(game.category) + '</span>' +
@@ -1597,7 +1606,7 @@
 
         async function loadGames() {
             try {
-                var response = await fetch("games.json", { cache: "no-cache" });
+                var response = await fetch("games.json", { cache: "force-cache" });
                 if (!response.ok) {
                     throw new Error("Failed to load games.json");
                 }
@@ -1649,7 +1658,13 @@
             render();
         });
 
-        searchInput.addEventListener("input", render);
+        var searchDebounceTimer = null;
+        searchInput.addEventListener("input", function () {
+            if (searchDebounceTimer) {
+                clearTimeout(searchDebounceTimer);
+            }
+            searchDebounceTimer = setTimeout(render, 90);
+        });
         categorySelect.addEventListener("change", render);
 
         openSourceOnlyToggle.addEventListener("change", function () {

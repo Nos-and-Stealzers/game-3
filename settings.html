@@ -259,6 +259,26 @@
             gap: 6px;
         }
 
+        .save-status-groups {
+            display: grid;
+            gap: 10px;
+        }
+
+        .save-status-group {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--panel-2);
+            padding: 10px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .save-status-group h3 {
+            margin: 0;
+            font-size: 0.88rem;
+            color: var(--ink);
+        }
+
         .save-sync-item {
             border: 1px solid var(--line);
             border-radius: 10px;
@@ -376,8 +396,9 @@
             </article>
 
             <article class="panel">
-                <h2>FNAF Save Sync Status</h2>
-                <ul id="fnafSaveStatus" class="save-sync-list"></ul>
+                <h2>All Game Save Status</h2>
+                <p class="meta">Separated by category so it is easier to scan.</p>
+                <section id="allGameSaveStatus" class="save-status-groups"></section>
             </article>
 
             <article class="panel" style="grid-column: 1 / -1;">
@@ -412,16 +433,7 @@
         var SECURITY_CHECKLIST_KEY = "gamehub_security_checklist";
         var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, PERFORMANCE_PROFILE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, CLOUD_AUTO_SYNC_KEY, GAME_SAVES_KEY, LOCAL_SAVE_UPDATED_KEY, CLOUD_LAST_SYNC_KEY];
 
-        var FNAF_SAVE_STATUS_ITEMS = [
-            { id: "fnaf-1", title: "FNAF 1" },
-            { id: "fnaf-2", title: "FNAF 2" },
-            { id: "fnaf-3", title: "FNAF 3" },
-            { id: "fnaf-4", title: "FNAF 4" },
-            { id: "fnaf-world", title: "FNAF World" },
-            { id: "fnaf-sl", title: "Sister Location" },
-            { id: "fnaf-ps", title: "Pizzeria Sim" },
-            { id: "fnaf-ucn", title: "Ultimate Custom Night" }
-        ];
+        var gamesCatalog = [];
 
         var themeSelect = document.getElementById("themeSelect");
         var libraryViewSelect = document.getElementById("libraryViewSelect");
@@ -439,7 +451,7 @@
         var cloudDataStatus = document.getElementById("cloudDataStatus");
         var localSaveChip = document.getElementById("localSaveChip");
         var cloudSaveChip = document.getElementById("cloudSaveChip");
-        var fnafSaveStatus = document.getElementById("fnafSaveStatus");
+        var allGameSaveStatus = document.getElementById("allGameSaveStatus");
         var securityCheckboxes = Array.prototype.slice.call(document.querySelectorAll("[data-security-key]"));
 
         var storageFallback = {};
@@ -518,17 +530,83 @@
         }
 
         function readGameSaveById(allSaves, gameId) {
-            if (allSaves[gameId] && typeof allSaves[gameId] === "object") return allSaves[gameId];
+            if (allSaves[gameId] && typeof allSaves[gameId] === "object") {
+                return allSaves[gameId];
+            }
+
+            var aliases = {
+                "fnaf-world": ["fnaf-w", "fnafworld"],
+                "fnaf-sl": ["fnaf-sister-location", "fnafsl"],
+                "fnaf-ps": ["fnaf-pizzeria-simulator", "fnafps"],
+                "fnaf-ucn": ["fnaf-ultimate-custom-night", "fnafucn"]
+            };
+
+            var gameAliases = aliases[gameId] || [];
+            for (var i = 0; i < gameAliases.length; i++) {
+                var aliasId = gameAliases[i];
+                if (allSaves[aliasId] && typeof allSaves[aliasId] === "object") {
+                    return allSaves[aliasId];
+                }
+            }
+
             return null;
         }
 
-        function renderFnafSaveStatus() {
+        function groupNameForGame(game) {
+            var cat = String(game.category || "other").toLowerCase();
+            if (cat === "horror" && String(game.id || "").indexOf("fnaf-") === 0) {
+                return "FNAF";
+            }
+            return cat.charAt(0).toUpperCase() + cat.slice(1);
+        }
+
+        function renderAllGameSaveStatus() {
             var allSaves = readObject(GAME_SAVES_KEY);
-            fnafSaveStatus.innerHTML = FNAF_SAVE_STATUS_ITEMS.map(function (item) {
-                var saveData = readGameSaveById(allSaves, item.id);
-                var updatedAt = saveData ? saveData.updatedAt : "";
-                return '<li class="save-sync-item"><span>' + item.title + '</span><span>' + formatSyncTime(updatedAt) + '</span></li>';
+            if (!gamesCatalog.length) {
+                allGameSaveStatus.innerHTML = '<div class="meta">Loading game catalog...</div>';
+                return;
+            }
+
+            var grouped = {};
+            gamesCatalog.forEach(function (game) {
+                var key = groupNameForGame(game);
+                if (!grouped[key]) {
+                    grouped[key] = [];
+                }
+                grouped[key].push(game);
+            });
+
+            var groupKeys = Object.keys(grouped).sort(function (a, b) {
+                if (a === "FNAF") return -1;
+                if (b === "FNAF") return 1;
+                return a.localeCompare(b);
+            });
+
+            allGameSaveStatus.innerHTML = groupKeys.map(function (groupKey) {
+                var items = grouped[groupKey].sort(function (a, b) {
+                    return String(a.title || "").localeCompare(String(b.title || ""));
+                }).map(function (game) {
+                    var saveData = readGameSaveById(allSaves, game.id);
+                    var updatedAt = saveData ? saveData.updatedAt : "";
+                    return '<li class="save-sync-item"><span>' + game.title + '</span><span>' + formatSyncTime(updatedAt) + '</span></li>';
+                }).join("");
+
+                return '<section class="save-status-group"><h3>' + groupKey + '</h3><ul class="save-sync-list">' + items + '</ul></section>';
             }).join("");
+        }
+
+        async function loadGamesCatalog() {
+            try {
+                var response = await fetch("games.json", { cache: "force-cache" });
+                if (!response.ok) {
+                    throw new Error("Unable to load games catalog.");
+                }
+                var data = await response.json();
+                gamesCatalog = Array.isArray(data) ? data : [];
+            } catch (error) {
+                gamesCatalog = [];
+            }
+            renderAllGameSaveStatus();
         }
 
         function getSupabaseConfig() {
@@ -563,7 +641,7 @@
             playableOnlyToggle.checked = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
             cloudAutoSyncToggle.checked = readSetting(CLOUD_AUTO_SYNC_KEY, "1") === "1";
             renderSaveHealthStatus();
-            renderFnafSaveStatus();
+            renderAllGameSaveStatus();
             applySecurityChecklistState();
         }
 
@@ -712,6 +790,7 @@
         });
 
         applyFormState();
+        loadGamesCatalog();
         initSupabase();
     </script>
 </body>

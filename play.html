@@ -249,6 +249,7 @@
         <h1 id="gameTitle" class="title">Loading game...</h1>
         <div class="actions">
             <a class="btn alt" href="index.html">Back to Library</a>
+            <a class="btn alt" href="settings.html">Settings</a>
             <button id="fullscreenBtn" type="button" class="btn alt">Fullscreen</button>
             <a id="openDirect" class="btn" href="#" target="_blank" rel="noopener noreferrer">Open Direct</a>
         </div>
@@ -401,7 +402,7 @@
 
         async function loadCatalog() {
             try {
-                var response = await fetch("games.json", { cache: "no-cache" });
+                var response = await fetch("games.json", { cache: "force-cache" });
                 if (!response.ok) {
                     throw new Error("Could not load games.json");
                 }
