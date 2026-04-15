@@ -1212,7 +1212,7 @@
             var cfg = getSupabaseConfig();
             var hasFactory = !!(window.supabase && typeof window.supabase.createClient === "function");
             if (!hasFactory || !cfg.url || !cfg.anonKey) {
-                updateAuthStatus("Supabase: not configured.");
+                updateAuthStatus("Cloud: not configured.");
                 return;
             }
 
@@ -1220,15 +1220,15 @@
                 supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
                 var auth = await supabaseClient.auth.getUser();
                 var user = auth && auth.data ? auth.data.user : null;
-                updateAuthStatus(user && user.email ? ("Signed in: " + user.email) : "Supabase ready. Sign in to use cloud save.");
+                updateAuthStatus(user && user.email ? ("Signed in: " + user.email) : "Cloud ready. Sign in to use cloud save.");
 
                 supabaseClient.auth.onAuthStateChange(function (_event, session) {
                     var sessionUser = session && session.user ? session.user : null;
-                    updateAuthStatus(sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Supabase ready. Sign in to use cloud save.");
+                    updateAuthStatus(sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Cloud ready. Sign in to use cloud save.");
                 });
             } catch (error) {
                 supabaseClient = null;
-                updateAuthStatus("Supabase init failed.");
+                updateAuthStatus("Cloud init failed.");
             }
         }
 

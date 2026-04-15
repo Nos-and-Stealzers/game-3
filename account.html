@@ -273,7 +273,7 @@
     </header>
 
     <section class="content">
-      <p id="authStatus" class="status">Checking Supabase setup...</p>
+      <p id="authStatus" class="status">Checking cloud setup...</p>
       <p id="cloudAutoSyncStatus" class="muted">Autosave heartbeat: initializing...</p>
 
       <section class="panel">
@@ -631,7 +631,7 @@
       if (!hasFactory || !cfg.url || !cfg.anonKey) {
         setButtonsDisabled(true);
         setAdminPortalVisibility("");
-        setStatus("Supabase is not configured yet. Add keys in js/supabase.config.js.", "warn");
+        setStatus("Cloud is not configured yet. Add keys in js/supabase.config.js.", "warn");
         setHeartbeat("Autosave heartbeat: waiting for setup");
         return;
       }
@@ -646,7 +646,7 @@
           await autoLoadCloudForUser(user);
         } else {
           setAdminPortalVisibility("");
-          setStatus("Supabase ready. Sign in to sync.", "warn");
+          setStatus("Cloud ready. Sign in to sync.", "warn");
         }
 
         supabaseClient.auth.onAuthStateChange(function (_event, session) {
@@ -665,7 +665,7 @@
       } catch (error) {
         setButtonsDisabled(true);
         setAdminPortalVisibility("");
-        setStatus("Supabase init failed.", "error");
+        setStatus("Cloud init failed.", "error");
       }
     }
 
