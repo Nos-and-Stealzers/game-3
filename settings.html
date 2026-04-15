@@ -187,6 +187,15 @@
             font-weight: 700;
         }
 
+        .input.invalid {
+            border-color: #d64b4b;
+            box-shadow: 0 0 0 2px rgba(214, 75, 75, 0.14);
+        }
+
+        .meta.error {
+            color: #b33939;
+        }
+
         .btn {
             border: 0;
             text-decoration: none;
@@ -461,6 +470,7 @@
                     <label class="setting-block">
                         <span class="meta">Username</span>
                         <input id="userUsername" class="input" type="text" placeholder="username">
+                        <span id="userUsernameHint" class="meta">Lowercase letters, numbers, and underscores only (3-24 chars).</span>
                     </label>
                     <label class="setting-block">
                         <span class="meta">Language</span>
@@ -549,6 +559,7 @@
         var userSettingsPanel = document.getElementById("userSettingsPanel");
         var userDisplayName = document.getElementById("userDisplayName");
         var userUsername = document.getElementById("userUsername");
+        var userUsernameHint = document.getElementById("userUsernameHint");
         var userLanguage = document.getElementById("userLanguage");
         var userTimeZone = document.getElementById("userTimeZone");
         var userEmailUpdates = document.getElementById("userEmailUpdates");
@@ -562,6 +573,7 @@
         var storageFallback = {};
         var supabaseClient = null;
         var activeAccountUser = null;
+        var USERNAME_REGEX = /^[a-z0-9_]{3,24}$/;
 
         function storageGet(key) {
             try { return localStorage.getItem(key); } catch (error) { return Object.prototype.hasOwnProperty.call(storageFallback, key) ? storageFallback[key] : null; }
@@ -804,6 +816,35 @@
             };
         }
 
+        function normalizeUsernameInput(raw) {
+            return String(raw || "")
+                .toLowerCase()
+                .replace(/[^a-z0-9_]/g, "")
+                .slice(0, 24);
+        }
+
+        function validateUsernameValue(username) {
+            if (!username) {
+                return { valid: true, message: "Username optional. Leave blank or use 3-24 lowercase letters/numbers/underscore." };
+            }
+            if (!USERNAME_REGEX.test(username)) {
+                return { valid: false, message: "Username must be 3-24 chars: lowercase letters, numbers, underscore." };
+            }
+            return { valid: true, message: "Username format looks good." };
+        }
+
+        function updateUsernameUiFeedback() {
+            var normalized = normalizeUsernameInput(userUsername.value);
+            if (normalized !== userUsername.value) {
+                userUsername.value = normalized;
+            }
+            var validation = validateUsernameValue(normalized);
+            userUsername.classList.toggle("invalid", !validation.valid);
+            userUsernameHint.classList.toggle("error", !validation.valid);
+            userUsernameHint.textContent = validation.message;
+            return validation.valid;
+        }
+
         function setAccountVisibility(user) {
             activeAccountUser = user || null;
             var isSignedIn = !!(activeAccountUser && activeAccountUser.id);
@@ -1027,6 +1068,8 @@
         fastModeToggle.addEventListener("change", function () { writeSetting(FAST_MODE_KEY, fastModeToggle.checked ? "1" : "0"); });
         cloudAutoSyncToggle.addEventListener("change", function () { writeSetting(CLOUD_AUTO_SYNC_KEY, cloudAutoSyncToggle.checked ? "1" : "0"); });
         saveStatusGroupFilter.addEventListener("change", renderAllGameSaveStatus);
+        userUsername.addEventListener("input", updateUsernameUiFeedback);
+        userUsername.addEventListener("blur", updateUsernameUiFeedback);
 
         function applyPreset(type) {
             if (type === "chromebook") {
@@ -1061,6 +1104,10 @@
         });
 
         saveUserSettingsBtn.addEventListener("click", async function () {
+            if (!updateUsernameUiFeedback()) {
+                userSettingsStatus.textContent = "Fix username format before saving.";
+                return;
+            }
             var settings = normalizeUserSettings(collectUserSettingsForm());
             writeUserSettings(settings);
             userSettingsStatus.textContent = "User settings saved locally.";
@@ -1136,6 +1183,7 @@
 
         applyFormState();
         applyUserSettingsForm();
+        updateUsernameUiFeedback();
         loadGamesCatalog();
         initSupabase();
     </script>
