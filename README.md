@@ -32,6 +32,7 @@ Then open:
 - `retro-bowl-plus` entry in `games.json`: External game sourced from `LucasGrimm389/help2` via homepage URL.
 - `games.json`: Central game catalog used by both `index.html` and `play.html`.
 - `js/supabase.config.js`: Supabase public config (URL + anon key) loaded by `index.html`.
+- `js/cloud-autosync.js`: Shared periodic cloud sync worker used during active play sessions.
 - `supabase/setup.sql`: SQL to create and secure the `user_saves` table for cloud save sync.
 - `privacy.html`: Privacy and terms page for public deployment.
 - `404.html`: Not found page for static host fallback.
@@ -81,9 +82,10 @@ The script reports status codes and key headers like `X-Frame-Options` and `Cont
 	- Click `Save your data` to open the dedicated sign-in page
 	- Sign Up or Sign In on `account.html`
 	- Toggle `Cloud Auto Sync` on/off as desired
-	- `Cloud Save` to upload local favorites/settings
+	- `Cloud Save` to upload local favorites/settings/game data snapshot
 	- `Cloud Load` to pull saved data back
-	- After sign-in, local favorites/settings changes also auto-sync in the background
+	- After sign-in, auto-sync runs every 30 seconds on hub/account/player pages and local FNAF pages
+	- `Cloud Auto Sync Status` in hub/account shows the latest autosave heartbeat
 
 If config is empty, the UI will show `Supabase: not configured.` and stay local-only.
 
