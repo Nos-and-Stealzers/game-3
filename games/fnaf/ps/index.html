@@ -174,8 +174,8 @@
     // -----------------
     window.onload = function () {
         const map = new Map();
-        const REQUEST_TIMEOUT_MS = 20000;
-        const MAX_REQUEST_RETRIES = 2;
+        const REQUEST_TIMEOUT_MS = 10000;
+        const MAX_REQUEST_RETRIES = 1;
 
         function normalizePercent(percent) {
             if (!Number.isFinite(percent)) return 0;
@@ -330,40 +330,22 @@
 
         function mergeFiles(fileParts) {
             return new Promise((resolve, reject) => {
-                let buffers = [];
-                let totalSize = 0;
-                let loadedSize = 0;
-                Promise.all(fileParts.map(part =>
-                    fetchWithRetry(part, { method: 'HEAD' }).then(res => {
-                        try {
-                            if (!res.ok) throw new Error("Missing part: " + part);
-                            const partSize = parseInt(res.headers.get("Content-Length") || "0", 10);
-                            return Number.isFinite(partSize) && partSize > 0 ? partSize : 0;
-                        } catch (error) { document.getElementById('stage').innerHTML = "ERROR: MISSING FILE(S)..." }
+                let buffers = new Array(fileParts.length);
+                let loadedParts = 0;
+
+                Promise.all(fileParts.map((part, index) =>
+                    fetchWithRetry(part).then((response) => {
+                        if (!response.ok) throw new Error("Missing part: " + part);
+                        return response.arrayBuffer();
+                    }).then((data) => {
+                        buffers[index] = data;
+                        loadedParts++;
+                        updateProgress(progressLabel('LOCATING ARCHIVE...', true), calculateHalfProgress(loadedParts, fileParts.length));
                     })
-                )).then(sizes => {
-                    totalSize = sizes.reduce((a, b) => a + b, 0);
-                    const isArchiveSizeEstimated = !Number.isFinite(totalSize) || totalSize <= 0;
-                    function fetchPart(index) {
-                        if (index >= fileParts.length) {
-                            let mergedBlob = new Blob(buffers);
-                            let mergedFileUrl = URL.createObjectURL(mergedBlob);
-                            resolve(mergedFileUrl);
-                            return;
-                        }
-
-                        fetchWithRetry(fileParts[index]).then((response) => {
-                            if (!response.ok) throw new Error("Missing part: " + fileParts[index]);
-                            return response.arrayBuffer();
-                        }).then((data) => {
-                            buffers.push(data);
-                            loadedSize += data.byteLength;
-                            updateProgress(progressLabel('LOCATING ARCHIVE...', isArchiveSizeEstimated), calculateHalfProgress(loadedSize, totalSize));
-                            fetchPart(index + 1);
-                        }).catch(reject);
-                    }
-
-                    fetchPart(0);
+                )).then(() => {
+                    let mergedBlob = new Blob(buffers);
+                    let mergedFileUrl = URL.createObjectURL(mergedBlob);
+                    resolve(mergedFileUrl);
                 }).catch(reject);
             });
         }
