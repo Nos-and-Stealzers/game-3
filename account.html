@@ -325,6 +325,10 @@
     var supabaseClient = null;
     var isConfigured = false;
     var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
+    var INDEXED_DB_SYNC_MAX_DATABASES = 6;
+    var INDEXED_DB_SYNC_MAX_STORES_PER_DB = 12;
+    var INDEXED_DB_SYNC_MAX_RECORDS_PER_STORE = 200;
+    var INDEXED_DB_SYNC_MAX_VALUE_CHARS = 120000;
 
     function storageGet(key) {
       try {
@@ -460,6 +464,263 @@
       });
     }
 
+    function toJsonSafeValue(value, maxChars) {
+      try {
+        var json = JSON.stringify(value);
+        if (typeof json !== "string" || json.length > maxChars) {
+          return null;
+        }
+        return JSON.parse(json);
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function shouldSyncIndexedDbName(name) {
+      if (typeof name !== "string" || !name) {
+        return false;
+      }
+      if (/supabase|firebase|auth|workbox|service ?worker|cache/i.test(name)) {
+        return false;
+      }
+      return true;
+    }
+
+    function getIndexedDbDatabaseList() {
+      try {
+        if (!window.indexedDB || typeof window.indexedDB.databases !== "function") {
+          return Promise.resolve([]);
+        }
+        return window.indexedDB.databases().then(function (list) {
+          return Array.isArray(list) ? list : [];
+        }).catch(function () {
+          return [];
+        });
+      } catch (error) {
+        return Promise.resolve([]);
+      }
+    }
+
+    function openIndexedDb(name, version, onUpgradeNeeded) {
+      return new Promise(function (resolve, reject) {
+        var request;
+        try {
+          request = (typeof version === "number" && version > 0)
+            ? window.indexedDB.open(name, version)
+            : window.indexedDB.open(name);
+        } catch (error) {
+          reject(error);
+          return;
+        }
+
+        if (typeof onUpgradeNeeded === "function") {
+          request.onupgradeneeded = function (event) {
+            onUpgradeNeeded(event);
+          };
+        }
+
+        request.onsuccess = function () {
+          resolve(request.result);
+        };
+        request.onerror = function () {
+          reject(request.error || new Error("Unable to open IndexedDB"));
+        };
+      });
+    }
+
+    function deleteIndexedDb(name) {
+      return new Promise(function (resolve) {
+        var request;
+        try {
+          request = window.indexedDB.deleteDatabase(name);
+        } catch (error) {
+          resolve();
+          return;
+        }
+        request.onsuccess = function () { resolve(); };
+        request.onerror = function () { resolve(); };
+        request.onblocked = function () { resolve(); };
+      });
+    }
+
+    function readIndexedDbStoreSnapshot(db, storeName) {
+      return new Promise(function (resolve, reject) {
+        var tx;
+        try {
+          tx = db.transaction(storeName, "readonly");
+        } catch (error) {
+          resolve(null);
+          return;
+        }
+
+        var store = tx.objectStore(storeName);
+        var out = {
+          keyPath: typeof store.keyPath === "string" ? store.keyPath : null,
+          autoIncrement: store.autoIncrement === true,
+          records: []
+        };
+
+        var cursorRequest = store.openCursor();
+        cursorRequest.onsuccess = function () {
+          var cursor = cursorRequest.result;
+          if (!cursor) {
+            resolve(out);
+            return;
+          }
+
+          if (out.records.length >= INDEXED_DB_SYNC_MAX_RECORDS_PER_STORE) {
+            resolve(out);
+            return;
+          }
+
+          var safeValue = toJsonSafeValue(cursor.value, INDEXED_DB_SYNC_MAX_VALUE_CHARS);
+          var safeKey = toJsonSafeValue(cursor.key, 4000);
+          if (safeValue !== null && safeKey !== null) {
+            out.records.push({ key: safeKey, value: safeValue });
+          }
+          cursor.continue();
+        };
+        cursorRequest.onerror = function () {
+          reject(cursorRequest.error || new Error("Unable to read IndexedDB store"));
+        };
+      });
+    }
+
+    async function snapshotIndexedDb() {
+      if (!window.indexedDB) {
+        return {};
+      }
+
+      var out = {};
+      var dbList = await getIndexedDbDatabaseList();
+      var names = dbList
+        .map(function (db) { return db && typeof db.name === "string" ? db.name : ""; })
+        .filter(function (name) { return shouldSyncIndexedDbName(name); })
+        .slice(0, INDEXED_DB_SYNC_MAX_DATABASES);
+
+      for (var i = 0; i < names.length; i++) {
+        var name = names[i];
+        var info = dbList.find(function (db) { return db && db.name === name; }) || {};
+        var version = typeof info.version === "number" && info.version > 0 ? Math.floor(info.version) : 1;
+        var db = null;
+        try {
+          db = await openIndexedDb(name, version);
+          var storeNames = Array.from(db.objectStoreNames || []).slice(0, INDEXED_DB_SYNC_MAX_STORES_PER_DB);
+          var stores = {};
+          for (var s = 0; s < storeNames.length; s++) {
+            var storeName = storeNames[s];
+            var storeSnapshot = await readIndexedDbStoreSnapshot(db, storeName);
+            if (storeSnapshot) {
+              stores[storeName] = storeSnapshot;
+            }
+          }
+          if (Object.keys(stores).length > 0) {
+            out[name] = { version: version, stores: stores };
+          }
+        } catch (error) {
+        } finally {
+          if (db) {
+            db.close();
+          }
+        }
+      }
+
+      return out;
+    }
+
+    function writeIndexedDbStore(db, storeName, storeData) {
+      return new Promise(function (resolve) {
+        var tx;
+        try {
+          tx = db.transaction(storeName, "readwrite");
+        } catch (error) {
+          resolve();
+          return;
+        }
+        var store = tx.objectStore(storeName);
+        var records = Array.isArray(storeData.records) ? storeData.records : [];
+
+        try {
+          store.clear();
+        } catch (error) {
+        }
+
+        records.forEach(function (entry) {
+          if (!entry || typeof entry !== "object") {
+            return;
+          }
+          try {
+            if (store.keyPath) {
+              store.put(entry.value);
+            } else {
+              store.put(entry.value, entry.key);
+            }
+          } catch (error) {
+          }
+        });
+
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { resolve(); };
+        tx.onabort = function () { resolve(); };
+      });
+    }
+
+    async function applyIndexedDbSnapshot(indexedDbSnapshot) {
+      if (!window.indexedDB || !indexedDbSnapshot || typeof indexedDbSnapshot !== "object" || Array.isArray(indexedDbSnapshot)) {
+        return;
+      }
+
+      var dbNames = Object.keys(indexedDbSnapshot)
+        .filter(function (name) { return shouldSyncIndexedDbName(name); })
+        .slice(0, INDEXED_DB_SYNC_MAX_DATABASES);
+
+      for (var i = 0; i < dbNames.length; i++) {
+        var dbName = dbNames[i];
+        var dbData = indexedDbSnapshot[dbName];
+        if (!dbData || typeof dbData !== "object" || Array.isArray(dbData)) {
+          continue;
+        }
+        var stores = dbData.stores;
+        if (!stores || typeof stores !== "object" || Array.isArray(stores)) {
+          continue;
+        }
+
+        await deleteIndexedDb(dbName);
+        var version = typeof dbData.version === "number" && dbData.version > 0 ? Math.floor(dbData.version) : 1;
+
+        var db = null;
+        try {
+          db = await openIndexedDb(dbName, version, function (event) {
+            var upgradeDb = event.target.result;
+            Object.keys(stores).slice(0, INDEXED_DB_SYNC_MAX_STORES_PER_DB).forEach(function (storeName) {
+              if (upgradeDb.objectStoreNames.contains(storeName)) {
+                return;
+              }
+              var storeData = stores[storeName] || {};
+              var options = { autoIncrement: storeData.autoIncrement === true };
+              if (typeof storeData.keyPath === "string" && storeData.keyPath) {
+                options.keyPath = storeData.keyPath;
+              }
+              try {
+                upgradeDb.createObjectStore(storeName, options);
+              } catch (error) {
+              }
+            });
+          });
+
+          var storeNames = Object.keys(stores).slice(0, INDEXED_DB_SYNC_MAX_STORES_PER_DB);
+          for (var s = 0; s < storeNames.length; s++) {
+            await writeIndexedDbStore(db, storeNames[s], stores[storeNames[s]] || {});
+          }
+        } catch (error) {
+        } finally {
+          if (db) {
+            db.close();
+          }
+        }
+      }
+    }
+
     function snapshotSavedData() {
       return {
         version: 1,
@@ -480,7 +741,13 @@
       };
     }
 
-    function applySavedData(payload) {
+    async function snapshotSavedDataAsync() {
+      var payload = snapshotSavedData();
+      payload.data.indexedDb = await snapshotIndexedDb();
+      return payload;
+    }
+
+    async function applySavedData(payload) {
       if (!payload || typeof payload !== "object" || !payload.data || typeof payload.data !== "object") {
         throw new Error("Invalid cloud payload.");
       }
@@ -526,6 +793,7 @@
 
       writeObject(GAME_SAVES_KEY, cleanGameSaves);
       applyExtraLocalStorage(data.extraLocalStorage);
+      await applyIndexedDbSnapshot(data.indexedDb);
     }
 
     function getSupabaseConfig() {
@@ -611,7 +879,7 @@
 
     async function cloudPush() {
       var user = await requireSupabaseUser();
-      var payload = snapshotSavedData();
+      var payload = await snapshotSavedDataAsync();
       var result = await supabaseClient.from("user_saves").upsert({ user_id: user.id, payload: payload }, { onConflict: "user_id" });
       if (result.error) {
         throw result.error;
@@ -630,7 +898,7 @@
         setStatus("No cloud save found yet.", false);
         return;
       }
-      applySavedData(result.data.payload);
+      await applySavedData(result.data.payload);
       markCloudSynced();
       setStatus("Cloud data loaded to this browser.", true);
     }
