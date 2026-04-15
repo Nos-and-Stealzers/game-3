@@ -122,6 +122,76 @@
     return out;
   }
 
+  function isAuthTokenStorageKey(key) {
+    return /^sb-.*-auth-token$/i.test(key) || key === "supabase.auth.token";
+  }
+
+  function snapshotAuthTokens() {
+    var out = {};
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (!isAuthTokenStorageKey(key)) {
+          continue;
+        }
+        var value = localStorage.getItem(key);
+        if (typeof value === "string" && value) {
+          out[key] = value;
+        }
+      }
+    } catch (error) {
+      return out;
+    }
+    return out;
+  }
+
+  function snapshotSessionStorage() {
+    var out = {};
+    try {
+      if (!window.sessionStorage) {
+        return out;
+      }
+      for (var i = 0; i < sessionStorage.length; i++) {
+        var key = sessionStorage.key(i);
+        var value = sessionStorage.getItem(key);
+        if (typeof key === "string" && key && typeof value === "string") {
+          out[key] = value;
+        }
+      }
+    } catch (error) {
+      return out;
+    }
+    return out;
+  }
+
+  function snapshotCookies() {
+    var out = {};
+    try {
+      var raw = document.cookie || "";
+      if (!raw) {
+        return out;
+      }
+      raw.split(";").forEach(function (part) {
+        var section = part.trim();
+        if (!section) {
+          return;
+        }
+        var eqIndex = section.indexOf("=");
+        if (eqIndex <= 0) {
+          return;
+        }
+        var key = section.slice(0, eqIndex).trim();
+        var value = section.slice(eqIndex + 1);
+        if (key) {
+          out[key] = value;
+        }
+      });
+    } catch (error) {
+      return out;
+    }
+    return out;
+  }
+
   function shouldSyncIndexedDbName(name) {
     if (typeof name !== "string" || !name) {
       return false;
@@ -304,6 +374,9 @@
         cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1"),
         gameSaves: readObject(GAME_SAVES_KEY),
         extraLocalStorage: snapshotExtraLocalStorage(),
+        authTokens: snapshotAuthTokens(),
+        sessionStorage: snapshotSessionStorage(),
+        cookies: snapshotCookies(),
         indexedDb: await snapshotIndexedDb()
       }
     };
