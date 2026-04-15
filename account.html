@@ -289,6 +289,7 @@
       </details>
 
       <p id="authStatus" class="status">Checking Supabase config...</p>
+      <p id="cloudAutoSyncStatus" class="meta">Autosave heartbeat: initializing...</p>
     </section>
   </main>
 
@@ -320,6 +321,7 @@
     var saveSetupBtn = document.getElementById("saveSetupBtn");
     var clearSetupBtn = document.getElementById("clearSetupBtn");
     var authStatus = document.getElementById("authStatus");
+    var cloudAutoSyncStatus = document.getElementById("cloudAutoSyncStatus");
     var setupHelp = document.getElementById("setupHelp");
 
     var supabaseClient = null;
@@ -825,6 +827,13 @@
       authStatus.classList.toggle("error", isError === true);
     }
 
+    function setCloudAutoSyncStatus(message) {
+      if (!cloudAutoSyncStatus) {
+        return;
+      }
+      cloudAutoSyncStatus.textContent = message;
+    }
+
     function setAuthButtonsDisabled(disabled) {
       authSignInBtn.disabled = disabled;
       authSignUpBtn.disabled = disabled;
@@ -840,6 +849,7 @@
       }
 
       if (readSetting(CLOUD_AUTO_SYNC_KEY, "1") !== "1") {
+        setCloudAutoSyncStatus("Autosave heartbeat: off");
         return;
       }
 
@@ -849,16 +859,23 @@
         }
 
         cloudPeriodicSyncInFlight = true;
+        setCloudAutoSyncStatus("Autosave heartbeat: syncing now...");
         try {
           await cloudPush({ silent: true });
+          setCloudAutoSyncStatus("Autosave heartbeat: synced at " + new Date().toLocaleTimeString());
         } catch (error) {
           if (!(error && error.message === "Please sign in first.")) {
             console.warn("Account periodic cloud sync skipped:", error);
+            setCloudAutoSyncStatus("Autosave heartbeat: retrying in 30s (last sync failed)");
+          } else {
+            setCloudAutoSyncStatus("Autosave heartbeat: sign in required");
           }
         } finally {
           cloudPeriodicSyncInFlight = false;
         }
       }, 30000);
+
+      setCloudAutoSyncStatus("Autosave heartbeat: active (every 30s)");
     }
 
     async function initSupabase() {
@@ -1029,6 +1046,7 @@
     });
 
     initSupabase();
+    restartCloudPeriodicSync();
   </script>
 </body>
 </html>

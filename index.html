@@ -949,6 +949,7 @@
                     <a href="account.html" class="btn alt small">Manage Account</a>
                 </div>
                 <p id="authStatus" class="auth-status">Checking account status...</p>
+                <p id="cloudAutoSyncStatus" class="meta-note">Autosave heartbeat: initializing...</p>
             </div>
 
             <div class="settings-group">
@@ -1072,6 +1073,7 @@
         var importDataInput = document.getElementById("importDataInput");
         var cloudAutoSyncToggle = document.getElementById("cloudAutoSyncToggle");
         var authStatus = document.getElementById("authStatus");
+        var cloudAutoSyncStatus = document.getElementById("cloudAutoSyncStatus");
         var saveDataStatus = document.getElementById("saveDataStatus");
         var cloudDataStatus = document.getElementById("cloudDataStatus");
         var localSaveChip = document.getElementById("localSaveChip");
@@ -1623,6 +1625,13 @@
             authStatus.textContent = message;
         }
 
+        function updateCloudAutoSyncStatus(message) {
+            if (!cloudAutoSyncStatus) {
+                return;
+            }
+            cloudAutoSyncStatus.textContent = message;
+        }
+
         async function initSupabase() {
             var cfg = getSupabaseConfig();
             var hasFactory = !!(window.supabase && typeof window.supabase.createClient === "function");
@@ -1721,16 +1730,23 @@
                 }
 
                 cloudPeriodicSyncInFlight = true;
+                updateCloudAutoSyncStatus("Autosave heartbeat: syncing now...");
                 try {
                     await cloudPush({ silent: true });
+                    updateCloudAutoSyncStatus("Autosave heartbeat: synced at " + new Date().toLocaleTimeString());
                 } catch (error) {
                     if (!(error && error.message === "Please sign in first.")) {
                         console.warn("Periodic cloud sync skipped:", error);
+                        updateCloudAutoSyncStatus("Autosave heartbeat: retrying in 30s (last sync failed)");
+                    } else {
+                        updateCloudAutoSyncStatus("Autosave heartbeat: sign in required");
                     }
                 } finally {
                     cloudPeriodicSyncInFlight = false;
                 }
             }, 30000);
+
+            updateCloudAutoSyncStatus("Autosave heartbeat: active (every 30s)");
         }
 
         function applySavedData(payload) {
@@ -2239,6 +2255,8 @@
             restartCloudPeriodicSync();
             if (cloudAutoSyncToggle.checked) {
                 queueCloudAutoSync();
+            } else {
+                updateCloudAutoSyncStatus("Autosave heartbeat: off");
             }
         });
 
@@ -2299,6 +2317,7 @@
         });
 
         applySettings();
+        restartCloudPeriodicSync();
         setSettingsOpen(false);
         initSupabase();
         loadGames();
