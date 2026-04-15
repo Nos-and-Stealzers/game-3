@@ -167,5 +167,50 @@
     "platform": "external",
     "embed": "blocked",
     "schoolRisk": "high"
+  },
+  {
+    "id": "rpg-lucas",
+    "title": "RPG (LucasGrimm389)",
+    "category": "rpg",
+    "description": "Open-source browser RPG from LucasGrimm389/rpg.",
+    "gradient": "linear-gradient(135deg, #4d8f5a, #204f33)",
+    "source": "https://htmlpreview.github.io/?https://raw.githubusercontent.com/LucasGrimm389/rpg/master/index.html",
+    "direct": "https://htmlpreview.github.io/?https://raw.githubusercontent.com/LucasGrimm389/rpg/master/index.html",
+    "repo": "https://github.com/LucasGrimm389/rpg",
+    "platform": "external",
+    "embed": "allowed",
+    "openSource": true,
+    "license": "MIT",
+    "schoolRisk": "medium"
+  },
+  {
+    "id": "tower-defense-lucas",
+    "title": "Tower Defense (LucasGrimm389)",
+    "category": "strategy",
+    "description": "Open-source tower defense from LucasGrimm389/tower-defense.",
+    "gradient": "linear-gradient(135deg, #74b3ff, #2852a4)",
+    "source": "https://couchfriends.com/games.html",
+    "direct": "https://couchfriends.com/games.html",
+    "repo": "https://github.com/LucasGrimm389/tower-defense",
+    "platform": "external",
+    "embed": "allowed",
+    "openSource": true,
+    "license": "MIT",
+    "schoolRisk": "medium"
+  },
+  {
+    "id": "blk-game",
+    "title": "BLK Game",
+    "category": "sandbox",
+    "description": "Voxel sandbox prototype from LucasGrimm389/blk-game.",
+    "gradient": "linear-gradient(135deg, #8aa4b9, #2b3f53)",
+    "source": "https://benvanik.github.io/blk-game/",
+    "direct": "https://benvanik.github.io/blk-game/",
+    "repo": "https://github.com/LucasGrimm389/blk-game",
+    "platform": "external",
+    "embed": "allowed",
+    "openSource": true,
+    "license": "NOASSERTION",
+    "schoolRisk": "medium"
   }
 ]

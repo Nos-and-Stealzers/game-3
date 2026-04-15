@@ -324,6 +324,8 @@
 
     var supabaseClient = null;
     var isConfigured = false;
+    var cloudPeriodicSyncTimer = null;
+    var cloudPeriodicSyncInFlight = false;
     var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
     var INDEXED_DB_SYNC_MAX_DATABASES = 6;
     var INDEXED_DB_SYNC_MAX_STORES_PER_DB = 12;
@@ -831,6 +833,34 @@
       cloudPushBtn.disabled = disabled;
     }
 
+    function restartCloudPeriodicSync() {
+      if (cloudPeriodicSyncTimer) {
+        clearInterval(cloudPeriodicSyncTimer);
+        cloudPeriodicSyncTimer = null;
+      }
+
+      if (readSetting(CLOUD_AUTO_SYNC_KEY, "1") !== "1") {
+        return;
+      }
+
+      cloudPeriodicSyncTimer = setInterval(async function () {
+        if (!supabaseClient || cloudPeriodicSyncInFlight) {
+          return;
+        }
+
+        cloudPeriodicSyncInFlight = true;
+        try {
+          await cloudPush({ silent: true });
+        } catch (error) {
+          if (!(error && error.message === "Please sign in first.")) {
+            console.warn("Account periodic cloud sync skipped:", error);
+          }
+        } finally {
+          cloudPeriodicSyncInFlight = false;
+        }
+      }, 30000);
+    }
+
     async function initSupabase() {
       supabaseClient = null;
       var cfg = getSupabaseConfig();
@@ -855,7 +885,10 @@
         supabaseClient.auth.onAuthStateChange(function (_event, session) {
           var sessionUser = session && session.user ? session.user : null;
           setStatus(sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Signed out.", !!sessionUser, false);
+          restartCloudPeriodicSync();
         });
+
+        restartCloudPeriodicSync();
       } catch (error) {
         supabaseClient = null;
         isConfigured = false;
@@ -877,7 +910,9 @@
       return user;
     }
 
-    async function cloudPush() {
+    async function cloudPush(options) {
+      var opts = options || {};
+      var silent = opts.silent === true;
       var user = await requireSupabaseUser();
       var payload = await snapshotSavedDataAsync();
       var result = await supabaseClient.from("user_saves").upsert({ user_id: user.id, payload: payload }, { onConflict: "user_id" });
@@ -885,7 +920,9 @@
         throw result.error;
       }
       markCloudSynced();
-      setStatus("Cloud save synced.", true);
+      if (!silent) {
+        setStatus("Cloud save synced.", true);
+      }
     }
 
     async function cloudPull() {

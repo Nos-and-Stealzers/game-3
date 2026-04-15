@@ -1080,6 +1080,8 @@
         var storageFallback = {};
         var supabaseClient = null;
         var cloudAutoSyncTimer = null;
+        var cloudPeriodicSyncTimer = null;
+        var cloudPeriodicSyncInFlight = false;
         var INDEXED_DB_SYNC_MAX_DATABASES = 6;
         var INDEXED_DB_SYNC_MAX_STORES_PER_DB = 12;
         var INDEXED_DB_SYNC_MAX_RECORDS_PER_STORE = 200;
@@ -1638,7 +1640,10 @@
                 supabaseClient.auth.onAuthStateChange(function (_event, session) {
                     var sessionUser = session && session.user ? session.user : null;
                     updateAuthStatus(sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Supabase ready. Sign in to use cloud save.");
+                    restartCloudPeriodicSync();
                 });
+
+                restartCloudPeriodicSync();
             } catch (error) {
                 supabaseClient = null;
                 updateAuthStatus("Supabase init failed.");
@@ -1698,6 +1703,34 @@
                     updateAuthStatus("Cloud sync pending. Use Cloud Save.");
                 }
             }, 1200);
+        }
+
+        function restartCloudPeriodicSync() {
+            if (cloudPeriodicSyncTimer) {
+                clearInterval(cloudPeriodicSyncTimer);
+                cloudPeriodicSyncTimer = null;
+            }
+
+            if (readSetting(CLOUD_AUTO_SYNC_KEY, "1") !== "1") {
+                return;
+            }
+
+            cloudPeriodicSyncTimer = setInterval(async function () {
+                if (!supabaseClient || cloudPeriodicSyncInFlight) {
+                    return;
+                }
+
+                cloudPeriodicSyncInFlight = true;
+                try {
+                    await cloudPush({ silent: true });
+                } catch (error) {
+                    if (!(error && error.message === "Please sign in first.")) {
+                        console.warn("Periodic cloud sync skipped:", error);
+                    }
+                } finally {
+                    cloudPeriodicSyncInFlight = false;
+                }
+            }, 30000);
         }
 
         function applySavedData(payload) {
@@ -2203,6 +2236,7 @@
 
         cloudAutoSyncToggle.addEventListener("change", function () {
             writeSetting(CLOUD_AUTO_SYNC_KEY, cloudAutoSyncToggle.checked ? "1" : "0");
+            restartCloudPeriodicSync();
             if (cloudAutoSyncToggle.checked) {
                 queueCloudAutoSync();
             }

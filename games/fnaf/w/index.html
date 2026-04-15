@@ -174,8 +174,8 @@
     // -----------------
     window.onload = function () {
         const map = new Map();
-        const REQUEST_TIMEOUT_MS = 10000;
-        const MAX_REQUEST_RETRIES = 1;
+        const REQUEST_TIMEOUT_MS = 30000;
+        const MAX_REQUEST_RETRIES = 2;
 
         function normalizePercent(percent) {
             if (!Number.isFinite(percent)) return 0;
@@ -201,7 +201,8 @@
             let lastError = null;
             for (let attempt = 0; attempt <= retries; attempt++) {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+                const timeoutMs = document.hidden ? REQUEST_TIMEOUT_MS * 6 : REQUEST_TIMEOUT_MS;
+                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                 try {
                     const response = await fetch(url, { ...options, signal: controller.signal });
                     clearTimeout(timeoutId);
