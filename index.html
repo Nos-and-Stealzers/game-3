@@ -386,7 +386,7 @@
             height: 17px;
             border: 1.5px solid var(--line);
             border-radius: 5px;
-            background: #fff;
+            background: var(--panel-2);
             display: inline-grid;
             place-items: center;
             margin: 0;
@@ -407,9 +407,9 @@
         }
 
         .check input[type="checkbox"]:checked {
-            background: var(--accent);
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--input-focus);
         }
 
         .check input[type="checkbox"]:checked::after {
@@ -1705,7 +1705,7 @@
 
         async function loadGames() {
             try {
-                var response = await fetch("games.json", { cache: "force-cache" });
+                var response = await fetch("games.json", { cache: "no-store" });
                 if (!response.ok) {
                     throw new Error("Failed to load games.json");
                 }

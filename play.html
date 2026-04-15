@@ -402,7 +402,7 @@
 
         async function loadCatalog() {
             try {
-                var response = await fetch("games.json", { cache: "force-cache" });
+                var response = await fetch("games.json", { cache: "no-store" });
                 if (!response.ok) {
                     throw new Error("Could not load games.json");
                 }

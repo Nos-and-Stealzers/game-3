@@ -182,7 +182,7 @@
             height: 18px;
             border: 1.5px solid var(--line);
             border-radius: 5px;
-            background: #fff;
+            background: var(--panel-2);
             display: inline-grid;
             place-items: center;
             margin: 0;
@@ -207,7 +207,7 @@
         .security-row input[type="checkbox"]:checked {
             background: var(--primary);
             border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(30, 111, 255, 0.18);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 24%, transparent);
         }
 
         .check input[type="checkbox"]:checked::after,
@@ -548,7 +548,7 @@
                 <a class="btn alt" href="account.html">Go to Account Sign In</a>
             </article>
 
-            <article id="userSettingsPanel" class="panel hidden" style="grid-column: 1 / -1;">
+            <article id="userSettingsPanel" class="panel hidden" style="grid-column: 1 / -1;" hidden>
                 <h2>User Settings</h2>
                 <p class="meta">Common profile preferences similar to modern account settings pages.</p>
                 <div class="user-settings-grid">
@@ -590,7 +590,7 @@
                 </div>
             </article>
 
-            <article class="panel" style="grid-column: 1 / -1;">
+            <article id="securityChecklistPanel" class="panel hidden" style="grid-column: 1 / -1;" hidden>
                 <h2>Cloud Security Checklist</h2>
                 <p class="meta">Track which Auth + Security options you enabled in your cloud dashboard.</p>
                 <label class="security-row"><div><strong>Change email address</strong><span>Require verification for changed email addresses.</span></div><input data-security-key="changeEmailVerify" type="checkbox"></label>
@@ -648,6 +648,7 @@
         var allGameSaveStatus = document.getElementById("allGameSaveStatus");
         var userSettingsGuestPanel = document.getElementById("userSettingsGuestPanel");
         var userSettingsPanel = document.getElementById("userSettingsPanel");
+        var securityChecklistPanel = document.getElementById("securityChecklistPanel");
         var userDisplayName = document.getElementById("userDisplayName");
         var userUsername = document.getElementById("userUsername");
         var userUsernameHint = document.getElementById("userUsernameHint");
@@ -1157,6 +1158,9 @@
             var isSignedIn = !!(activeAccountUser && activeAccountUser.id);
             userSettingsGuestPanel.classList.toggle("hidden", isSignedIn);
             userSettingsPanel.classList.toggle("hidden", !isSignedIn);
+            userSettingsPanel.hidden = !isSignedIn;
+            securityChecklistPanel.classList.toggle("hidden", !isSignedIn);
+            securityChecklistPanel.hidden = !isSignedIn;
             if (!isSignedIn) {
                 userSettingsStatus.textContent = "Sign in to edit user settings.";
                 setUsernameAvailabilityUi("", "Sign in to check username availability.");
@@ -1215,7 +1219,7 @@
 
         async function loadGamesCatalog() {
             try {
-                var response = await fetch("games.json", { cache: "force-cache" });
+                var response = await fetch("games.json", { cache: "no-store" });
                 if (!response.ok) {
                     throw new Error("Unable to load games catalog.");
                 }
