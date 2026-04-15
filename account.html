@@ -495,7 +495,7 @@
       writeArray(RECENTS_KEY, Array.isArray(data.recent) ? data.recent : []);
       writeSetting(THEME_KEY, typeof data.theme === "string" ? data.theme : "light");
       writeSetting(FAST_MODE_KEY, data.fastMode === "1" ? "1" : "0");
-      writeSetting(PERFORMANCE_PROFILE_KEY, (data.performanceProfile === "quick" || data.performanceProfile === "turbo") ? data.performanceProfile : "normal");
+      writeSetting(PERFORMANCE_PROFILE_KEY, (data.performanceProfile === "quick" || data.performanceProfile === "turbo" || data.performanceProfile === "ultra") ? data.performanceProfile : "normal");
       writeSetting(LIBRARY_VIEW_KEY, ["cards", "grouped", "platform", "compact"].indexOf(data.libraryView) !== -1 ? data.libraryView : "cards");
       writeSetting(OPEN_SOURCE_ONLY_KEY, data.openSourceOnly === "1" ? "1" : "0");
       writeSetting(PLAYABLE_ONLY_KEY, data.playableOnly === "1" ? "1" : "0");

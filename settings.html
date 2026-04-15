@@ -369,7 +369,9 @@
                         <option value="normal">Normal</option>
                         <option value="quick">Quick</option>
                         <option value="turbo">Turbo</option>
+                        <option value="ultra">Ultra Lite</option>
                     </select>
+                    <span class="meta">Ultra Lite disables heavy effects. Large game lists also auto-use lite rendering.</span>
                 </label>
                 <label class="setting-block">
                     <span class="check"><input id="cloudAutoSyncToggle" type="checkbox"> Cloud Auto Sync</span>
@@ -635,7 +637,7 @@
             if (["cards", "grouped", "platform", "compact"].indexOf(view) === -1) view = "cards";
             libraryViewSelect.value = view;
             var profile = readSetting(PERFORMANCE_PROFILE_KEY, "normal");
-            if (["normal", "quick", "turbo"].indexOf(profile) === -1) profile = "normal";
+            if (["normal", "quick", "turbo", "ultra"].indexOf(profile) === -1) profile = "normal";
             performanceProfileSelect.value = profile;
             openSourceOnlyToggle.checked = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
             playableOnlyToggle.checked = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
@@ -674,7 +676,7 @@
             writeArray(RECENTS_KEY, Array.isArray(data.recent) ? data.recent : []);
             writeSetting(THEME_KEY, typeof data.theme === "string" ? data.theme : "light");
             writeSetting(FAST_MODE_KEY, data.fastMode === "1" ? "1" : "0");
-            writeSetting(PERFORMANCE_PROFILE_KEY, (data.performanceProfile === "quick" || data.performanceProfile === "turbo") ? data.performanceProfile : "normal");
+            writeSetting(PERFORMANCE_PROFILE_KEY, (data.performanceProfile === "quick" || data.performanceProfile === "turbo" || data.performanceProfile === "ultra") ? data.performanceProfile : "normal");
             writeSetting(LIBRARY_VIEW_KEY, ["cards", "grouped", "platform", "compact"].indexOf(data.libraryView) !== -1 ? data.libraryView : "cards");
             writeSetting(OPEN_SOURCE_ONLY_KEY, data.openSourceOnly === "1" ? "1" : "0");
             writeSetting(PLAYABLE_ONLY_KEY, data.playableOnly === "1" ? "1" : "0");
@@ -746,7 +748,7 @@
         libraryViewSelect.addEventListener("change", function () { writeSetting(LIBRARY_VIEW_KEY, libraryViewSelect.value); });
         performanceProfileSelect.addEventListener("change", function () {
             var value = performanceProfileSelect.value;
-            if (["normal", "quick", "turbo"].indexOf(value) === -1) value = "normal";
+            if (["normal", "quick", "turbo", "ultra"].indexOf(value) === -1) value = "normal";
             writeSetting(PERFORMANCE_PROFILE_KEY, value);
         });
         openSourceOnlyToggle.addEventListener("change", function () { writeSetting(OPEN_SOURCE_ONLY_KEY, openSourceOnlyToggle.checked ? "1" : "0"); });

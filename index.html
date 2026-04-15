@@ -817,6 +817,38 @@
             display: none;
         }
 
+        body[data-performance="ultra"] * {
+            animation: none !important;
+            transition: none !important;
+        }
+
+        body[data-performance="ultra"] .hero,
+        body[data-performance="ultra"] .panel,
+        body[data-performance="ultra"] .card,
+        body.auto-ultra-lite .hero,
+        body.auto-ultra-lite .panel,
+        body.auto-ultra-lite .card {
+            box-shadow: none;
+        }
+
+        body[data-performance="ultra"] .card:hover,
+        body.auto-ultra-lite .card:hover {
+            transform: none;
+        }
+
+        body[data-performance="ultra"] .thumb::after,
+        body[data-performance="ultra"] .chip.warn,
+        body[data-performance="ultra"] .chip.ok,
+        body[data-performance="ultra"] .chip.source,
+        body.auto-ultra-lite .thumb::after {
+            display: none;
+        }
+
+        body.auto-ultra-lite .card {
+            content-visibility: auto;
+            contain-intrinsic-size: 280px;
+        }
+
         @media (max-width: 760px) {
             .toolbar { grid-template-columns: 1fr; }
             .split { grid-template-columns: 1fr; }
@@ -1270,7 +1302,7 @@
             var incomingFast = data.fastMode === "1" ? "1" : "0";
             writeSetting(FAST_MODE_KEY, incomingFast);
 
-            var incomingProfile = (data.performanceProfile === "quick" || data.performanceProfile === "turbo") ? data.performanceProfile : "normal";
+            var incomingProfile = (data.performanceProfile === "quick" || data.performanceProfile === "turbo" || data.performanceProfile === "ultra") ? data.performanceProfile : "normal";
             writeSetting(PERFORMANCE_PROFILE_KEY, incomingProfile);
 
             var incomingView = ["cards", "grouped", "platform", "compact"].indexOf(data.libraryView) !== -1 ? data.libraryView : "cards";
@@ -1460,7 +1492,7 @@
 
             fastMode = readSetting(FAST_MODE_KEY, "0") === "1";
             var performanceProfile = readSetting(PERFORMANCE_PROFILE_KEY, "normal");
-            if (["normal", "quick", "turbo"].indexOf(performanceProfile) === -1) {
+            if (["normal", "quick", "turbo", "ultra"].indexOf(performanceProfile) === -1) {
                 performanceProfile = "normal";
             }
 
@@ -1532,6 +1564,9 @@
             filtered.sort(function (a, b) {
                 return a.title.localeCompare(b.title);
             });
+
+            // Auto-enable extra lightweight rendering when very large result sets are shown.
+            document.body.classList.toggle("auto-ultra-lite", filtered.length >= 36 && readSetting(PERFORMANCE_PROFILE_KEY, "normal") !== "ultra");
 
             var libraryView = readSetting(LIBRARY_VIEW_KEY, "cards");
             gameGrid.classList.remove("grouped", "platform-grouped", "compact-view");
