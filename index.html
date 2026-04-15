@@ -1164,6 +1164,53 @@
             touchLocalSave();
         }
 
+        function shouldSyncExtraLocalStorageKey(key) {
+            if (typeof key !== "string" || !key) {
+                return false;
+            }
+            if (SAVE_KEYS.indexOf(key) !== -1 || key === SUPABASE_CONFIG_KEY) {
+                return false;
+            }
+            if (/^sb-.*-auth-token$/i.test(key) || key === "supabase.auth.token") {
+                return false;
+            }
+            return true;
+        }
+
+        function snapshotExtraLocalStorage() {
+            var out = {};
+            try {
+                for (var i = 0; i < localStorage.length; i++) {
+                    var key = localStorage.key(i);
+                    if (!shouldSyncExtraLocalStorageKey(key)) {
+                        continue;
+                    }
+                    var value = localStorage.getItem(key);
+                    if (typeof value === "string") {
+                        out[key] = value;
+                    }
+                }
+            } catch (error) {
+                return out;
+            }
+            return out;
+        }
+
+        function applyExtraLocalStorage(extraLocalStorage) {
+            if (!extraLocalStorage || typeof extraLocalStorage !== "object" || Array.isArray(extraLocalStorage)) {
+                return;
+            }
+            Object.keys(extraLocalStorage).forEach(function (key) {
+                if (!shouldSyncExtraLocalStorageKey(key)) {
+                    return;
+                }
+                var value = extraLocalStorage[key];
+                if (typeof value === "string") {
+                    storageSet(key, value);
+                }
+            });
+        }
+
         function extractGradientColor(gradientStr) {
             if (!gradientStr) return "#f3f7ff";
             var colors = gradientStr.match(/#[0-9a-fA-F]{6}|rgb\([^)]+\)/g);
@@ -1264,7 +1311,8 @@
                     openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
                     playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
                     cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1"),
-                    gameSaves: readObject(GAME_SAVES_KEY)
+                    gameSaves: readObject(GAME_SAVES_KEY),
+                    extraLocalStorage: snapshotExtraLocalStorage()
                 }
             };
         }
@@ -1433,6 +1481,7 @@
             });
 
             writeObject(GAME_SAVES_KEY, cleanGameSaves);
+            applyExtraLocalStorage(data.extraLocalStorage);
             renderFnafSaveStatus();
         }
 

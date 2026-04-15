@@ -399,6 +399,67 @@
       touchLocalSave();
     }
 
+    function shouldSyncExtraLocalStorageKey(key) {
+      if (typeof key !== "string" || !key) {
+        return false;
+      }
+      if (
+        key === FAVORITES_KEY ||
+        key === RECENTS_KEY ||
+        key === THEME_KEY ||
+        key === FAST_MODE_KEY ||
+        key === PERFORMANCE_PROFILE_KEY ||
+        key === LIBRARY_VIEW_KEY ||
+        key === OPEN_SOURCE_ONLY_KEY ||
+        key === PLAYABLE_ONLY_KEY ||
+        key === CLOUD_AUTO_SYNC_KEY ||
+        key === GAME_SAVES_KEY ||
+        key === LOCAL_SAVE_UPDATED_KEY ||
+        key === CLOUD_LAST_SYNC_KEY ||
+        key === SUPABASE_CONFIG_KEY
+      ) {
+        return false;
+      }
+      if (/^sb-.*-auth-token$/i.test(key) || key === "supabase.auth.token") {
+        return false;
+      }
+      return true;
+    }
+
+    function snapshotExtraLocalStorage() {
+      var out = {};
+      try {
+        for (var i = 0; i < localStorage.length; i++) {
+          var key = localStorage.key(i);
+          if (!shouldSyncExtraLocalStorageKey(key)) {
+            continue;
+          }
+          var value = localStorage.getItem(key);
+          if (typeof value === "string") {
+            out[key] = value;
+          }
+        }
+      } catch (error) {
+        return out;
+      }
+      return out;
+    }
+
+    function applyExtraLocalStorage(extraLocalStorage) {
+      if (!extraLocalStorage || typeof extraLocalStorage !== "object" || Array.isArray(extraLocalStorage)) {
+        return;
+      }
+      Object.keys(extraLocalStorage).forEach(function (key) {
+        if (!shouldSyncExtraLocalStorageKey(key)) {
+          return;
+        }
+        var value = extraLocalStorage[key];
+        if (typeof value === "string") {
+          storageSet(key, value);
+        }
+      });
+    }
+
     function snapshotSavedData() {
       return {
         version: 1,
@@ -413,7 +474,8 @@
           openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
           playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
           cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1"),
-          gameSaves: readObject(GAME_SAVES_KEY)
+          gameSaves: readObject(GAME_SAVES_KEY),
+          extraLocalStorage: snapshotExtraLocalStorage()
         }
       };
     }
@@ -463,6 +525,7 @@
       });
 
       writeObject(GAME_SAVES_KEY, cleanGameSaves);
+      applyExtraLocalStorage(data.extraLocalStorage);
     }
 
     function getSupabaseConfig() {
