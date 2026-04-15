@@ -737,6 +737,44 @@
             };
         }
 
+        function normalizeUserSettings(raw) {
+            var defaults = {
+                displayName: "",
+                username: "",
+                language: "en",
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+                emailUpdates: false,
+                gameAlerts: true,
+                profilePublic: false,
+                showOnline: true
+            };
+
+            var value = raw && typeof raw === "object" ? raw : {};
+            return {
+                displayName: typeof value.displayName === "string" ? value.displayName : (typeof value.display_name === "string" ? value.display_name : defaults.displayName),
+                username: typeof value.username === "string" ? value.username : defaults.username,
+                language: typeof value.language === "string" ? value.language : defaults.language,
+                timeZone: typeof value.timeZone === "string" ? value.timeZone : (typeof value.time_zone === "string" ? value.time_zone : defaults.timeZone),
+                emailUpdates: value.emailUpdates === true || value.email_updates === true,
+                gameAlerts: value.gameAlerts !== false && value.game_alerts !== false,
+                profilePublic: value.profilePublic === true || value.profile_public === true,
+                showOnline: value.showOnline !== false && value.show_online !== false
+            };
+        }
+
+        function toDbUserSettingsPayload(settings) {
+            return {
+                display_name: settings.displayName,
+                username: settings.username,
+                language: settings.language,
+                time_zone: settings.timeZone,
+                email_updates: settings.emailUpdates,
+                game_alerts: settings.gameAlerts,
+                profile_public: settings.profilePublic,
+                show_online: settings.showOnline
+            };
+        }
+
         function writeUserSettings(settings) {
             storageSet(USER_SETTINGS_KEY, JSON.stringify(settings || {}));
         }
@@ -776,13 +814,49 @@
             }
         }
 
+        function isMissingTableError(error) {
+            if (!error) {
+                return false;
+            }
+            var msg = String(error.message || "").toLowerCase();
+            return msg.indexOf("relation") !== -1 && msg.indexOf("user_settings") !== -1;
+        }
+
+        async function fetchUserSettingsFromCloud(user) {
+            if (!user || !supabaseClient) {
+                return null;
+            }
+
+            var tableResult = await supabaseClient
+                .from("user_settings")
+                .select("display_name, username, language, time_zone, email_updates, game_alerts, profile_public, show_online")
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+            if (!tableResult.error && tableResult.data) {
+                return normalizeUserSettings(tableResult.data);
+            }
+
+            if (tableResult.error && !isMissingTableError(tableResult.error)) {
+                return null;
+            }
+
+            var metadata = user.user_metadata && user.user_metadata.arcadeSettings;
+            if (metadata && typeof metadata === "object") {
+                return normalizeUserSettings(metadata);
+            }
+
+            return null;
+        }
+
         async function hydrateUserSettingsFromAccount(user) {
-            if (!user || !user.user_metadata) {
+            if (!user) {
                 applyUserSettingsForm();
                 return;
             }
-            var fromCloud = user.user_metadata.arcadeSettings;
-            if (fromCloud && typeof fromCloud === "object") {
+
+            var fromCloud = await fetchUserSettingsFromCloud(user);
+            if (fromCloud) {
                 writeUserSettings(fromCloud);
             }
             applyUserSettingsForm();
@@ -987,7 +1061,7 @@
         });
 
         saveUserSettingsBtn.addEventListener("click", async function () {
-            var settings = collectUserSettingsForm();
+            var settings = normalizeUserSettings(collectUserSettingsForm());
             writeUserSettings(settings);
             userSettingsStatus.textContent = "User settings saved locally.";
 
@@ -996,17 +1070,32 @@
             }
 
             try {
-                var result = await supabaseClient.auth.updateUser({
-                    data: {
-                        arcadeSettings: settings
-                    }
+                var rpcResult = await supabaseClient.rpc("upsert_my_user_settings", {
+                    payload: settings
                 });
-                if (result.error) {
-                    throw result.error;
+                if (rpcResult.error) {
+                    var tableWrite = await supabaseClient
+                        .from("user_settings")
+                        .upsert(Object.assign({ user_id: activeAccountUser.id }, toDbUserSettingsPayload(settings)), { onConflict: "user_id" });
+                    if (tableWrite.error) {
+                        throw tableWrite.error;
+                    }
                 }
-                userSettingsStatus.textContent = "User settings saved and synced to your account.";
+                userSettingsStatus.textContent = "User settings saved and synced to your cloud account.";
             } catch (error) {
-                userSettingsStatus.textContent = "Saved locally. Cloud sync failed, try again later.";
+                try {
+                    var metadataResult = await supabaseClient.auth.updateUser({
+                        data: {
+                            arcadeSettings: settings
+                        }
+                    });
+                    if (metadataResult.error) {
+                        throw metadataResult.error;
+                    }
+                    userSettingsStatus.textContent = "User settings synced with compatibility fallback.";
+                } catch (secondaryError) {
+                    userSettingsStatus.textContent = "Saved locally. Cloud sync failed, try again later.";
+                }
             }
         });
 
