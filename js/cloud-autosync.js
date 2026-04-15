@@ -1,5 +1,4 @@
 (function () {
-  var CLOUD_AUTO_SYNC_KEY = "gamehub_cloud_auto_sync";
   var CLOUD_LAST_SYNC_KEY = "gamehub_cloud_last_sync";
   var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
   var FAVORITES_KEY = "gamehub_favorites";
@@ -11,6 +10,21 @@
   var OPEN_SOURCE_ONLY_KEY = "gamehub_open_source_only";
   var PLAYABLE_ONLY_KEY = "gamehub_playable_only";
   var GAME_SAVES_KEY = "gamehub_game_saves";
+  var GAME_SAVE_ALIASES = {
+    "fnaf-sl": ["fnaf-sister-location"],
+    "fnaf-ps": ["fnaf-pizzeria-simulator"]
+  };
+  var GAME_SAVE_CANONICAL_BY_ALIAS = (function () {
+    var out = {};
+    Object.keys(GAME_SAVE_ALIASES).forEach(function (canonicalId) {
+      out[canonicalId] = canonicalId;
+      var aliases = GAME_SAVE_ALIASES[canonicalId] || [];
+      for (var i = 0; i < aliases.length; i++) {
+        out[aliases[i]] = canonicalId;
+      }
+    });
+    return out;
+  })();
 
   var SAVE_KEYS = [
     FAVORITES_KEY,
@@ -21,7 +35,6 @@
     LIBRARY_VIEW_KEY,
     OPEN_SOURCE_ONLY_KEY,
     PLAYABLE_ONLY_KEY,
-    CLOUD_AUTO_SYNC_KEY,
     GAME_SAVES_KEY,
     "gamehub_local_last_saved",
     CLOUD_LAST_SYNC_KEY
@@ -31,9 +44,19 @@
   var INDEXED_DB_SYNC_MAX_STORES_PER_DB = 12;
   var INDEXED_DB_SYNC_MAX_RECORDS_PER_STORE = 200;
   var INDEXED_DB_SYNC_MAX_VALUE_CHARS = 120000;
-  var AUTOSYNC_INTERVAL_MS = 30000;
+
+  var options = window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ || {};
+  var AUTOSYNC_INTERVAL_MS = (typeof options.intervalMs === "number" && options.intervalMs > 0)
+    ? Math.floor(options.intervalMs)
+    : 60000;
+  var CAPTURE_INDEXED_DB = options.captureIndexedDb !== false;
+  var RUN_ON_START = options.runOnStart !== false;
+  var PULL_ON_START = options.pullOnStart !== false;
+  var PAGEHIDE_ONLY = options.pagehideOnly === true;
 
   var inFlight = false;
+  var loadInFlight = false;
+  var loadedUserId = "";
   var timer = null;
   var client = null;
 
@@ -48,6 +71,13 @@
   function storageSet(key, value) {
     try {
       localStorage.setItem(key, value);
+    } catch (error) {
+    }
+  }
+
+  function storageRemove(key) {
+    try {
+      localStorage.removeItem(key);
     } catch (error) {
     }
   }
@@ -71,6 +101,75 @@
     } catch (error) {
       return {};
     }
+  }
+
+  function getCanonicalGameSaveId(gameId) {
+    if (typeof gameId !== "string" || !gameId) {
+      return "";
+    }
+    return GAME_SAVE_CANONICAL_BY_ALIAS[gameId] || gameId;
+  }
+
+  function sanitizeGameSaveEntry(gameSave) {
+    if (!gameSave || typeof gameSave !== "object" || Array.isArray(gameSave)) {
+      return null;
+    }
+
+    var localData = gameSave.localStorage;
+    if (!localData || typeof localData !== "object" || Array.isArray(localData)) {
+      return null;
+    }
+
+    var cleanLocalData = {};
+    Object.keys(localData).forEach(function (key) {
+      var value = localData[key];
+      if (value === null || typeof value === "string") {
+        cleanLocalData[key] = value;
+      }
+    });
+
+    return {
+      updatedAt: typeof gameSave.updatedAt === "string" ? gameSave.updatedAt : new Date().toISOString(),
+      localStorage: cleanLocalData
+    };
+  }
+
+  function normalizeGameSaveMap(rawGameSaves) {
+    if (!rawGameSaves || typeof rawGameSaves !== "object" || Array.isArray(rawGameSaves)) {
+      return {};
+    }
+
+    var out = {};
+    Object.keys(rawGameSaves).forEach(function (gameId) {
+      var canonicalId = getCanonicalGameSaveId(gameId);
+      if (!canonicalId) {
+        return;
+      }
+
+      var incoming = sanitizeGameSaveEntry(rawGameSaves[gameId]);
+      if (!incoming) {
+        return;
+      }
+
+      var existing = out[canonicalId];
+      if (!existing) {
+        out[canonicalId] = incoming;
+        return;
+      }
+
+      var existingTime = Date.parse(existing.updatedAt || "") || 0;
+      var incomingTime = Date.parse(incoming.updatedAt || "") || 0;
+      var incomingWins = incomingTime >= existingTime;
+
+      out[canonicalId] = {
+        updatedAt: incomingWins ? incoming.updatedAt : existing.updatedAt,
+        localStorage: incomingWins
+          ? Object.assign({}, existing.localStorage, incoming.localStorage)
+          : Object.assign({}, incoming.localStorage, existing.localStorage)
+      };
+    });
+
+    return out;
   }
 
   function readSetting(key, fallback) {
@@ -145,6 +244,21 @@
     return out;
   }
 
+  function applyAuthTokens(authTokens) {
+    if (!authTokens || typeof authTokens !== "object" || Array.isArray(authTokens)) {
+      return;
+    }
+    Object.keys(authTokens).forEach(function (key) {
+      if (!isAuthTokenStorageKey(key)) {
+        return;
+      }
+      var value = authTokens[key];
+      if (typeof value === "string" && value) {
+        storageSet(key, value);
+      }
+    });
+  }
+
   function snapshotSessionStorage() {
     var out = {};
     try {
@@ -162,6 +276,24 @@
       return out;
     }
     return out;
+  }
+
+  function applySessionStorage(sessionData) {
+    if (!sessionData || typeof sessionData !== "object" || Array.isArray(sessionData)) {
+      return;
+    }
+    try {
+      if (!window.sessionStorage) {
+        return;
+      }
+      Object.keys(sessionData).forEach(function (key) {
+        var value = sessionData[key];
+        if (typeof value === "string") {
+          sessionStorage.setItem(key, value);
+        }
+      });
+    } catch (error) {
+    }
   }
 
   function snapshotCookies() {
@@ -190,6 +322,37 @@
       return out;
     }
     return out;
+  }
+
+  function applyCookies(cookies) {
+    if (!cookies || typeof cookies !== "object" || Array.isArray(cookies)) {
+      return;
+    }
+    Object.keys(cookies).forEach(function (key) {
+      var value = cookies[key];
+      if (typeof key !== "string" || !key || typeof value !== "string") {
+        return;
+      }
+      try {
+        document.cookie = key + "=" + value + "; path=/; max-age=2592000; SameSite=Lax";
+      } catch (error) {
+      }
+    });
+  }
+
+  function applyExtraLocalStorage(extraLocalStorage) {
+    if (!extraLocalStorage || typeof extraLocalStorage !== "object" || Array.isArray(extraLocalStorage)) {
+      return;
+    }
+    Object.keys(extraLocalStorage).forEach(function (key) {
+      if (!shouldSyncExtraLocalStorageKey(key)) {
+        return;
+      }
+      var value = extraLocalStorage[key];
+      if (typeof value === "string") {
+        storageSet(key, value);
+      }
+    });
   }
 
   function shouldSyncIndexedDbName(name) {
@@ -371,22 +534,102 @@
         libraryView: readSetting(LIBRARY_VIEW_KEY, "cards"),
         openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
         playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
-        cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1"),
-        gameSaves: readObject(GAME_SAVES_KEY),
+        cloudAutoSync: "1",
+        gameSaves: normalizeGameSaveMap(readObject(GAME_SAVES_KEY)),
         extraLocalStorage: snapshotExtraLocalStorage(),
         authTokens: snapshotAuthTokens(),
         sessionStorage: snapshotSessionStorage(),
         cookies: snapshotCookies(),
-        indexedDb: await snapshotIndexedDb()
+        indexedDb: CAPTURE_INDEXED_DB ? await snapshotIndexedDb() : {}
       }
     };
   }
 
+  function writeArray(key, value) {
+    storageSet(key, JSON.stringify(Array.isArray(value) ? value : []));
+  }
+
+  function writeObject(key, value) {
+    var safeValue = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    if (key === GAME_SAVES_KEY) {
+      safeValue = normalizeGameSaveMap(safeValue);
+    }
+    storageSet(key, JSON.stringify(safeValue));
+  }
+
+  function applyPayload(payload) {
+    if (!payload || typeof payload !== "object" || !payload.data || typeof payload.data !== "object") {
+      return false;
+    }
+
+    var data = payload.data;
+    writeArray(FAVORITES_KEY, Array.isArray(data.favorites) ? data.favorites : []);
+    writeArray(RECENTS_KEY, Array.isArray(data.recent) ? data.recent : []);
+    storageSet(THEME_KEY, typeof data.theme === "string" ? data.theme : "light");
+    storageSet(FAST_MODE_KEY, data.fastMode === "1" ? "1" : "0");
+    storageSet(PERFORMANCE_PROFILE_KEY, (data.performanceProfile === "quick" || data.performanceProfile === "turbo") ? data.performanceProfile : "normal");
+    storageSet(LIBRARY_VIEW_KEY, ["cards", "grouped", "platform", "compact"].indexOf(data.libraryView) !== -1 ? data.libraryView : "cards");
+    storageSet(OPEN_SOURCE_ONLY_KEY, data.openSourceOnly === "1" ? "1" : "0");
+    storageSet(PLAYABLE_ONLY_KEY, data.playableOnly === "1" ? "1" : "0");
+    writeObject(GAME_SAVES_KEY, data.gameSaves);
+    applyExtraLocalStorage(data.extraLocalStorage);
+    applyAuthTokens(data.authTokens);
+    applySessionStorage(data.sessionStorage);
+    applyCookies(data.cookies);
+    return true;
+  }
+
+  async function runCloudLoadOnce() {
+    if (loadInFlight) {
+      return false;
+    }
+
+    var supabaseClient = await getSupabaseClient();
+    if (!supabaseClient) {
+      return false;
+    }
+
+    loadInFlight = true;
+    try {
+      var auth = await supabaseClient.auth.getUser();
+      var user = auth && auth.data ? auth.data.user : null;
+      if (!user) {
+        loadedUserId = "";
+        return false;
+      }
+      if (loadedUserId === user.id) {
+        return false;
+      }
+
+      var result = await supabaseClient
+        .from("user_saves")
+        .select("payload")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (result && result.error) {
+        return false;
+      }
+      if (!result || !result.data || !result.data.payload) {
+        loadedUserId = user.id;
+        return false;
+      }
+
+      var applied = applyPayload(result.data.payload);
+      loadedUserId = user.id;
+      if (applied) {
+        storageSet(CLOUD_LAST_SYNC_KEY, new Date().toISOString());
+      }
+      return applied;
+    } catch (error) {
+      return false;
+    } finally {
+      loadInFlight = false;
+    }
+  }
+
   async function runCloudSync() {
     if (inFlight) {
-      return;
-    }
-    if (readSetting(CLOUD_AUTO_SYNC_KEY, "1") !== "1") {
       return;
     }
 
@@ -424,8 +667,19 @@
       clearInterval(timer);
     }
 
-    runCloudSync();
-    timer = setInterval(runCloudSync, AUTOSYNC_INTERVAL_MS);
+    if (PULL_ON_START) {
+      runCloudLoadOnce().finally(function () {
+        if (RUN_ON_START) {
+          runCloudSync();
+        }
+      });
+    } else if (RUN_ON_START) {
+      runCloudSync();
+    }
+
+    if (!PAGEHIDE_ONLY) {
+      timer = setInterval(runCloudSync, AUTOSYNC_INTERVAL_MS);
+    }
 
     window.addEventListener("pagehide", runCloudSync);
     window.addEventListener("beforeunload", runCloudSync);

@@ -249,6 +249,7 @@
         <h1 id="gameTitle" class="title">Loading game...</h1>
         <div class="actions">
             <a class="btn alt" href="index.html">Back to Library</a>
+            <button id="fullscreenBtn" type="button" class="btn alt">Fullscreen</button>
             <a id="openDirect" class="btn" href="#" target="_blank" rel="noopener noreferrer">Open Direct</a>
         </div>
     </header>
@@ -298,14 +299,61 @@
 
         var titleEl = document.getElementById("gameTitle");
         var frame = document.getElementById("gameFrame");
+        var frameWrap = document.querySelector(".frame-wrap");
+        var fullscreenBtn = document.getElementById("fullscreenBtn");
         var direct = document.getElementById("openDirect");
         var embedStatus = document.getElementById("embedStatus");
         var loadTimer;
+
+        function isFullscreenActive() {
+            return !!(document.fullscreenElement || document.webkitFullscreenElement);
+        }
+
+        function updateFullscreenButton() {
+            if (!fullscreenBtn) {
+                return;
+            }
+            fullscreenBtn.textContent = isFullscreenActive() ? "Exit Fullscreen" : "Fullscreen";
+        }
+
+        async function toggleFullscreen() {
+            try {
+                if (isFullscreenActive()) {
+                    if (document.exitFullscreen) {
+                        await document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    }
+                    return;
+                }
+
+                var target = frameWrap || document.documentElement;
+                if (target.requestFullscreen) {
+                    await target.requestFullscreen();
+                } else if (target.webkitRequestFullscreen) {
+                    target.webkitRequestFullscreen();
+                }
+            } catch (error) {
+                setStatus("warn", "Fullscreen was blocked by the browser. Try Open Direct.");
+            } finally {
+                updateFullscreenButton();
+            }
+        }
 
         function setStatus(type, message) {
             embedStatus.className = "status " + type;
             embedStatus.textContent = message;
         }
+
+        fullscreenBtn.addEventListener("click", toggleFullscreen);
+        document.addEventListener("fullscreenchange", updateFullscreenButton);
+        document.addEventListener("webkitfullscreenchange", updateFullscreenButton);
+        document.addEventListener("keydown", function (event) {
+            if ((event.key || "").toLowerCase() === "f" && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                event.preventDefault();
+                toggleFullscreen();
+            }
+        });
 
         function readSetting(key, fallback) {
             var value = storageGet(key);
@@ -418,6 +466,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.config.js"></script>
+    <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { intervalMs: 60000, captureIndexedDb: false };</script>
     <script src="js/cloud-autosync.js"></script>
 </body>
 </html>

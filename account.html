@@ -3,293 +3,356 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Account Cloud Save</title>
-  <meta name="description" content="Sign in to sync your Arcade Campus Hub save data with Supabase.">
+  <title>Account Center</title>
+  <meta name="description" content="Sign in and keep game saves synced automatically.">
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Nunito:wght@600;700;800&display=swap");
+    @import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
 
     :root {
-      --bg: #f2f5fb;
+      --bg: #eef3ff;
       --panel: #ffffff;
-      --line: #d7deea;
-      --ink: #1b2535;
-      --muted: #66748f;
-      --primary: #2e6bff;
-      --primary-strong: #1f56d7;
-      --soft: #f7f9fe;
-      --warn-bg: #fff1cd;
-      --warn-line: #f1d48d;
-      --warn-ink: #6e4d00;
+      --line: #d3ddf5;
+      --text: #14213d;
+      --muted: #5a6a8f;
+      --primary: #0a66ff;
+      --primary-strong: #0049bd;
+      --soft: #f5f8ff;
       --ok-bg: #e8fff2;
-      --ok-ink: #1f6f41;
-      --error-bg: #ffefec;
-      --error-ink: #8f2f2f;
-      --shadow: 0 14px 34px rgba(20, 36, 78, 0.12);
+      --ok-line: #9ee0ba;
+      --ok-text: #1f6b41;
+      --warn-bg: #fff6df;
+      --warn-line: #f0d195;
+      --warn-text: #7a5800;
+      --danger-bg: #ffefee;
+      --danger-line: #f4c0bb;
+      --danger-text: #8a2b2b;
+      --shadow: 0 16px 38px rgba(32, 53, 104, 0.14);
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
-      font-family: "Nunito", "Segoe UI", sans-serif;
-      color: var(--ink);
-      background: var(--bg);
       min-height: 100vh;
+      padding: 26px 14px;
       display: grid;
       place-items: center;
-      padding: 24px 14px;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(10, 102, 255, 0.18) 0, rgba(10, 102, 255, 0) 36%),
+        radial-gradient(circle at 100% 100%, rgba(4, 84, 201, 0.14) 0, rgba(4, 84, 201, 0) 36%),
+        var(--bg);
     }
 
-    .card {
-      width: min(460px, 96vw);
+    .shell {
+      width: min(760px, 98vw);
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 16px;
+      border-radius: 18px;
       box-shadow: var(--shadow);
-      animation: cardIn 0.35s ease-out both;
+      overflow: hidden;
+      animation: reveal .4s ease both;
     }
 
-    @keyframes cardIn {
-      from {
-        transform: translateY(12px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .body {
-      padding: 22px;
-      display: grid;
-      gap: 12px;
+    .hero {
+      padding: 24px 24px 14px;
+      background: linear-gradient(140deg, #f4f8ff 0%, #edf3ff 55%, #e8f0ff 100%);
+      border-bottom: 1px solid var(--line);
     }
 
-    .title {
-      margin: 0;
-      font-size: 1.45rem;
+    .eyebrow {
+      margin: 0 0 8px;
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .9px;
+      color: #48639b;
       font-weight: 800;
     }
 
-    .subtitle {
+    h1 {
       margin: 0;
+      font-family: "Space Grotesk", "Sora", sans-serif;
+      font-size: clamp(1.5rem, 2.7vw, 2rem);
+      line-height: 1.12;
+      letter-spacing: -.3px;
+    }
+
+    .sub {
+      margin: 9px 0 0;
       color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.4;
+      font-size: .95rem;
+      max-width: 66ch;
+      line-height: 1.5;
     }
 
-    .setup {
-      margin: 0;
-      background: var(--soft);
-      border: 1px dashed #adc8f4;
-      border-radius: 12px;
-      padding: 10px 12px;
-      color: #345a97;
-      font-size: 0.85rem;
-      line-height: 1.45;
-      display: none;
-    }
-
-    .setup.show {
-      display: block;
-    }
-
-    .meta {
-      color: var(--muted);
-      font-size: 0.84rem;
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .inputs {
+    .content {
+      padding: 18px 24px 24px;
       display: grid;
-      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .status {
+      margin: 0;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid #cad9f6;
+      background: #eef5ff;
+      color: #285188;
+      font-weight: 700;
+      font-size: .92rem;
+    }
+
+    .status.ok {
+      background: var(--ok-bg);
+      border-color: var(--ok-line);
+      color: var(--ok-text);
+    }
+
+    .status.warn {
+      background: var(--warn-bg);
+      border-color: var(--warn-line);
+      color: var(--warn-text);
+    }
+
+    .status.error {
+      background: var(--danger-bg);
+      border-color: var(--danger-line);
+      color: var(--danger-text);
+    }
+
+    .muted {
+      margin: 0;
+      color: #61739c;
+      font-weight: 700;
+      font-size: .86rem;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: var(--soft);
+      display: grid;
       gap: 10px;
     }
 
-    .label {
-      margin: 0 0 5px;
-      color: #4f5f7d;
-      font-size: 0.78rem;
+    .panel h2 {
+      margin: 0;
+      font-size: .98rem;
       font-weight: 800;
-      letter-spacing: 0.2px;
+      color: #233e72;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .label {
+      margin: 0;
+      color: #4f628f;
+      font-size: .75rem;
       text-transform: uppercase;
+      letter-spacing: .35px;
+      font-weight: 800;
     }
 
     .input {
       width: 100%;
-      border: 1px solid #c9d3e5;
       border-radius: 10px;
+      border: 1px solid #bfceeb;
       padding: 10px 11px;
       font: inherit;
-      color: var(--ink);
       font-weight: 600;
-      background: #ffffff;
+      color: var(--text);
+      background: #fff;
     }
 
     .input:focus {
-      outline: 2px solid rgba(0, 109, 242, 0.24);
+      outline: 2px solid rgba(10, 102, 255, .22);
       border-color: var(--primary);
     }
 
-    .actions {
+    .row {
       display: flex;
-      flex-wrap: nowrap;
       gap: 8px;
-    }
-
-    .actions.stack {
       flex-wrap: wrap;
     }
 
     .btn {
       appearance: none;
-      border: 1px solid var(--line);
+      border: 1px solid #bfd0ef;
       border-radius: 10px;
-      background: #f8faff;
-      color: var(--ink);
-      padding: 10px 12px;
+      padding: 9px 12px;
       font: inherit;
       font-weight: 700;
-      cursor: pointer;
+      color: #19335f;
+      background: #f6faff;
       text-decoration: none;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      flex: 1;
+      gap: 6px;
+      min-height: 40px;
     }
 
     .btn:hover {
-      background: #edf6ff;
+      background: #ecf4ff;
     }
 
     .btn:disabled {
-      opacity: 0.45;
+      opacity: .5;
       cursor: not-allowed;
     }
 
     .btn.primary {
-      background: var(--primary);
+      color: #fff;
       border-color: var(--primary);
-      color: #ffffff;
+      background: var(--primary);
     }
 
     .btn.primary:hover {
-      background: var(--primary-strong);
       border-color: var(--primary-strong);
+      background: var(--primary-strong);
     }
 
     .btn.warn {
-      background: var(--warn-bg);
-      border-color: var(--warn-line);
-      color: var(--warn-ink);
+      border-color: #efc38f;
+      background: #fff5df;
+      color: #755000;
     }
 
     details {
       border: 1px solid var(--line);
-      border-radius: 10px;
+      border-radius: 12px;
+      background: #fbfcff;
       padding: 10px;
-      background: var(--soft);
     }
 
     summary {
       cursor: pointer;
       font-weight: 800;
-      color: #364a70;
-      outline: none;
+      color: #2e4a80;
     }
 
-    .config-actions {
-      margin-top: 10px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+    .email-template {
+      border-radius: 10px;
+      border: 1px solid #c6d5f2;
+      background: #fff;
+      width: 100%;
+      min-height: 160px;
+      resize: vertical;
+      padding: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #20335f;
+      line-height: 1.4;
     }
 
-    .status {
-      margin: 0;
-      background: #eef5ff;
-      border: 1px solid #c7daf6;
-      color: #284a82;
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-weight: 700;
-      font-size: 0.9rem;
+    .hidden {
+      display: none !important;
     }
 
-    .status.ok {
-      background: var(--ok-bg);
-      border-color: #9fdab6;
-      color: var(--ok-ink);
-    }
+    @media (max-width: 720px) {
+      .hero,
+      .content {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
 
-    .status.error {
-      background: var(--error-bg);
-      border-color: #f2c1b8;
-      color: var(--error-ink);
-    }
+      .grid {
+        grid-template-columns: 1fr;
+      }
 
-    @media (max-width: 680px) {
-      .actions {
-        flex-wrap: wrap;
+      .row {
+        flex-direction: column;
+      }
+
+      .row .btn,
+      .row a.btn {
+        width: 100%;
       }
     }
   </style>
 </head>
 <body>
-  <main class="card">
-    <section class="body">
-      <h1 class="title">Sign in</h1>
-      <p class="subtitle">Save and load your Arcade Hub data from your Supabase account.</p>
-      <p id="setupHelp" class="setup">Supabase is not configured yet. Open "Supabase setup" below and paste your project URL and anon key.</p>
-      <div class="inputs">
-        <div>
-          <p class="label">Email</p>
-          <input id="authEmail" class="input" type="email" placeholder="you@example.com" autocomplete="email">
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">Arcade Campus Hub</p>
+      <h1>Account Center</h1>
+      <p class="sub">Sign in once and cloud sync runs automatically. Saves auto-load when your account is detected and auto-save when you close game tabs.</p>
+    </header>
+
+    <section class="content">
+      <p id="authStatus" class="status">Checking Supabase setup...</p>
+      <p id="cloudAutoSyncStatus" class="muted">Autosave heartbeat: initializing...</p>
+
+      <section class="panel">
+        <h2>Sign In</h2>
+        <div class="grid">
+          <label class="field">
+            <span class="label">Email</span>
+            <input id="authEmail" class="input" type="email" placeholder="you@example.com" autocomplete="email">
+          </label>
+          <label class="field">
+            <span class="label">Password</span>
+            <input id="authPassword" class="input" type="password" placeholder="Password" autocomplete="current-password">
+          </label>
         </div>
-        <div>
-          <p class="label">Password</p>
-          <input id="authPassword" class="input" type="password" placeholder="Your password" autocomplete="current-password">
+        <p class="muted">Create account once, verify email, then sign in. Cloud load/save buttons were removed because sync is now always automatic.</p>
+        <div class="row">
+          <button id="authSignInBtn" type="button" class="btn primary">Sign In</button>
+          <button id="authSignUpBtn" type="button" class="btn">Create Account</button>
+          <button id="resendVerifyBtn" type="button" class="btn">Resend Verification</button>
         </div>
-      </div>
-
-      <div class="actions">
-        <button id="authSignInBtn" type="button" class="btn primary">Sign In</button>
-        <button id="authSignUpBtn" type="button" class="btn">Create Account</button>
-      </div>
-
-      <div class="actions">
-        <button id="authSignOutBtn" type="button" class="btn warn">Sign Out</button>
-        <a href="index.html" class="btn">Back to Hub</a>
-      </div>
-
-      <div class="actions stack">
-        <button id="cloudPullBtn" type="button" class="btn">Cloud Load</button>
-        <button id="cloudPushBtn" type="button" class="btn">Cloud Save</button>
-      </div>
+        <div class="row">
+          <button id="authSignOutBtn" type="button" class="btn warn">Sign Out</button>
+          <a href="index.html" class="btn">Back to Hub</a>
+          <a id="adminPortalBtn" href="admin.html" class="btn hidden">Open Admin Panel</a>
+        </div>
+      </section>
 
       <details>
         <summary>Supabase setup</summary>
-        <p class="meta" style="margin-top:8px;">Paste these from Supabase Project Settings -> API.</p>
-        <div class="inputs" style="margin-top:8px;">
-          <div>
-            <p class="label">Project URL</p>
+        <div style="display:grid;gap:8px;margin-top:10px;">
+          <label class="field">
+            <span class="label">Project URL</span>
             <input id="setupUrl" class="input" type="url" placeholder="https://YOUR-PROJECT.supabase.co" autocomplete="off">
-          </div>
-          <div>
-            <p class="label">Anon Public Key</p>
+          </label>
+          <label class="field">
+            <span class="label">Anon Public Key</span>
             <input id="setupAnonKey" class="input" type="password" placeholder="eyJ..." autocomplete="off">
+          </label>
+          <div class="row">
+            <button id="saveSetupBtn" type="button" class="btn primary">Save Setup</button>
+            <button id="clearSetupBtn" type="button" class="btn">Clear Setup</button>
           </div>
-        </div>
-        <div class="config-actions">
-          <button id="saveSetupBtn" type="button" class="btn primary">Save Setup</button>
-          <button id="clearSetupBtn" type="button" class="btn">Clear Setup</button>
         </div>
       </details>
 
-      <p id="authStatus" class="status">Checking Supabase config...</p>
-      <p id="cloudAutoSyncStatus" class="meta">Autosave heartbeat: initializing...</p>
+      <details>
+        <summary>Better verification email template</summary>
+        <p class="muted" style="margin-top:8px;">Paste this into Supabase Dashboard -> Authentication -> Email Templates -> Confirm signup.</p>
+        <textarea id="emailTemplate" class="email-template" readonly></textarea>
+        <div class="row">
+          <button id="copyEmailTemplateBtn" type="button" class="btn">Copy Template</button>
+        </div>
+      </details>
     </section>
   </main>
 
@@ -304,35 +367,50 @@
     var LIBRARY_VIEW_KEY = "gamehub_library_view";
     var OPEN_SOURCE_ONLY_KEY = "gamehub_open_source_only";
     var PLAYABLE_ONLY_KEY = "gamehub_playable_only";
-    var CLOUD_AUTO_SYNC_KEY = "gamehub_cloud_auto_sync";
     var GAME_SAVES_KEY = "gamehub_game_saves";
     var LOCAL_SAVE_UPDATED_KEY = "gamehub_local_last_saved";
     var CLOUD_LAST_SYNC_KEY = "gamehub_cloud_last_sync";
+    var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
+
+    var ADMIN_EMAILS = {
+      "9152@mail.cadott.k12.wi.us": true,
+      "lucasgrimm854@gmail.com": true,
+      "stealzers.com@gmail.com": true
+    };
 
     var authEmail = document.getElementById("authEmail");
     var authPassword = document.getElementById("authPassword");
     var authSignInBtn = document.getElementById("authSignInBtn");
     var authSignUpBtn = document.getElementById("authSignUpBtn");
+    var resendVerifyBtn = document.getElementById("resendVerifyBtn");
     var authSignOutBtn = document.getElementById("authSignOutBtn");
-    var cloudPullBtn = document.getElementById("cloudPullBtn");
-    var cloudPushBtn = document.getElementById("cloudPushBtn");
+    var authStatus = document.getElementById("authStatus");
+    var cloudAutoSyncStatus = document.getElementById("cloudAutoSyncStatus");
     var setupUrl = document.getElementById("setupUrl");
     var setupAnonKey = document.getElementById("setupAnonKey");
     var saveSetupBtn = document.getElementById("saveSetupBtn");
     var clearSetupBtn = document.getElementById("clearSetupBtn");
-    var authStatus = document.getElementById("authStatus");
-    var cloudAutoSyncStatus = document.getElementById("cloudAutoSyncStatus");
-    var setupHelp = document.getElementById("setupHelp");
+    var adminPortalBtn = document.getElementById("adminPortalBtn");
+    var emailTemplate = document.getElementById("emailTemplate");
+    var copyEmailTemplateBtn = document.getElementById("copyEmailTemplateBtn");
 
     var supabaseClient = null;
-    var isConfigured = false;
     var cloudPeriodicSyncTimer = null;
     var cloudPeriodicSyncInFlight = false;
-    var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
-    var INDEXED_DB_SYNC_MAX_DATABASES = 6;
-    var INDEXED_DB_SYNC_MAX_STORES_PER_DB = 12;
-    var INDEXED_DB_SYNC_MAX_RECORDS_PER_STORE = 200;
-    var INDEXED_DB_SYNC_MAX_VALUE_CHARS = 120000;
+    var cloudPullInFlight = false;
+    var autoCloudLoadedUserId = "";
+    var AUTO_SYNC_INTERVAL_MS = 60000;
+
+    function isAdminEmail(email) {
+      if (typeof email !== "string") {
+        return false;
+      }
+      return !!ADMIN_EMAILS[email.trim().toLowerCase()];
+    }
+
+    function setAdminPortalVisibility(email) {
+      adminPortalBtn.classList.toggle("hidden", !isAdminEmail(email));
+    }
 
     function storageGet(key) {
       try {
@@ -346,7 +424,6 @@
       try {
         localStorage.setItem(key, value);
       } catch (error) {
-        // ignore storage exceptions
       }
     }
 
@@ -354,16 +431,7 @@
       try {
         localStorage.removeItem(key);
       } catch (error) {
-        // ignore storage exceptions
       }
-    }
-
-    function touchLocalSave() {
-      storageSet(LOCAL_SAVE_UPDATED_KEY, new Date().toISOString());
-    }
-
-    function markCloudSynced() {
-      storageSet(CLOUD_LAST_SYNC_KEY, new Date().toISOString());
     }
 
     function readArray(key) {
@@ -373,21 +441,6 @@
       } catch (error) {
         return [];
       }
-    }
-
-    function writeArray(key, value) {
-      storageSet(key, JSON.stringify(value));
-      touchLocalSave();
-    }
-
-    function readSetting(key, fallback) {
-      var value = storageGet(key);
-      return value === null ? fallback : value;
-    }
-
-    function writeSetting(key, value) {
-      storageSet(key, value);
-      touchLocalSave();
     }
 
     function readObject(key) {
@@ -402,527 +455,51 @@
       }
     }
 
-    function writeObject(key, value) {
-      storageSet(key, JSON.stringify(value || {}));
+    function readSetting(key, fallback) {
+      var value = storageGet(key);
+      return value === null ? fallback : value;
+    }
+
+    function touchLocalSave() {
+      storageSet(LOCAL_SAVE_UPDATED_KEY, new Date().toISOString());
+    }
+
+    function markCloudSynced() {
+      storageSet(CLOUD_LAST_SYNC_KEY, new Date().toISOString());
+    }
+
+    function writeArray(key, value) {
+      storageSet(key, JSON.stringify(Array.isArray(value) ? value : []));
       touchLocalSave();
     }
 
-    function shouldSyncExtraLocalStorageKey(key) {
-      if (typeof key !== "string" || !key) {
-        return false;
-      }
-      if (
-        key === FAVORITES_KEY ||
-        key === RECENTS_KEY ||
-        key === THEME_KEY ||
-        key === FAST_MODE_KEY ||
-        key === PERFORMANCE_PROFILE_KEY ||
-        key === LIBRARY_VIEW_KEY ||
-        key === OPEN_SOURCE_ONLY_KEY ||
-        key === PLAYABLE_ONLY_KEY ||
-        key === CLOUD_AUTO_SYNC_KEY ||
-        key === GAME_SAVES_KEY ||
-        key === LOCAL_SAVE_UPDATED_KEY ||
-        key === CLOUD_LAST_SYNC_KEY ||
-        key === SUPABASE_CONFIG_KEY
-      ) {
-        return false;
-      }
-      if (/^sb-.*-auth-token$/i.test(key) || key === "supabase.auth.token") {
-        return false;
-      }
-      return true;
+    function writeObject(key, value) {
+      storageSet(key, JSON.stringify(value && typeof value === "object" ? value : {}));
+      touchLocalSave();
     }
 
-    function snapshotExtraLocalStorage() {
-      var out = {};
-      try {
-        for (var i = 0; i < localStorage.length; i++) {
-          var key = localStorage.key(i);
-          if (!shouldSyncExtraLocalStorageKey(key)) {
-            continue;
-          }
-          var value = localStorage.getItem(key);
-          if (typeof value === "string") {
-            out[key] = value;
-          }
-        }
-      } catch (error) {
-        return out;
-      }
-      return out;
+    function writeSetting(key, value) {
+      storageSet(key, value);
+      touchLocalSave();
     }
 
-    function isAuthTokenStorageKey(key) {
-      return /^sb-.*-auth-token$/i.test(key) || key === "supabase.auth.token";
-    }
-
-    function snapshotAuthTokens() {
-      var out = {};
-      try {
-        for (var i = 0; i < localStorage.length; i++) {
-          var key = localStorage.key(i);
-          if (!isAuthTokenStorageKey(key)) {
-            continue;
-          }
-          var value = localStorage.getItem(key);
-          if (typeof value === "string" && value) {
-            out[key] = value;
-          }
-        }
-      } catch (error) {
-        return out;
-      }
-      return out;
-    }
-
-    function applyAuthTokens(authTokens) {
-      if (!authTokens || typeof authTokens !== "object" || Array.isArray(authTokens)) {
-        return;
-      }
-      Object.keys(authTokens).forEach(function (key) {
-        if (!isAuthTokenStorageKey(key)) {
-          return;
-        }
-        var value = authTokens[key];
-        if (typeof value === "string" && value) {
-          storageSet(key, value);
-        }
-      });
-    }
-
-    function snapshotSessionStorage() {
-      var out = {};
-      try {
-        if (!window.sessionStorage) {
-          return out;
-        }
-        for (var i = 0; i < sessionStorage.length; i++) {
-          var key = sessionStorage.key(i);
-          var value = sessionStorage.getItem(key);
-          if (typeof key === "string" && key && typeof value === "string") {
-            out[key] = value;
-          }
-        }
-      } catch (error) {
-        return out;
-      }
-      return out;
-    }
-
-    function applySessionStorage(sessionData) {
-      if (!sessionData || typeof sessionData !== "object" || Array.isArray(sessionData)) {
-        return;
-      }
-      try {
-        if (!window.sessionStorage) {
-          return;
-        }
-        Object.keys(sessionData).forEach(function (key) {
-          var value = sessionData[key];
-          if (typeof value === "string") {
-            sessionStorage.setItem(key, value);
-          }
-        });
-      } catch (error) {
+    function setStatus(message, state) {
+      authStatus.textContent = message;
+      authStatus.classList.remove("ok", "warn", "error");
+      if (state) {
+        authStatus.classList.add(state);
       }
     }
 
-    function snapshotCookies() {
-      var out = {};
-      try {
-        var raw = document.cookie || "";
-        if (!raw) {
-          return out;
-        }
-        raw.split(";").forEach(function (part) {
-          var section = part.trim();
-          if (!section) {
-            return;
-          }
-          var eqIndex = section.indexOf("=");
-          if (eqIndex <= 0) {
-            return;
-          }
-          var key = section.slice(0, eqIndex).trim();
-          var value = section.slice(eqIndex + 1);
-          if (key) {
-            out[key] = value;
-          }
-        });
-      } catch (error) {
-        return out;
-      }
-      return out;
+    function setHeartbeat(message) {
+      cloudAutoSyncStatus.textContent = message;
     }
 
-    function applyCookies(cookies) {
-      if (!cookies || typeof cookies !== "object" || Array.isArray(cookies)) {
-        return;
-      }
-      Object.keys(cookies).forEach(function (key) {
-        var value = cookies[key];
-        if (typeof key !== "string" || !key || typeof value !== "string") {
-          return;
-        }
-        try {
-          document.cookie = key + "=" + value + "; path=/; max-age=2592000; SameSite=Lax";
-        } catch (error) {
-        }
-      });
-    }
-
-    function applyExtraLocalStorage(extraLocalStorage) {
-      if (!extraLocalStorage || typeof extraLocalStorage !== "object" || Array.isArray(extraLocalStorage)) {
-        return;
-      }
-      Object.keys(extraLocalStorage).forEach(function (key) {
-        if (!shouldSyncExtraLocalStorageKey(key)) {
-          return;
-        }
-        var value = extraLocalStorage[key];
-        if (typeof value === "string") {
-          storageSet(key, value);
-        }
-      });
-    }
-
-    function toJsonSafeValue(value, maxChars) {
-      try {
-        var json = JSON.stringify(value);
-        if (typeof json !== "string" || json.length > maxChars) {
-          return null;
-        }
-        return JSON.parse(json);
-      } catch (error) {
-        return null;
-      }
-    }
-
-    function shouldSyncIndexedDbName(name) {
-      if (typeof name !== "string" || !name) {
-        return false;
-      }
-      if (/supabase|firebase|auth|workbox|service ?worker|cache/i.test(name)) {
-        return false;
-      }
-      return true;
-    }
-
-    function getIndexedDbDatabaseList() {
-      try {
-        if (!window.indexedDB || typeof window.indexedDB.databases !== "function") {
-          return Promise.resolve([]);
-        }
-        return window.indexedDB.databases().then(function (list) {
-          return Array.isArray(list) ? list : [];
-        }).catch(function () {
-          return [];
-        });
-      } catch (error) {
-        return Promise.resolve([]);
-      }
-    }
-
-    function openIndexedDb(name, version, onUpgradeNeeded) {
-      return new Promise(function (resolve, reject) {
-        var request;
-        try {
-          request = (typeof version === "number" && version > 0)
-            ? window.indexedDB.open(name, version)
-            : window.indexedDB.open(name);
-        } catch (error) {
-          reject(error);
-          return;
-        }
-
-        if (typeof onUpgradeNeeded === "function") {
-          request.onupgradeneeded = function (event) {
-            onUpgradeNeeded(event);
-          };
-        }
-
-        request.onsuccess = function () {
-          resolve(request.result);
-        };
-        request.onerror = function () {
-          reject(request.error || new Error("Unable to open IndexedDB"));
-        };
-      });
-    }
-
-    function deleteIndexedDb(name) {
-      return new Promise(function (resolve) {
-        var request;
-        try {
-          request = window.indexedDB.deleteDatabase(name);
-        } catch (error) {
-          resolve();
-          return;
-        }
-        request.onsuccess = function () { resolve(); };
-        request.onerror = function () { resolve(); };
-        request.onblocked = function () { resolve(); };
-      });
-    }
-
-    function readIndexedDbStoreSnapshot(db, storeName) {
-      return new Promise(function (resolve, reject) {
-        var tx;
-        try {
-          tx = db.transaction(storeName, "readonly");
-        } catch (error) {
-          resolve(null);
-          return;
-        }
-
-        var store = tx.objectStore(storeName);
-        var out = {
-          keyPath: typeof store.keyPath === "string" ? store.keyPath : null,
-          autoIncrement: store.autoIncrement === true,
-          records: []
-        };
-
-        var cursorRequest = store.openCursor();
-        cursorRequest.onsuccess = function () {
-          var cursor = cursorRequest.result;
-          if (!cursor) {
-            resolve(out);
-            return;
-          }
-
-          if (out.records.length >= INDEXED_DB_SYNC_MAX_RECORDS_PER_STORE) {
-            resolve(out);
-            return;
-          }
-
-          var safeValue = toJsonSafeValue(cursor.value, INDEXED_DB_SYNC_MAX_VALUE_CHARS);
-          var safeKey = toJsonSafeValue(cursor.key, 4000);
-          if (safeValue !== null && safeKey !== null) {
-            out.records.push({ key: safeKey, value: safeValue });
-          }
-          cursor.continue();
-        };
-        cursorRequest.onerror = function () {
-          reject(cursorRequest.error || new Error("Unable to read IndexedDB store"));
-        };
-      });
-    }
-
-    async function snapshotIndexedDb() {
-      if (!window.indexedDB) {
-        return {};
-      }
-
-      var out = {};
-      var dbList = await getIndexedDbDatabaseList();
-      var names = dbList
-        .map(function (db) { return db && typeof db.name === "string" ? db.name : ""; })
-        .filter(function (name) { return shouldSyncIndexedDbName(name); })
-        .slice(0, INDEXED_DB_SYNC_MAX_DATABASES);
-
-      for (var i = 0; i < names.length; i++) {
-        var name = names[i];
-        var info = dbList.find(function (db) { return db && db.name === name; }) || {};
-        var version = typeof info.version === "number" && info.version > 0 ? Math.floor(info.version) : 1;
-        var db = null;
-        try {
-          db = await openIndexedDb(name, version);
-          var storeNames = Array.from(db.objectStoreNames || []).slice(0, INDEXED_DB_SYNC_MAX_STORES_PER_DB);
-          var stores = {};
-          for (var s = 0; s < storeNames.length; s++) {
-            var storeName = storeNames[s];
-            var storeSnapshot = await readIndexedDbStoreSnapshot(db, storeName);
-            if (storeSnapshot) {
-              stores[storeName] = storeSnapshot;
-            }
-          }
-          if (Object.keys(stores).length > 0) {
-            out[name] = { version: version, stores: stores };
-          }
-        } catch (error) {
-        } finally {
-          if (db) {
-            db.close();
-          }
-        }
-      }
-
-      return out;
-    }
-
-    function writeIndexedDbStore(db, storeName, storeData) {
-      return new Promise(function (resolve) {
-        var tx;
-        try {
-          tx = db.transaction(storeName, "readwrite");
-        } catch (error) {
-          resolve();
-          return;
-        }
-        var store = tx.objectStore(storeName);
-        var records = Array.isArray(storeData.records) ? storeData.records : [];
-
-        try {
-          store.clear();
-        } catch (error) {
-        }
-
-        records.forEach(function (entry) {
-          if (!entry || typeof entry !== "object") {
-            return;
-          }
-          try {
-            if (store.keyPath) {
-              store.put(entry.value);
-            } else {
-              store.put(entry.value, entry.key);
-            }
-          } catch (error) {
-          }
-        });
-
-        tx.oncomplete = function () { resolve(); };
-        tx.onerror = function () { resolve(); };
-        tx.onabort = function () { resolve(); };
-      });
-    }
-
-    async function applyIndexedDbSnapshot(indexedDbSnapshot) {
-      if (!window.indexedDB || !indexedDbSnapshot || typeof indexedDbSnapshot !== "object" || Array.isArray(indexedDbSnapshot)) {
-        return;
-      }
-
-      var dbNames = Object.keys(indexedDbSnapshot)
-        .filter(function (name) { return shouldSyncIndexedDbName(name); })
-        .slice(0, INDEXED_DB_SYNC_MAX_DATABASES);
-
-      for (var i = 0; i < dbNames.length; i++) {
-        var dbName = dbNames[i];
-        var dbData = indexedDbSnapshot[dbName];
-        if (!dbData || typeof dbData !== "object" || Array.isArray(dbData)) {
-          continue;
-        }
-        var stores = dbData.stores;
-        if (!stores || typeof stores !== "object" || Array.isArray(stores)) {
-          continue;
-        }
-
-        await deleteIndexedDb(dbName);
-        var version = typeof dbData.version === "number" && dbData.version > 0 ? Math.floor(dbData.version) : 1;
-
-        var db = null;
-        try {
-          db = await openIndexedDb(dbName, version, function (event) {
-            var upgradeDb = event.target.result;
-            Object.keys(stores).slice(0, INDEXED_DB_SYNC_MAX_STORES_PER_DB).forEach(function (storeName) {
-              if (upgradeDb.objectStoreNames.contains(storeName)) {
-                return;
-              }
-              var storeData = stores[storeName] || {};
-              var options = { autoIncrement: storeData.autoIncrement === true };
-              if (typeof storeData.keyPath === "string" && storeData.keyPath) {
-                options.keyPath = storeData.keyPath;
-              }
-              try {
-                upgradeDb.createObjectStore(storeName, options);
-              } catch (error) {
-              }
-            });
-          });
-
-          var storeNames = Object.keys(stores).slice(0, INDEXED_DB_SYNC_MAX_STORES_PER_DB);
-          for (var s = 0; s < storeNames.length; s++) {
-            await writeIndexedDbStore(db, storeNames[s], stores[storeNames[s]] || {});
-          }
-        } catch (error) {
-        } finally {
-          if (db) {
-            db.close();
-          }
-        }
-      }
-    }
-
-    function snapshotSavedData() {
-      return {
-        version: 1,
-        exportedAt: new Date().toISOString(),
-        data: {
-          favorites: readArray(FAVORITES_KEY),
-          recent: readArray(RECENTS_KEY),
-          theme: readSetting(THEME_KEY, "light"),
-          fastMode: readSetting(FAST_MODE_KEY, "0"),
-          performanceProfile: readSetting(PERFORMANCE_PROFILE_KEY, "normal"),
-          libraryView: readSetting(LIBRARY_VIEW_KEY, "cards"),
-          openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
-          playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
-          cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1"),
-          gameSaves: readObject(GAME_SAVES_KEY),
-          extraLocalStorage: snapshotExtraLocalStorage(),
-          authTokens: snapshotAuthTokens(),
-          sessionStorage: snapshotSessionStorage(),
-          cookies: snapshotCookies()
-        }
-      };
-    }
-
-    async function snapshotSavedDataAsync() {
-      var payload = snapshotSavedData();
-      payload.data.indexedDb = await snapshotIndexedDb();
-      return payload;
-    }
-
-    async function applySavedData(payload) {
-      if (!payload || typeof payload !== "object" || !payload.data || typeof payload.data !== "object") {
-        throw new Error("Invalid cloud payload.");
-      }
-
-      var data = payload.data;
-      writeArray(FAVORITES_KEY, Array.isArray(data.favorites) ? data.favorites : []);
-      writeArray(RECENTS_KEY, Array.isArray(data.recent) ? data.recent : []);
-      writeSetting(THEME_KEY, typeof data.theme === "string" ? data.theme : "light");
-      writeSetting(FAST_MODE_KEY, data.fastMode === "1" ? "1" : "0");
-      writeSetting(PERFORMANCE_PROFILE_KEY, (data.performanceProfile === "quick" || data.performanceProfile === "turbo") ? data.performanceProfile : "normal");
-      writeSetting(LIBRARY_VIEW_KEY, ["cards", "grouped", "platform", "compact"].indexOf(data.libraryView) !== -1 ? data.libraryView : "cards");
-      writeSetting(OPEN_SOURCE_ONLY_KEY, data.openSourceOnly === "1" ? "1" : "0");
-      writeSetting(PLAYABLE_ONLY_KEY, data.playableOnly === "1" ? "1" : "0");
-      writeSetting(CLOUD_AUTO_SYNC_KEY, data.cloudAutoSync === "0" ? "0" : "1");
-
-      var rawGameSaves = (data.gameSaves && typeof data.gameSaves === "object" && !Array.isArray(data.gameSaves)) ? data.gameSaves : {};
-      var cleanGameSaves = {};
-
-      Object.keys(rawGameSaves).forEach(function (gameId) {
-        var gameSave = rawGameSaves[gameId];
-        if (!gameSave || typeof gameSave !== "object" || Array.isArray(gameSave)) {
-          return;
-        }
-
-        var localData = gameSave.localStorage;
-        if (!localData || typeof localData !== "object" || Array.isArray(localData)) {
-          return;
-        }
-
-        var cleanLocalData = {};
-        Object.keys(localData).forEach(function (key) {
-          var value = localData[key];
-          if (value === null || typeof value === "string") {
-            cleanLocalData[key] = value;
-          }
-        });
-
-        cleanGameSaves[gameId] = {
-          updatedAt: typeof gameSave.updatedAt === "string" ? gameSave.updatedAt : new Date().toISOString(),
-          localStorage: cleanLocalData
-        };
-      });
-
-      writeObject(GAME_SAVES_KEY, cleanGameSaves);
-      applyExtraLocalStorage(data.extraLocalStorage);
-      applyAuthTokens(data.authTokens);
-      applySessionStorage(data.sessionStorage);
-      applyCookies(data.cookies);
-      await applyIndexedDbSnapshot(data.indexedDb);
+    function setButtonsDisabled(disabled) {
+      authSignInBtn.disabled = disabled;
+      authSignUpBtn.disabled = disabled;
+      resendVerifyBtn.disabled = disabled;
+      authSignOutBtn.disabled = disabled;
     }
 
     function getSupabaseConfig() {
@@ -938,111 +515,57 @@
       var localAnon = typeof localCfg.anonKey === "string" ? localCfg.anonKey.trim() : "";
       var fileUrl = typeof cfg.url === "string" ? cfg.url.trim() : "";
       var fileAnon = typeof cfg.anonKey === "string" ? cfg.anonKey.trim() : "";
-      var url = localUrl || fileUrl;
-      var anonKey = localAnon || fileAnon;
 
       setupUrl.value = localUrl || fileUrl;
       setupAnonKey.value = localAnon || fileAnon;
-      return { url: url, anonKey: anonKey };
+
+      return {
+        url: localUrl || fileUrl,
+        anonKey: localAnon || fileAnon
+      };
     }
 
-    function setStatus(message, ok, isError) {
-      authStatus.textContent = message;
-      authStatus.classList.toggle("ok", ok === true);
-      authStatus.classList.toggle("error", isError === true);
-    }
-
-    function setCloudAutoSyncStatus(message) {
-      if (!cloudAutoSyncStatus) {
-        return;
-      }
-      cloudAutoSyncStatus.textContent = message;
-    }
-
-    function setAuthButtonsDisabled(disabled) {
-      authSignInBtn.disabled = disabled;
-      authSignUpBtn.disabled = disabled;
-      authSignOutBtn.disabled = disabled;
-      cloudPullBtn.disabled = disabled;
-      cloudPushBtn.disabled = disabled;
-    }
-
-    function restartCloudPeriodicSync() {
-      if (cloudPeriodicSyncTimer) {
-        clearInterval(cloudPeriodicSyncTimer);
-        cloudPeriodicSyncTimer = null;
-      }
-
-      if (readSetting(CLOUD_AUTO_SYNC_KEY, "1") !== "1") {
-        setCloudAutoSyncStatus("Autosave heartbeat: off");
-        return;
-      }
-
-      cloudPeriodicSyncTimer = setInterval(async function () {
-        if (!supabaseClient || cloudPeriodicSyncInFlight) {
-          return;
+    function snapshotSavedData() {
+      return {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        data: {
+          favorites: readArray(FAVORITES_KEY),
+          recent: readArray(RECENTS_KEY),
+          theme: readSetting(THEME_KEY, "light"),
+          fastMode: readSetting(FAST_MODE_KEY, "0"),
+          performanceProfile: readSetting(PERFORMANCE_PROFILE_KEY, "normal"),
+          libraryView: readSetting(LIBRARY_VIEW_KEY, "cards"),
+          openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
+          playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
+          cloudAutoSync: "1",
+          gameSaves: readObject(GAME_SAVES_KEY)
         }
-
-        cloudPeriodicSyncInFlight = true;
-        setCloudAutoSyncStatus("Autosave heartbeat: syncing now...");
-        try {
-          await cloudPush({ silent: true });
-          setCloudAutoSyncStatus("Autosave heartbeat: synced at " + new Date().toLocaleTimeString());
-        } catch (error) {
-          if (!(error && error.message === "Please sign in first.")) {
-            console.warn("Account periodic cloud sync skipped:", error);
-            setCloudAutoSyncStatus("Autosave heartbeat: retrying in 30s (last sync failed)");
-          } else {
-            setCloudAutoSyncStatus("Autosave heartbeat: sign in required");
-          }
-        } finally {
-          cloudPeriodicSyncInFlight = false;
-        }
-      }, 30000);
-
-      setCloudAutoSyncStatus("Autosave heartbeat: active (every 30s)");
+      };
     }
 
-    async function initSupabase() {
-      supabaseClient = null;
-      var cfg = getSupabaseConfig();
-      var hasFactory = !!(window.supabase && typeof window.supabase.createClient === "function");
-      if (!hasFactory || !cfg.url || !cfg.anonKey) {
-        isConfigured = false;
-        setupHelp.classList.add("show");
-        setAuthButtonsDisabled(true);
-        setStatus("Supabase is not configured yet.", false, true);
-        return;
+    function applySavedData(payload) {
+      if (!payload || typeof payload !== "object" || !payload.data || typeof payload.data !== "object") {
+        throw new Error("Invalid cloud payload.");
       }
 
-      try {
-        supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
-        isConfigured = true;
-        setupHelp.classList.remove("show");
-        setAuthButtonsDisabled(false);
-        var auth = await supabaseClient.auth.getUser();
-        var user = auth && auth.data ? auth.data.user : null;
-        setStatus(user && user.email ? ("Signed in: " + user.email) : "Supabase ready. Sign in to save to cloud.", !!user, false);
+      var data = payload.data;
+      writeArray(FAVORITES_KEY, Array.isArray(data.favorites) ? data.favorites : []);
+      writeArray(RECENTS_KEY, Array.isArray(data.recent) ? data.recent : []);
+      writeSetting(THEME_KEY, typeof data.theme === "string" ? data.theme : "light");
+      writeSetting(FAST_MODE_KEY, data.fastMode === "1" ? "1" : "0");
+      writeSetting(PERFORMANCE_PROFILE_KEY, (data.performanceProfile === "quick" || data.performanceProfile === "turbo") ? data.performanceProfile : "normal");
+      writeSetting(LIBRARY_VIEW_KEY, ["cards", "grouped", "platform", "compact"].indexOf(data.libraryView) !== -1 ? data.libraryView : "cards");
+      writeSetting(OPEN_SOURCE_ONLY_KEY, data.openSourceOnly === "1" ? "1" : "0");
+      writeSetting(PLAYABLE_ONLY_KEY, data.playableOnly === "1" ? "1" : "0");
 
-        supabaseClient.auth.onAuthStateChange(function (_event, session) {
-          var sessionUser = session && session.user ? session.user : null;
-          setStatus(sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Signed out.", !!sessionUser, false);
-          restartCloudPeriodicSync();
-        });
-
-        restartCloudPeriodicSync();
-      } catch (error) {
-        supabaseClient = null;
-        isConfigured = false;
-        setupHelp.classList.add("show");
-        setAuthButtonsDisabled(true);
-        setStatus("Supabase init failed.", false, true);
-      }
+      var incomingGameSaves = (data.gameSaves && typeof data.gameSaves === "object" && !Array.isArray(data.gameSaves)) ? data.gameSaves : {};
+      writeObject(GAME_SAVES_KEY, incomingGameSaves);
     }
 
     async function requireSupabaseUser() {
       if (!supabaseClient) {
-        throw new Error("Supabase is not configured yet. Add url + anonKey in js/supabase.config.js.");
+        throw new Error("Supabase is not configured.");
       }
       var auth = await supabaseClient.auth.getUser();
       var user = auth && auth.data ? auth.data.user : null;
@@ -1056,30 +579,153 @@
       var opts = options || {};
       var silent = opts.silent === true;
       var user = await requireSupabaseUser();
-      var payload = await snapshotSavedDataAsync();
-      var result = await supabaseClient.from("user_saves").upsert({ user_id: user.id, payload: payload }, { onConflict: "user_id" });
+      var payload = snapshotSavedData();
+      var result = await supabaseClient
+        .from("user_saves")
+        .upsert({ user_id: user.id, payload: payload }, { onConflict: "user_id" });
       if (result.error) {
         throw result.error;
       }
       markCloudSynced();
       if (!silent) {
-        setStatus("Cloud save synced.", true);
+        setStatus("Cloud save synced.", "ok");
       }
     }
 
-    async function cloudPull() {
-      var user = await requireSupabaseUser();
-      var result = await supabaseClient.from("user_saves").select("payload").eq("user_id", user.id).maybeSingle();
-      if (result.error) {
-        throw result.error;
+    async function cloudPull(options) {
+      var opts = options || {};
+      var silent = opts.silent === true;
+
+      if (cloudPullInFlight) {
+        return false;
       }
-      if (!result.data || !result.data.payload) {
-        setStatus("No cloud save found yet.", false);
+
+      cloudPullInFlight = true;
+      try {
+        var user = await requireSupabaseUser();
+        var result = await supabaseClient
+          .from("user_saves")
+          .select("payload")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        if (!result.data || !result.data.payload) {
+          if (!silent) {
+            setStatus("No cloud save found yet.", "warn");
+          }
+          return false;
+        }
+
+        applySavedData(result.data.payload);
+        markCloudSynced();
+
+        if (!silent) {
+          setStatus("Cloud data auto-loaded.", "ok");
+        }
+        return true;
+      } finally {
+        cloudPullInFlight = false;
+      }
+    }
+
+    async function autoLoadCloudForUser(user) {
+      if (!user || !user.id || autoCloudLoadedUserId === user.id) {
         return;
       }
-      await applySavedData(result.data.payload);
-      markCloudSynced();
-      setStatus("Cloud data loaded to this browser.", true);
+
+      try {
+        var loaded = await cloudPull({ silent: true });
+        autoCloudLoadedUserId = user.id;
+        setAdminPortalVisibility(user.email || "");
+        if (loaded) {
+          setStatus("Signed in: " + (user.email || "account") + " (cloud loaded)", "ok");
+        } else {
+          setStatus("Signed in: " + (user.email || "account") + " (no cloud save yet)", "ok");
+        }
+      } catch (error) {
+        if (!(error && error.message === "Please sign in first.")) {
+          console.warn("Auto cloud load skipped:", error);
+        }
+      }
+    }
+
+    function restartCloudPeriodicSync() {
+      if (cloudPeriodicSyncTimer) {
+        clearInterval(cloudPeriodicSyncTimer);
+        cloudPeriodicSyncTimer = null;
+      }
+
+      cloudPeriodicSyncTimer = setInterval(async function () {
+        if (!supabaseClient || cloudPeriodicSyncInFlight) {
+          return;
+        }
+
+        cloudPeriodicSyncInFlight = true;
+        setHeartbeat("Autosave heartbeat: syncing now...");
+        try {
+          await cloudPush({ silent: true });
+          setHeartbeat("Autosave heartbeat: synced at " + new Date().toLocaleTimeString());
+        } catch (error) {
+          if (error && error.message === "Please sign in first.") {
+            setHeartbeat("Autosave heartbeat: sign in required");
+          } else {
+            setHeartbeat("Autosave heartbeat: retrying in 60s (last sync failed)");
+          }
+        } finally {
+          cloudPeriodicSyncInFlight = false;
+        }
+      }, AUTO_SYNC_INTERVAL_MS);
+
+      setHeartbeat("Autosave heartbeat: active (every 60s)");
+    }
+
+    async function initSupabase() {
+      var cfg = getSupabaseConfig();
+      var hasFactory = !!(window.supabase && typeof window.supabase.createClient === "function");
+
+      if (!hasFactory || !cfg.url || !cfg.anonKey) {
+        setButtonsDisabled(true);
+        setAdminPortalVisibility("");
+        setStatus("Supabase is not configured yet. Add Project URL and Anon Key.", "warn");
+        setHeartbeat("Autosave heartbeat: waiting for setup");
+        return;
+      }
+
+      try {
+        supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+        setButtonsDisabled(false);
+        var auth = await supabaseClient.auth.getUser();
+        var user = auth && auth.data ? auth.data.user : null;
+
+        if (user) {
+          await autoLoadCloudForUser(user);
+        } else {
+          setAdminPortalVisibility("");
+          setStatus("Supabase ready. Sign in to sync.", "warn");
+        }
+
+        supabaseClient.auth.onAuthStateChange(function (_event, session) {
+          var sessionUser = session && session.user ? session.user : null;
+          if (!sessionUser) {
+            autoCloudLoadedUserId = "";
+            setAdminPortalVisibility("");
+            setStatus("Signed out.", "warn");
+          } else {
+            autoLoadCloudForUser(sessionUser);
+          }
+          restartCloudPeriodicSync();
+        });
+
+        restartCloudPeriodicSync();
+      } catch (error) {
+        setButtonsDisabled(true);
+        setAdminPortalVisibility("");
+        setStatus("Supabase init failed.", "error");
+      }
     }
 
     authSignInBtn.addEventListener("click", async function () {
@@ -1089,13 +735,18 @@
         }
         var email = authEmail.value.trim();
         var password = authPassword.value;
-        var signInResult = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
-        if (signInResult.error) {
-          throw signInResult.error;
+        if (!email || !password) {
+          throw new Error("Enter both email and password.");
         }
-        setStatus("Signed in: " + email, true, false);
+
+        var result = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+        if (result.error) {
+          throw result.error;
+        }
+
+        await autoLoadCloudForUser(result.data && result.data.user ? result.data.user : null);
       } catch (error) {
-        setStatus(error && error.message ? error.message : "Sign in failed.", false, true);
+        setStatus(error && error.message ? error.message : "Sign in failed.", "error");
       }
     });
 
@@ -1106,16 +757,54 @@
         }
         var email = authEmail.value.trim();
         var password = authPassword.value;
-        var signUpResult = await supabaseClient.auth.signUp({ email: email, password: password });
-        if (signUpResult.error) {
-          throw signUpResult.error;
+        if (!email || !password) {
+          throw new Error("Enter both email and password.");
         }
-        setStatus("Account created successfully! Redirecting to Terms and Privacy...", true, false);
-        setTimeout(function () {
-          window.location.href = "privacy.html";
-        }, 1500);
+
+        var result = await supabaseClient.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            emailRedirectTo: window.location.origin + "/account.html?verified=1"
+          }
+        });
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        setStatus("Account created. Check inbox and spam for verification.", "ok");
       } catch (error) {
-        setStatus(error && error.message ? error.message : "Sign up failed.", false, true);
+        setStatus(error && error.message ? error.message : "Sign up failed.", "error");
+      }
+    });
+
+    resendVerifyBtn.addEventListener("click", async function () {
+      try {
+        if (!supabaseClient) {
+          throw new Error("Supabase is not configured.");
+        }
+
+        var email = authEmail.value.trim();
+        if (!email) {
+          throw new Error("Enter your email first.");
+        }
+
+        var resend = await supabaseClient.auth.resend({
+          type: "signup",
+          email: email,
+          options: {
+            emailRedirectTo: window.location.origin + "/account.html?verified=1"
+          }
+        });
+
+        if (resend.error) {
+          throw resend.error;
+        }
+
+        setStatus("Verification email sent. Check inbox/spam.", "ok");
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Resend failed.", "error");
       }
     });
 
@@ -1124,29 +813,14 @@
         if (!supabaseClient) {
           throw new Error("Supabase is not configured.");
         }
-        var signOutResult = await supabaseClient.auth.signOut();
-        if (signOutResult.error) {
-          throw signOutResult.error;
+        var result = await supabaseClient.auth.signOut();
+        if (result.error) {
+          throw result.error;
         }
-        setStatus("Signed out.", false, false);
+        setAdminPortalVisibility("");
+        setStatus("Signed out.", "warn");
       } catch (error) {
-        setStatus(error && error.message ? error.message : "Sign out failed.", false, true);
-      }
-    });
-
-    cloudPullBtn.addEventListener("click", async function () {
-      try {
-        await cloudPull();
-      } catch (error) {
-        setStatus(error && error.message ? error.message : "Cloud load failed.", false, true);
-      }
-    });
-
-    cloudPushBtn.addEventListener("click", async function () {
-      try {
-        await cloudPush();
-      } catch (error) {
-        setStatus(error && error.message ? error.message : "Cloud save failed.", false, true);
+        setStatus(error && error.message ? error.message : "Sign out failed.", "error");
       }
     });
 
@@ -1154,11 +828,11 @@
       var url = setupUrl.value.trim();
       var anonKey = setupAnonKey.value.trim();
       if (!url || !anonKey) {
-        setStatus("Enter both Project URL and Anon Key.", false, true);
+        setStatus("Enter both Project URL and Anon Key.", "error");
         return;
       }
       storageSet(SUPABASE_CONFIG_KEY, JSON.stringify({ url: url, anonKey: anonKey }));
-      setStatus("Supabase setup saved locally. Reconnecting...", false, false);
+      setStatus("Supabase setup saved. Reconnecting...", "warn");
       initSupabase();
     });
 
@@ -1166,12 +840,39 @@
       storageRemove(SUPABASE_CONFIG_KEY);
       setupUrl.value = "";
       setupAnonKey.value = "";
-      setStatus("Saved Supabase setup cleared.", false, false);
+      setStatus("Saved Supabase setup cleared.", "warn");
       initSupabase();
     });
 
+    copyEmailTemplateBtn.addEventListener("click", async function () {
+      try {
+        await navigator.clipboard.writeText(emailTemplate.value);
+        setStatus("Email template copied.", "ok");
+      } catch (error) {
+        setStatus("Could not copy template. Select text and copy manually.", "warn");
+      }
+    });
+
+    emailTemplate.value = [
+      "<div style=\"font-family:Segoe UI,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#f5f9ff;color:#1b2d4d\">",
+      "  <div style=\"background:#ffffff;border:1px solid #d5e3ff;border-radius:12px;padding:20px\">",
+      "    <h2 style=\"margin:0 0 10px;font-size:22px;color:#0b4cc2\">Welcome to Arcade Campus Hub</h2>",
+      "    <p style=\"margin:0 0 14px;line-height:1.5\">Click the button below to verify your email and activate cloud saves.</p>",
+      "    <p style=\"margin:18px 0\"><a href=\"{{ .ConfirmationURL }}\" style=\"display:inline-block;background:#0a66ff;color:#ffffff;text-decoration:none;padding:11px 16px;border-radius:8px;font-weight:700\">Verify Email</a></p>",
+      "    <p style=\"margin:0;font-size:12px;color:#62749a\">If you did not request this, you can ignore this message.</p>",
+      "  </div>",
+      "</div>"
+    ].join("\n");
+
+    var params = new URLSearchParams(window.location.search);
+    if (params.get("verified") === "1") {
+      setStatus("Email verified. Sign in to load your cloud data.", "ok");
+      params.delete("verified");
+      var query = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (query ? ("?" + query) : ""));
+    }
+
     initSupabase();
-    restartCloudPeriodicSync();
   </script>
 </body>
 </html>

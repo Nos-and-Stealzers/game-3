@@ -2,41 +2,27 @@
   var GAME_SAVES_KEY = "gamehub_game_saves";
   var HUB_PREFIX = "gamehub_";
   var SAVE_INTERVAL_MS = 1500;
-  var GAME_SAVE_ALIASES = {
-    "fnaf-sl": ["fnaf-sister-location"],
-    "fnaf-ps": ["fnaf-pizzeria-simulator"]
-  };
-  var GAME_SAVE_CANONICAL_BY_ALIAS = (function () {
-    var out = {};
-    Object.keys(GAME_SAVE_ALIASES).forEach(function (canonicalId) {
-      out[canonicalId] = canonicalId;
-      var aliases = GAME_SAVE_ALIASES[canonicalId] || [];
-      for (var i = 0; i < aliases.length; i++) {
-        out[aliases[i]] = canonicalId;
-      }
-    });
-    return out;
-  })();
 
   function inferGameId() {
-    var match = String(window.location.pathname || "").match(/\/games\/fnaf\/([^\/]+)\//i);
-    if (!match) {
+    var path = String(window.location.pathname || "").toLowerCase();
+
+    if (/\/games\/fnaf\//i.test(path)) {
       return "";
     }
 
-    var slug = String(match[1] || "").toLowerCase();
-    var bySlug = {
-      "1": "fnaf-1",
-      "2": "fnaf-2",
-      "3": "fnaf-3",
-      "4": "fnaf-4",
-      "w": "fnaf-world",
-      "sl": "fnaf-sl",
-      "ps": "fnaf-ps",
-      "ucn": "fnaf-ucn"
-    };
+    if (/\/snow-rider\.html$/i.test(path)) {
+      return "snow-rider";
+    }
 
-    return bySlug[slug] || ("fnaf-" + slug);
+    if (/\/games\/sweet-bakery\/index\.html$/i.test(path)) {
+      return "sweet-bakery-local";
+    }
+
+    if (/\/games\/minecraft\/eaglercraft\/index\.html$/i.test(path)) {
+      return "minecraft-eaglercraft";
+    }
+
+    return "";
   }
 
   function storageGet(key) {
@@ -51,7 +37,6 @@
     try {
       localStorage.setItem(key, value);
     } catch (error) {
-      // ignore storage exceptions
     }
   }
 
@@ -59,7 +44,6 @@
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      // ignore storage exceptions
     }
   }
 
@@ -76,80 +60,8 @@
   }
 
   function writeObject(key, value) {
-    var safeValue = value || {};
-    if (key === GAME_SAVES_KEY) {
-      safeValue = normalizeGameSaveMap(safeValue);
-    }
+    var safeValue = value && typeof value === "object" && !Array.isArray(value) ? value : {};
     storageSet(key, JSON.stringify(safeValue));
-  }
-
-  function getCanonicalGameSaveId(gameId) {
-    if (typeof gameId !== "string" || !gameId) {
-      return "";
-    }
-    return GAME_SAVE_CANONICAL_BY_ALIAS[gameId] || gameId;
-  }
-
-  function sanitizeGameSaveEntry(gameSave) {
-    if (!gameSave || typeof gameSave !== "object" || Array.isArray(gameSave)) {
-      return null;
-    }
-
-    var localData = gameSave.localStorage;
-    if (!localData || typeof localData !== "object" || Array.isArray(localData)) {
-      return null;
-    }
-
-    var cleanLocalData = {};
-    Object.keys(localData).forEach(function (key) {
-      var value = localData[key];
-      if (value === null || typeof value === "string") {
-        cleanLocalData[key] = value;
-      }
-    });
-
-    return {
-      updatedAt: typeof gameSave.updatedAt === "string" ? gameSave.updatedAt : new Date().toISOString(),
-      localStorage: cleanLocalData
-    };
-  }
-
-  function normalizeGameSaveMap(rawGameSaves) {
-    if (!rawGameSaves || typeof rawGameSaves !== "object" || Array.isArray(rawGameSaves)) {
-      return {};
-    }
-
-    var out = {};
-    Object.keys(rawGameSaves).forEach(function (gameId) {
-      var canonicalId = getCanonicalGameSaveId(gameId);
-      if (!canonicalId) {
-        return;
-      }
-
-      var incoming = sanitizeGameSaveEntry(rawGameSaves[gameId]);
-      if (!incoming) {
-        return;
-      }
-
-      var existing = out[canonicalId];
-      if (!existing) {
-        out[canonicalId] = incoming;
-        return;
-      }
-
-      var existingTime = Date.parse(existing.updatedAt || "") || 0;
-      var incomingTime = Date.parse(incoming.updatedAt || "") || 0;
-      var incomingWins = incomingTime >= existingTime;
-
-      out[canonicalId] = {
-        updatedAt: incomingWins ? incoming.updatedAt : existing.updatedAt,
-        localStorage: incomingWins
-          ? Object.assign({}, existing.localStorage, incoming.localStorage)
-          : Object.assign({}, incoming.localStorage, existing.localStorage)
-      };
-    });
-
-    return out;
   }
 
   function shouldTrackStorageKey(key) {
@@ -173,10 +85,8 @@
   }
 
   function applyImportedState(gameId) {
-    var allSaves = normalizeGameSaveMap(readObject(GAME_SAVES_KEY));
-    var canonicalId = getCanonicalGameSaveId(gameId);
-    var gameSave = allSaves[canonicalId] || allSaves[gameId];
-
+    var allSaves = readObject(GAME_SAVES_KEY);
+    var gameSave = allSaves[gameId];
     if (!gameSave || typeof gameSave !== "object") {
       return;
     }
@@ -190,7 +100,6 @@
       if (!shouldTrackStorageKey(key)) {
         return;
       }
-
       var value = gameLocal[key];
       if (value === null) {
         storageRemove(key);
@@ -198,13 +107,9 @@
         storageSet(key, value);
       }
     });
-
-    // Persist alias migration so cloud/local sync keeps one canonical key.
-    writeObject(GAME_SAVES_KEY, allSaves);
   }
 
   function persistChanges(gameId, previousSnapshot) {
-    var canonicalId = getCanonicalGameSaveId(gameId) || gameId;
     var currentSnapshot = snapshotTrackedStorage();
     var allKeys = {};
 
@@ -226,8 +131,8 @@
       return currentSnapshot;
     }
 
-    var allSaves = normalizeGameSaveMap(readObject(GAME_SAVES_KEY));
-    var gameSave = allSaves[canonicalId];
+    var allSaves = readObject(GAME_SAVES_KEY);
+    var gameSave = allSaves[gameId];
     if (!gameSave || typeof gameSave !== "object" || Array.isArray(gameSave)) {
       gameSave = {};
     }
@@ -247,7 +152,7 @@
 
     gameSave.localStorage = gameLocal;
     gameSave.updatedAt = new Date().toISOString();
-    allSaves[canonicalId] = gameSave;
+    allSaves[gameId] = gameSave;
     writeObject(GAME_SAVES_KEY, allSaves);
 
     return currentSnapshot;
@@ -261,7 +166,7 @@
   applyImportedState(gameId);
 
   var lastSnapshot = snapshotTrackedStorage();
-  window.__GAMEHUB_FNAF_SAVE_SYNC__ = {
+  window.__GAMEHUB_GENERIC_SAVE_SYNC__ = {
     gameId: gameId,
     storageKey: GAME_SAVES_KEY
   };

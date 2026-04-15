@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel</title>
+  <meta name="description" content="Manage account moderation for the game hub.">
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
+
+    :root {
+      --bg: #eef3ff;
+      --panel: #ffffff;
+      --line: #d2ddf6;
+      --text: #14213d;
+      --muted: #5f6f93;
+      --primary: #085dff;
+      --primary-strong: #0047be;
+      --danger: #b62e2e;
+      --danger-bg: #ffefed;
+      --danger-line: #f0c0bb;
+      --ok-bg: #e9fff2;
+      --ok-line: #a6dec0;
+      --ok-text: #1d6a40;
+      --warn-bg: #fff6df;
+      --warn-line: #efcf91;
+      --warn-text: #7b5800;
+      --shadow: 0 16px 36px rgba(29, 49, 97, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px 12px;
+      display: grid;
+      place-items: start center;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(8, 93, 255, 0.16) 0, rgba(8, 93, 255, 0) 34%),
+        radial-gradient(circle at 100% 100%, rgba(3, 72, 176, 0.12) 0, rgba(3, 72, 176, 0) 36%),
+        var(--bg);
+    }
+
+    .shell {
+      width: min(1100px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .top {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(145deg, #f4f8ff, #ebf2ff);
+      display: grid;
+      gap: 8px;
+    }
+
+    .title {
+      margin: 0;
+      font-family: "Space Grotesk", "Sora", sans-serif;
+      font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+      letter-spacing: -.3px;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: .92rem;
+      line-height: 1.4;
+    }
+
+    .status {
+      margin: 0;
+      border: 1px solid #c7d8f7;
+      border-radius: 10px;
+      background: #edf5ff;
+      color: #264f87;
+      padding: 10px 12px;
+      font-size: .9rem;
+      font-weight: 700;
+    }
+
+    .status.ok {
+      background: var(--ok-bg);
+      border-color: var(--ok-line);
+      color: var(--ok-text);
+    }
+
+    .status.warn {
+      background: var(--warn-bg);
+      border-color: var(--warn-line);
+      color: var(--warn-text);
+    }
+
+    .status.error {
+      background: var(--danger-bg);
+      border-color: var(--danger-line);
+      color: #8c2f2f;
+    }
+
+    .controls {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .input {
+      flex: 1;
+      min-width: 220px;
+      border: 1px solid #c2d2ef;
+      border-radius: 10px;
+      padding: 9px 11px;
+      font: inherit;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid #bed0ef;
+      border-radius: 10px;
+      background: #f4f8ff;
+      color: #1a3768;
+      padding: 9px 12px;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #eaf2ff;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .btn.primary:hover {
+      background: var(--primary-strong);
+      border-color: var(--primary-strong);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      padding: 0 0 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 880px;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #f2f7ff;
+      color: #3a5486;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+      font-size: .72rem;
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    tbody td {
+      border-bottom: 1px solid #e0e8f8;
+      padding: 10px 12px;
+      vertical-align: top;
+      font-size: .88rem;
+    }
+
+    .email {
+      font-weight: 700;
+      color: #1f3f75;
+      word-break: break-word;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid #c8d7f4;
+      background: #eff5ff;
+      color: #395681;
+      font-size: .72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+
+    .badge.banned {
+      background: #ffefee;
+      border-color: #f0c1bc;
+      color: #a23434;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .row-actions .btn {
+      padding: 6px 9px;
+      font-size: .8rem;
+      min-height: 32px;
+    }
+
+    .btn.danger {
+      border-color: #e8a9a9;
+      background: #ffefee;
+      color: var(--danger);
+    }
+
+    .small {
+      margin: 0;
+      color: #65779d;
+      font-size: .8rem;
+      line-height: 1.3;
+    }
+
+    @media (max-width: 860px) {
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .controls .btn,
+      .controls a.btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="top">
+      <h1 class="title">Admin Account Manager</h1>
+      <p class="sub">Ban, unban, and delete accounts. Admin access is restricted to your approved admin emails only.</p>
+      <p id="status" class="status">Checking authentication...</p>
+    </section>
+
+    <section class="controls">
+      <input id="searchInput" class="input" type="search" placeholder="Search email...">
+      <button id="refreshBtn" type="button" class="btn primary">Refresh</button>
+      <a href="index.html" class="btn">Back to Hub</a>
+      <a href="account.html" class="btn">Account</a>
+    </section>
+
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Created</th>
+            <th>Last Sign-In</th>
+            <th>Status</th>
+            <th>Reason</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.config.js"></script>
+  <script>
+    var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
+    var ADMIN_EMAILS = {
+      "9152@mail.cadott.k12.wi.us": true,
+      "lucasgrimm854@gmail.com": true,
+      "stealzers.com@gmail.com": true
+    };
+
+    var statusEl = document.getElementById("status");
+    var rowsEl = document.getElementById("rows");
+    var searchInput = document.getElementById("searchInput");
+    var refreshBtn = document.getElementById("refreshBtn");
+
+    var supabaseClient = null;
+    var allUsers = [];
+
+    function storageGet(key) {
+      try {
+        return localStorage.getItem(key);
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function isAdminEmail(email) {
+      if (typeof email !== "string") {
+        return false;
+      }
+      return !!ADMIN_EMAILS[email.trim().toLowerCase()];
+    }
+
+    function setStatus(message, state) {
+      statusEl.textContent = message;
+      statusEl.classList.remove("ok", "warn", "error");
+      if (state) {
+        statusEl.classList.add(state);
+      }
+    }
+
+    function getSupabaseConfig() {
+      var cfg = window.__GAMEHUB_SUPABASE__ || {};
+      var localCfg = {};
+      try {
+        localCfg = JSON.parse(storageGet(SUPABASE_CONFIG_KEY) || "{}") || {};
+      } catch (error) {
+        localCfg = {};
+      }
+
+      var localUrl = typeof localCfg.url === "string" ? localCfg.url.trim() : "";
+      var localAnon = typeof localCfg.anonKey === "string" ? localCfg.anonKey.trim() : "";
+      var fileUrl = typeof cfg.url === "string" ? cfg.url.trim() : "";
+      var fileAnon = typeof cfg.anonKey === "string" ? cfg.anonKey.trim() : "";
+
+      return {
+        url: localUrl || fileUrl,
+        anonKey: localAnon || fileAnon
+      };
+    }
+
+    function formatDate(value) {
+      if (!value) {
+        return "Never";
+      }
+      var time = Date.parse(value);
+      if (!time) {
+        return "Unknown";
+      }
+      return new Date(time).toLocaleString();
+    }
+
+    function getFilteredUsers() {
+      var term = searchInput.value.trim().toLowerCase();
+      if (!term) {
+        return allUsers.slice();
+      }
+      return allUsers.filter(function (row) {
+        return String(row.email || "").toLowerCase().indexOf(term) !== -1;
+      });
+    }
+
+    function renderRows() {
+      var filtered = getFilteredUsers();
+      if (!filtered.length) {
+        rowsEl.innerHTML = '<tr><td colspan="6" class="small">No accounts found.</td></tr>';
+        return;
+      }
+
+      rowsEl.innerHTML = filtered.map(function (row) {
+        var statusBadge = row.banned
+          ? '<span class="badge banned">Banned</span>'
+          : '<span class="badge">Active</span>';
+
+        return [
+          '<tr data-user-id="' + row.user_id + '" data-email="' + escapeHtml(row.email || '') + '">',
+          '<td><div class="email">' + escapeHtml(row.email || '(no email)') + '</div></td>',
+          '<td>' + escapeHtml(formatDate(row.created_at)) + '</td>',
+          '<td>' + escapeHtml(formatDate(row.last_sign_in_at)) + '</td>',
+          '<td>' + statusBadge + '</td>',
+          '<td class="small">' + escapeHtml(row.ban_reason || '-') + '</td>',
+          '<td>',
+          '<div class="row-actions">',
+          row.banned
+            ? '<button type="button" class="btn" data-action="unban">Unban</button>'
+            : '<button type="button" class="btn" data-action="ban">Ban</button>',
+          '<button type="button" class="btn danger" data-action="delete">Delete</button>',
+          '</div>',
+          '</td>',
+          '</tr>'
+        ].join('');
+      }).join('');
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    async function fetchUsers() {
+      setStatus("Loading users...", "warn");
+      var result = await supabaseClient.rpc("admin_list_users");
+      if (result.error) {
+        throw result.error;
+      }
+      allUsers = Array.isArray(result.data) ? result.data : [];
+      renderRows();
+      setStatus("Loaded " + allUsers.length + " account(s).", "ok");
+    }
+
+    async function setUserBan(userId, banValue) {
+      var reason = "";
+      if (banValue) {
+        reason = window.prompt("Ban reason (optional):", "") || "";
+      }
+      var result = await supabaseClient.rpc("admin_set_ban", {
+        target_user_id: userId,
+        should_ban: banValue,
+        reason: reason || null
+      });
+      if (result.error) {
+        throw result.error;
+      }
+    }
+
+    async function deleteUser(userId, email) {
+      var confirmText = "Delete account for " + (email || "this user") + "? This cannot be undone.";
+      if (!window.confirm(confirmText)) {
+        return;
+      }
+      var result = await supabaseClient.rpc("admin_delete_account", {
+        target_user_id: userId
+      });
+      if (result.error) {
+        throw result.error;
+      }
+    }
+
+    rowsEl.addEventListener("click", async function (event) {
+      var actionBtn = event.target.closest("button[data-action]");
+      if (!(actionBtn instanceof HTMLElement)) {
+        return;
+      }
+
+      var row = actionBtn.closest("tr[data-user-id]");
+      if (!(row instanceof HTMLElement)) {
+        return;
+      }
+
+      var userId = row.getAttribute("data-user-id") || "";
+      var email = row.getAttribute("data-email") || "";
+      var action = actionBtn.getAttribute("data-action") || "";
+
+      if (!userId) {
+        return;
+      }
+
+      try {
+        if (action === "ban") {
+          await setUserBan(userId, true);
+          setStatus("User banned: " + email, "ok");
+        } else if (action === "unban") {
+          await setUserBan(userId, false);
+          setStatus("User unbanned: " + email, "ok");
+        } else if (action === "delete") {
+          await deleteUser(userId, email);
+          setStatus("User deleted: " + email, "ok");
+        }
+        await fetchUsers();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Admin action failed.", "error");
+      }
+    });
+
+    searchInput.addEventListener("input", renderRows);
+
+    refreshBtn.addEventListener("click", async function () {
+      try {
+        await fetchUsers();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Unable to refresh users.", "error");
+      }
+    });
+
+    async function init() {
+      var cfg = getSupabaseConfig();
+      if (!(window.supabase && typeof window.supabase.createClient === "function") || !cfg.url || !cfg.anonKey) {
+        setStatus("Supabase is not configured. Set it up on account page first.", "error");
+        return;
+      }
+
+      supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+      try {
+        var auth = await supabaseClient.auth.getUser();
+        var user = auth && auth.data ? auth.data.user : null;
+        var email = user && user.email ? user.email : "";
+
+        if (!user) {
+          setStatus("Sign in required. Redirecting...", "warn");
+          window.location.href = "account.html";
+          return;
+        }
+
+        if (!isAdminEmail(email)) {
+          setStatus("This account is not on the admin allowlist.", "error");
+          return;
+        }
+
+        await fetchUsers();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Admin panel init failed.", "error");
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

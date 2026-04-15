@@ -146,7 +146,9 @@
     <script src="../../../js/fnaf-save-sync.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../../../js/supabase.config.js"></script>
+    <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { pagehideOnly: true, runOnStart: false, captureIndexedDb: false };</script>
     <script src="../../../js/cloud-autosync.js"></script>
+    <script src="../../../js/fnaf-input-fix.js"></script>
 </body>
 <!--Made by irv77-->
 <script>
@@ -154,6 +156,7 @@
     let gametitle, runtimecanvas
     gametitle = document.title;
     runtimecanvas = "resources/fnafw.cch";
+    const inputStability = window.installFnafInputStability ? window.installFnafInputStability("MMFCanvas") : null;
     // Prevents touchscreen move
     window.addEventListener("scroll", preventMotion, false);
     window.addEventListener("touchmove", preventMotion, false);
@@ -163,16 +166,25 @@
         event.stopPropagation();
     }
     // Fullscreen Key
-    const pressedKeys = {};
-    document.addEventListener('keydown', event => {
-        pressedKeys[event.key] = true;
-        if (pressedKeys['-'] && pressedKeys['=']) {
-            document.querySelector('canvas').requestFullscreen();
-            delete pressedKeys[event.key];
+    document.addEventListener('keydown', function (event) {
+        var key = (event.key || '').toLowerCase();
+        if (key !== 'f' || event.ctrlKey || event.metaKey || event.altKey) {
+            return;
         }
-    });
-    document.addEventListener('keyup', (event) => {
-        delete pressedKeys[event.key];
+        var canvas = document.querySelector('canvas');
+        if (!canvas) {
+            return;
+        }
+        event.preventDefault();
+        if (document.fullscreenElement) {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+            return;
+        }
+        if (canvas.requestFullscreen) {
+            canvas.requestFullscreen();
+        }
     });
     // -----------------
     window.onload = function () {
@@ -327,6 +339,10 @@
             document.getElementById('MMFCanvas').style.display = 'block';
             document.getElementById('selection').style.display = 'none';
             document.title = gametitle;
+            if (inputStability) {
+                inputStability.releaseStuckInput();
+                setTimeout(inputStability.focusCanvas, 0);
+            }
             document.head.appendChild(script);
         }
 
@@ -365,11 +381,11 @@
             mergeFiles(getParts("src/resources.zip", 1, parts))
         ]).then(([resources]) => {
             window.fetch = async function (url, ...args) {
-                if (url.endsWith("resources.zip")) {
+                var requestUrl = typeof url === "string" ? url : (url && typeof url.url === "string" ? url.url : "");
+                if (requestUrl && requestUrl.endsWith("resources.zip")) {
                     return originalFetch(resources, ...args);
-                } else {
-                    return originalFetch(url, ...args);
                 }
+                return originalFetch(url, ...args);
             };
             return wedone();
         }).catch((error) => {

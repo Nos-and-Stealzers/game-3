@@ -916,6 +916,12 @@
                         Fast mode (skip animations, direct launch)
                     </span>
                 </label>
+                <label class="setting-block">
+                    <span class="check">
+                        <input id="hideHighRiskToggle" type="checkbox">
+                        Hide high-risk external games
+                    </span>
+                </label>
             </div>
 
             <div class="settings-group">
@@ -935,27 +941,34 @@
 
             <div class="settings-group">
                 <h3 class="settings-group-title">Cloud Sync (Supabase)</h3>
-                <label class="setting-block">
-                    <span class="check">
-                        <input id="cloudAutoSyncToggle" type="checkbox" checked>
-                        Auto sync enabled
-                    </span>
-                </label>
                 <div class="save-health-row">
                     <span id="cloudSaveChip" class="save-health-chip warn">Cloud: Not synced</span>
                     <p id="cloudDataStatus" class="meta-note">Cloud sync: not yet synced in this browser.</p>
                 </div>
                 <div class="auth-actions">
                     <a href="account.html" class="btn alt small">Manage Account</a>
+                    <a id="adminPanelBtn" href="admin.html" class="btn alt small" hidden>Admin Panel</a>
                 </div>
                 <p id="authStatus" class="auth-status">Checking account status...</p>
-                <p id="cloudAutoSyncStatus" class="meta-note">Autosave heartbeat: initializing...</p>
+                <p id="cloudAutoSyncStatus" class="meta-note">Autosave heartbeat: always on (every 60s)</p>
             </div>
 
             <div class="settings-group">
-                <h3 class="settings-group-title">FNAF Save Status</h3>
-                <ul id="fnafSaveStatus" class="save-sync-list"></ul>
-                <p class="meta-note">Shows cloud sync timestamp for each FNAF game save.</p>
+                <h3 class="settings-group-title">Game Save Status</h3>
+                <label class="setting-block">
+                    <span class="meta">Search Saved Games</span>
+                    <input id="gameSaveSearchInput" class="input" type="search" placeholder="Search by game title">
+                </label>
+                <label class="setting-block">
+                    <span class="meta">Show</span>
+                    <select id="gameSaveFilterSelect" class="select">
+                        <option value="saved">Games with saves</option>
+                        <option value="missing">Games without saves</option>
+                        <option value="all">All games</option>
+                    </select>
+                </label>
+                <ul id="gameSaveStatus" class="save-sync-list"></ul>
+                <p class="meta-note">Shows local/cloud sync timestamp for every game profile in this browser.</p>
             </div>
         </section>
 
@@ -987,6 +1000,23 @@
                 <div class="meta">Category</div>
                 <select id="categorySelect" class="select">
                     <option value="all">All categories</option>
+                </select>
+            </label>
+            <label class="panel">
+                <div class="meta">Platform</div>
+                <select id="platformSelect" class="select">
+                    <option value="all">All platforms</option>
+                    <option value="local">Local only</option>
+                    <option value="external">External only</option>
+                </select>
+            </label>
+            <label class="panel">
+                <div class="meta">Risk</div>
+                <select id="riskSelect" class="select">
+                    <option value="all">All risk levels</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
                 </select>
             </label>
             <label class="panel" style="display:flex;align-items:center;gap:8px;">
@@ -1022,29 +1052,37 @@
         var LIBRARY_VIEW_KEY = "gamehub_library_view";
         var OPEN_SOURCE_ONLY_KEY = "gamehub_open_source_only";
         var PLAYABLE_ONLY_KEY = "gamehub_playable_only";
-        var CLOUD_AUTO_SYNC_KEY = "gamehub_cloud_auto_sync";
+        var HIDE_HIGH_RISK_KEY = "gamehub_hide_high_risk";
         var GAME_SAVES_KEY = "gamehub_game_saves";
         var LOCAL_SAVE_UPDATED_KEY = "gamehub_local_last_saved";
         var CLOUD_LAST_SYNC_KEY = "gamehub_cloud_last_sync";
         var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
-        var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, PERFORMANCE_PROFILE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, CLOUD_AUTO_SYNC_KEY, GAME_SAVES_KEY, LOCAL_SAVE_UPDATED_KEY, CLOUD_LAST_SYNC_KEY];
-        var FNAF_SAVE_STATUS_ITEMS = [
-            { id: "fnaf-1", title: "FNAF 1" },
-            { id: "fnaf-2", title: "FNAF 2" },
-            { id: "fnaf-3", title: "FNAF 3" },
-            { id: "fnaf-4", title: "FNAF 4" },
-            { id: "fnaf-world", title: "FNAF World" },
-            { id: "fnaf-sl", title: "FNAF Sister Location" },
-            { id: "fnaf-ps", title: "FNAF Pizzeria Simulator" },
-            { id: "fnaf-ucn", title: "FNAF Ultimate Custom Night" }
-        ];
+        var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, PERFORMANCE_PROFILE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, HIDE_HIGH_RISK_KEY, GAME_SAVES_KEY, LOCAL_SAVE_UPDATED_KEY, CLOUD_LAST_SYNC_KEY];
+        var ADMIN_EMAILS = {
+            "9152@mail.cadott.k12.wi.us": true,
+            "lucasgrimm854@gmail.com": true,
+            "stealzers.com@gmail.com": true
+        };
         var GAME_SAVE_ALIASES = {
             "fnaf-sl": ["fnaf-sister-location"],
             "fnaf-ps": ["fnaf-pizzeria-simulator"]
         };
+        var GAME_SAVE_CANONICAL_BY_ALIAS = (function () {
+            var out = {};
+            Object.keys(GAME_SAVE_ALIASES).forEach(function (canonicalId) {
+                out[canonicalId] = canonicalId;
+                var aliases = GAME_SAVE_ALIASES[canonicalId] || [];
+                for (var i = 0; i < aliases.length; i++) {
+                    out[aliases[i]] = canonicalId;
+                }
+            });
+            return out;
+        })();
 
         var searchInput = document.getElementById("searchInput");
         var categorySelect = document.getElementById("categorySelect");
+        var platformSelect = document.getElementById("platformSelect");
+        var riskSelect = document.getElementById("riskSelect");
         var gameGrid = document.getElementById("gameGrid");
         var emptyState = document.getElementById("emptyState");
         var favoriteGrid = document.getElementById("favoriteGrid");
@@ -1066,30 +1104,50 @@
         var performanceProfileSelect = document.getElementById("performanceProfileSelect");
         var openSourceOnlyToggle = document.getElementById("openSourceOnlyToggle");
         var playableOnlyToggle = document.getElementById("playableOnlyToggle");
+        var hideHighRiskToggle = document.getElementById("hideHighRiskToggle");
         var fastModeToggle = document.getElementById("fastModeToggle");
         var exportDataBtn = document.getElementById("exportDataBtn");
         var importDataBtn = document.getElementById("importDataBtn");
         var resetDataBtn = document.getElementById("resetDataBtn");
         var importDataInput = document.getElementById("importDataInput");
-        var cloudAutoSyncToggle = document.getElementById("cloudAutoSyncToggle");
+        var adminPanelBtn = document.getElementById("adminPanelBtn");
         var authStatus = document.getElementById("authStatus");
         var cloudAutoSyncStatus = document.getElementById("cloudAutoSyncStatus");
         var saveDataStatus = document.getElementById("saveDataStatus");
         var cloudDataStatus = document.getElementById("cloudDataStatus");
         var localSaveChip = document.getElementById("localSaveChip");
         var cloudSaveChip = document.getElementById("cloudSaveChip");
-        var fnafSaveStatus = document.getElementById("fnafSaveStatus");
+        var gameSaveStatus = document.getElementById("gameSaveStatus");
+        var gameSaveSearchInput = document.getElementById("gameSaveSearchInput");
+        var gameSaveFilterSelect = document.getElementById("gameSaveFilterSelect");
         var storageFallback = {};
         var supabaseClient = null;
         var cloudAutoSyncTimer = null;
         var cloudPeriodicSyncTimer = null;
         var cloudPeriodicSyncInFlight = false;
+        var cloudPullInFlight = false;
+        var autoCloudLoadedUserId = "";
+        var AUTO_SYNC_INTERVAL_MS = 60000;
         var INDEXED_DB_SYNC_MAX_DATABASES = 6;
         var INDEXED_DB_SYNC_MAX_STORES_PER_DB = 12;
         var INDEXED_DB_SYNC_MAX_RECORDS_PER_STORE = 200;
         var INDEXED_DB_SYNC_MAX_VALUE_CHARS = 120000;
 
         var fastMode = false;
+
+        function isAdminEmail(email) {
+            if (typeof email !== "string") {
+                return false;
+            }
+            return !!ADMIN_EMAILS[email.trim().toLowerCase()];
+        }
+
+        function setAdminPanelVisibility(email) {
+            if (!adminPanelBtn) {
+                return;
+            }
+            adminPanelBtn.hidden = !isAdminEmail(email);
+        }
 
         function storageGet(key) {
             try {
@@ -1168,8 +1226,82 @@
         }
 
         function writeObject(key, value) {
-            storageSet(key, JSON.stringify(value || {}));
+            var safeValue = value || {};
+            if (key === GAME_SAVES_KEY) {
+                safeValue = normalizeGameSaveMap(safeValue);
+            }
+            storageSet(key, JSON.stringify(safeValue));
             touchLocalSave();
+        }
+
+        function getCanonicalGameSaveId(gameId) {
+            if (typeof gameId !== "string" || !gameId) {
+                return "";
+            }
+            return GAME_SAVE_CANONICAL_BY_ALIAS[gameId] || gameId;
+        }
+
+        function sanitizeGameSaveEntry(gameSave) {
+            if (!gameSave || typeof gameSave !== "object" || Array.isArray(gameSave)) {
+                return null;
+            }
+
+            var localData = gameSave.localStorage;
+            if (!localData || typeof localData !== "object" || Array.isArray(localData)) {
+                return null;
+            }
+
+            var cleanLocalData = {};
+            Object.keys(localData).forEach(function (key) {
+                var value = localData[key];
+                if (value === null || typeof value === "string") {
+                    cleanLocalData[key] = value;
+                }
+            });
+
+            return {
+                updatedAt: typeof gameSave.updatedAt === "string" ? gameSave.updatedAt : new Date().toISOString(),
+                localStorage: cleanLocalData
+            };
+        }
+
+        function normalizeGameSaveMap(rawGameSaves) {
+            if (!rawGameSaves || typeof rawGameSaves !== "object" || Array.isArray(rawGameSaves)) {
+                return {};
+            }
+
+            var out = {};
+            Object.keys(rawGameSaves).forEach(function (gameId) {
+                var canonicalId = getCanonicalGameSaveId(gameId);
+                if (!canonicalId) {
+                    return;
+                }
+
+                var incoming = sanitizeGameSaveEntry(rawGameSaves[gameId]);
+                if (!incoming) {
+                    return;
+                }
+
+                var existing = out[canonicalId];
+                if (!existing) {
+                    out[canonicalId] = incoming;
+                    return;
+                }
+
+                var existingTime = Date.parse(existing.updatedAt || "") || 0;
+                var incomingTime = Date.parse(incoming.updatedAt || "") || 0;
+                var incomingWins = incomingTime >= existingTime;
+                var mergedLocalStorage = incomingWins
+                    ? Object.assign({}, existing.localStorage, incoming.localStorage)
+                    : Object.assign({}, incoming.localStorage, existing.localStorage);
+
+                out[canonicalId] = {
+                    updatedAt: incomingWins ? incoming.updatedAt : existing.updatedAt,
+                    localStorage: mergedLocalStorage
+                };
+            });
+
+            return out;
         }
 
         function shouldSyncExtraLocalStorageKey(key) {
@@ -1679,16 +1811,92 @@
             return null;
         }
 
-        function renderFnafSaveStatus() {
-            if (!fnafSaveStatus) {
+        function getGameTitle(gameId) {
+            var game = getGameById(gameId);
+            if (game && game.title) {
+                return game.title;
+            }
+
+            var aliases = GAME_SAVE_ALIASES[gameId] || [];
+            for (var i = 0; i < aliases.length; i++) {
+                var aliasGame = getGameById(aliases[i]);
+                if (aliasGame && aliasGame.title) {
+                    return aliasGame.title;
+                }
+            }
+
+            return gameId;
+        }
+
+        function buildGameSaveStatusItems() {
+            var allSaves = normalizeGameSaveMap(readObject(GAME_SAVES_KEY));
+            var catalogIds = games.map(function (game) { return game.id; });
+            var knownIds = {};
+            var out = [];
+
+            catalogIds.forEach(function (gameId) {
+                knownIds[gameId] = true;
+                var saveData = readGameSaveById(allSaves, gameId);
+                out.push({
+                    id: gameId,
+                    title: getGameTitle(gameId),
+                    updatedAt: saveData && typeof saveData.updatedAt === "string" ? saveData.updatedAt : "",
+                    hasSave: !!saveData
+                });
+            });
+
+            Object.keys(allSaves).forEach(function (gameId) {
+                if (knownIds[gameId]) {
+                    return;
+                }
+
+                out.push({
+                    id: gameId,
+                    title: getGameTitle(gameId),
+                    updatedAt: allSaves[gameId] && typeof allSaves[gameId].updatedAt === "string" ? allSaves[gameId].updatedAt : "",
+                    hasSave: true
+                });
+            });
+
+            out.sort(function (a, b) {
+                if (a.hasSave !== b.hasSave) {
+                    return a.hasSave ? -1 : 1;
+                }
+                return a.title.localeCompare(b.title);
+            });
+
+            return out;
+        }
+
+        function renderGameSaveStatus() {
+            if (!gameSaveStatus) {
                 return;
             }
 
-            var allSaves = readObject(GAME_SAVES_KEY);
-            fnafSaveStatus.innerHTML = FNAF_SAVE_STATUS_ITEMS.map(function (item) {
-                var saveData = readGameSaveById(allSaves, item.id);
-                var updatedAt = saveData ? saveData.updatedAt : "";
-                return '<li class="save-sync-item"><span class="save-sync-game">' + item.title + '</span><span class="save-sync-time">' + formatSyncTime(updatedAt) + '</span></li>';
+            var query = gameSaveSearchInput ? gameSaveSearchInput.value.trim().toLowerCase() : "";
+            var filter = gameSaveFilterSelect ? gameSaveFilterSelect.value : "saved";
+            var items = buildGameSaveStatusItems();
+
+            if (filter === "saved") {
+                items = items.filter(function (item) { return item.hasSave; });
+            } else if (filter === "missing") {
+                items = items.filter(function (item) { return !item.hasSave; });
+            }
+
+            if (query) {
+                items = items.filter(function (item) {
+                    var haystack = (item.title + " " + item.id).toLowerCase();
+                    return haystack.indexOf(query) !== -1;
+                });
+            }
+
+            if (!items.length) {
+                gameSaveStatus.innerHTML = '<li class="save-sync-item"><span class="save-sync-game">No games match this filter.</span><span class="save-sync-time">-</span></li>';
+                return;
+            }
+
+            gameSaveStatus.innerHTML = items.map(function (item) {
+                return '<li class="save-sync-item"><span class="save-sync-game">' + item.title + '</span><span class="save-sync-time">' + formatSyncTime(item.updatedAt) + '</span></li>';
             }).join("");
         }
 
@@ -1705,7 +1913,8 @@
                     libraryView: readSetting(LIBRARY_VIEW_KEY, "cards"),
                     openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
                     playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
-                    cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1"),
+                    hideHighRisk: readSetting(HIDE_HIGH_RISK_KEY, "0"),
+                    cloudAutoSync: "1",
                     gameSaves: readObject(GAME_SAVES_KEY),
                     extraLocalStorage: snapshotExtraLocalStorage(),
                     authTokens: snapshotAuthTokens(),
@@ -1767,16 +1976,27 @@
                 var auth = await supabaseClient.auth.getUser();
                 var user = auth && auth.data ? auth.data.user : null;
                 updateAuthStatus(user && user.email ? ("Signed in: " + user.email) : "Supabase ready. Sign in to use cloud save.");
+                setAdminPanelVisibility(user && user.email ? user.email : "");
+                if (user) {
+                    await autoLoadCloudForUser(user);
+                }
 
                 supabaseClient.auth.onAuthStateChange(function (_event, session) {
                     var sessionUser = session && session.user ? session.user : null;
                     updateAuthStatus(sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Supabase ready. Sign in to use cloud save.");
+                    setAdminPanelVisibility(sessionUser && sessionUser.email ? sessionUser.email : "");
+                    if (!sessionUser) {
+                        autoCloudLoadedUserId = "";
+                    } else {
+                        autoLoadCloudForUser(sessionUser);
+                    }
                     restartCloudPeriodicSync();
                 });
 
                 restartCloudPeriodicSync();
             } catch (error) {
                 supabaseClient = null;
+                setAdminPanelVisibility("");
                 updateAuthStatus("Supabase init failed.");
             }
         }
@@ -1810,12 +2030,71 @@
             }
         }
 
-        function queueCloudAutoSync() {
-            if (!supabaseClient) {
+        async function cloudPull(options) {
+            var opts = options || {};
+            var silent = opts.silent === true;
+
+            if (cloudPullInFlight) {
+                return false;
+            }
+
+            cloudPullInFlight = true;
+            try {
+                var user = await requireSupabaseUser();
+                var result = await supabaseClient
+                    .from("user_saves")
+                    .select("payload")
+                    .eq("user_id", user.id)
+                    .maybeSingle();
+
+                if (result.error) {
+                    throw result.error;
+                }
+
+                if (!result.data || !result.data.payload) {
+                    if (!silent) {
+                        updateAuthStatus("No cloud save found yet.");
+                    }
+                    return false;
+                }
+
+                applySavedData(result.data.payload);
+                markCloudSynced();
+                applySettings();
+                render();
+
+                if (!silent) {
+                    updateAuthStatus("Cloud data loaded to this browser.");
+                }
+                return true;
+            } finally {
+                cloudPullInFlight = false;
+            }
+        }
+
+        async function autoLoadCloudForUser(user) {
+            if (!user || !user.id || autoCloudLoadedUserId === user.id) {
                 return;
             }
 
-            if (readSetting(CLOUD_AUTO_SYNC_KEY, "1") !== "1") {
+            try {
+                var loaded = await cloudPull({ silent: true });
+                autoCloudLoadedUserId = user.id;
+                if (loaded) {
+                    updateAuthStatus("Signed in: " + (user.email || "account") + " (cloud data loaded)");
+                } else {
+                    updateAuthStatus("Signed in: " + (user.email || "account") + " (no cloud save yet)");
+                }
+            } catch (error) {
+                if (error && error.message === "Please sign in first.") {
+                    return;
+                }
+                console.warn("Auto cloud load skipped:", error);
+            }
+        }
+
+        function queueCloudAutoSync() {
+            if (!supabaseClient) {
                 return;
             }
 
@@ -1842,10 +2121,6 @@
                 cloudPeriodicSyncTimer = null;
             }
 
-            if (readSetting(CLOUD_AUTO_SYNC_KEY, "1") !== "1") {
-                return;
-            }
-
             cloudPeriodicSyncTimer = setInterval(async function () {
                 if (!supabaseClient || cloudPeriodicSyncInFlight) {
                     return;
@@ -1859,16 +2134,16 @@
                 } catch (error) {
                     if (!(error && error.message === "Please sign in first.")) {
                         console.warn("Periodic cloud sync skipped:", error);
-                        updateCloudAutoSyncStatus("Autosave heartbeat: retrying in 30s (last sync failed)");
+                        updateCloudAutoSyncStatus("Autosave heartbeat: retrying in 60s (last sync failed)");
                     } else {
                         updateCloudAutoSyncStatus("Autosave heartbeat: sign in required");
                     }
                 } finally {
                     cloudPeriodicSyncInFlight = false;
                 }
-            }, 30000);
+            }, AUTO_SYNC_INTERVAL_MS);
 
-            updateCloudAutoSyncStatus("Autosave heartbeat: active (every 30s)");
+            updateCloudAutoSyncStatus("Autosave heartbeat: active (every 60s)");
         }
 
         function applySavedData(payload) {
@@ -1898,36 +2173,11 @@
             var incomingPlayableOnly = data.playableOnly === "1" ? "1" : "0";
             writeSetting(PLAYABLE_ONLY_KEY, incomingPlayableOnly);
 
-            var incomingCloudAutoSync = data.cloudAutoSync === "0" ? "0" : "1";
-            writeSetting(CLOUD_AUTO_SYNC_KEY, incomingCloudAutoSync);
+            var incomingHideHighRisk = data.hideHighRisk === "1" ? "1" : "0";
+            writeSetting(HIDE_HIGH_RISK_KEY, incomingHideHighRisk);
 
             var rawGameSaves = (data.gameSaves && typeof data.gameSaves === "object" && !Array.isArray(data.gameSaves)) ? data.gameSaves : {};
-            var cleanGameSaves = {};
-
-            Object.keys(rawGameSaves).forEach(function (gameId) {
-                var gameSave = rawGameSaves[gameId];
-                if (!gameSave || typeof gameSave !== "object" || Array.isArray(gameSave)) {
-                    return;
-                }
-
-                var localData = gameSave.localStorage;
-                if (!localData || typeof localData !== "object" || Array.isArray(localData)) {
-                    return;
-                }
-
-                var cleanLocalData = {};
-                Object.keys(localData).forEach(function (key) {
-                    var value = localData[key];
-                    if (value === null || typeof value === "string") {
-                        cleanLocalData[key] = value;
-                    }
-                });
-
-                cleanGameSaves[gameId] = {
-                    updatedAt: typeof gameSave.updatedAt === "string" ? gameSave.updatedAt : new Date().toISOString(),
-                    localStorage: cleanLocalData
-                };
-            });
+            var cleanGameSaves = normalizeGameSaveMap(rawGameSaves);
 
             writeObject(GAME_SAVES_KEY, cleanGameSaves);
             applyExtraLocalStorage(data.extraLocalStorage);
@@ -1937,7 +2187,7 @@
             applyIndexedDbSnapshot(data.indexedDb).catch(function (error) {
                 console.warn("IndexedDB restore skipped:", error);
             });
-            renderFnafSaveStatus();
+            renderGameSaveStatus();
         }
 
         function isLikelyPlayable(game) {
@@ -1971,7 +2221,7 @@
                 storageRemove(key);
             });
             applySettings();
-            renderFnafSaveStatus();
+            renderGameSaveStatus();
             render();
         }
 
@@ -2100,9 +2350,11 @@
             performanceProfileSelect.value = performanceProfile;
             openSourceOnlyToggle.checked = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
             playableOnlyToggle.checked = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
-            cloudAutoSyncToggle.checked = readSetting(CLOUD_AUTO_SYNC_KEY, "1") === "1";
+            hideHighRiskToggle.checked = readSetting(HIDE_HIGH_RISK_KEY, "0") === "1";
+            platformSelect.value = "all";
+            riskSelect.value = "all";
             modeBadge.textContent = fastMode ? ("Fast Mode - " + performanceProfile.toUpperCase()) : ("Local-First - " + performanceProfile.toUpperCase());
-            renderFnafSaveStatus();
+            renderGameSaveStatus();
             renderSaveHealthStatus();
         }
 
@@ -2149,16 +2401,23 @@
 
             var query = searchInput.value.trim().toLowerCase();
             var category = categorySelect.value;
+            var platform = platformSelect.value;
+            var risk = riskSelect.value;
             var openSourceOnly = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
             var playableOnly = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
+            var hideHighRisk = readSetting(HIDE_HIGH_RISK_KEY, "0") === "1";
 
             var filtered = games.filter(function (game) {
                 var matchesCategory = category === "all" || game.category === category;
+                var matchesPlatform = platform === "all" || (platform === "local" ? game.platform === "local" : game.platform !== "local");
+                var gameRisk = typeof game.schoolRisk === "string" ? game.schoolRisk : "medium";
+                var matchesRiskSelection = risk === "all" || gameRisk === risk;
                 var text = (game.title + " " + game.description + " " + game.category + " " + game.platform).toLowerCase();
                 var matchesQuery = query.length === 0 || text.indexOf(query) !== -1;
                 var matchesOpenSource = !openSourceOnly || game.openSource === true;
                 var matchesPlayable = !playableOnly || isLikelyPlayable(game);
-                return matchesCategory && matchesQuery && matchesOpenSource && matchesPlayable;
+                var matchesRisk = !hideHighRisk || game.schoolRisk !== "high";
+                return matchesCategory && matchesPlatform && matchesRiskSelection && matchesQuery && matchesOpenSource && matchesPlayable && matchesRisk;
             });
 
             filtered.sort(function (a, b) {
@@ -2218,6 +2477,7 @@
             emptyState.style.display = filtered.length ? "none" : "block";
             renderFavoritesAndRecent();
             renderOpenSource();
+            renderGameSaveStatus();
         }
 
         function populateCategoryFilter() {
@@ -2292,6 +2552,10 @@
 
         searchInput.addEventListener("input", render);
         categorySelect.addEventListener("change", render);
+        platformSelect.addEventListener("change", render);
+        riskSelect.addEventListener("change", render);
+        gameSaveSearchInput.addEventListener("input", renderGameSaveStatus);
+        gameSaveFilterSelect.addEventListener("change", renderGameSaveStatus);
 
         function setSettingsToggleLabel(text) {
             if (settingsToggleLabel) {
@@ -2354,6 +2618,12 @@
             render();
         });
 
+        hideHighRiskToggle.addEventListener("change", function () {
+            writeSetting(HIDE_HIGH_RISK_KEY, hideHighRiskToggle.checked ? "1" : "0");
+            queueCloudAutoSync();
+            render();
+        });
+
         libraryViewSelect.addEventListener("change", function () {
             var value = libraryViewSelect.value;
             if (["cards", "grouped", "platform", "compact"].indexOf(value) === -1) {
@@ -2373,16 +2643,6 @@
             queueCloudAutoSync();
             applySettings();
             render();
-        });
-
-        cloudAutoSyncToggle.addEventListener("change", function () {
-            writeSetting(CLOUD_AUTO_SYNC_KEY, cloudAutoSyncToggle.checked ? "1" : "0");
-            restartCloudPeriodicSync();
-            if (cloudAutoSyncToggle.checked) {
-                queueCloudAutoSync();
-            } else {
-                updateCloudAutoSyncStatus("Autosave heartbeat: off");
-            }
         });
 
         exportDataBtn.addEventListener("click", async function () {

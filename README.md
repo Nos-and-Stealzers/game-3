@@ -84,7 +84,7 @@ The script reports status codes and key headers like `X-Frame-Options` and `Cont
 	- Toggle `Cloud Auto Sync` on/off as desired
 	- `Cloud Save` to upload local favorites/settings/game data snapshot
 	- `Cloud Load` to pull saved data back
-	- After sign-in, auto-sync runs every 30 seconds on hub/account/player pages and local game pages (`snow-rider`, `sweet-bakery`, `minecraft-eaglercraft`, and local FNAF pages)
+	- After sign-in, auto-sync runs every 60 seconds on hub/account/player pages and local game pages (`snow-rider`, `sweet-bakery`, `minecraft-eaglercraft`, and local FNAF pages)
 	- `Cloud Auto Sync Status` in hub/account shows the latest autosave heartbeat
 	- Cloud payload now includes safe extra localStorage + game save map + bounded IndexedDB + sessionStorage + same-origin cookies + Supabase auth token keys for login continuity
 
