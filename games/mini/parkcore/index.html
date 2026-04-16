@@ -3,55 +3,45 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Parkcore Trials</title>
+  <title>Parkcore Forge</title>
   <style>
     :root {
       --bg-a: #f2f7ff;
-      --bg-b: #dfeeff;
+      --bg-b: #dcecff;
       --ink: #10294e;
-      --panel: rgba(255, 255, 255, 0.8);
-      --line: rgba(28, 64, 124, 0.2);
+      --line: rgba(28,64,124,0.2);
+      --panel: rgba(255,255,255,0.82);
       --accent: #0f6fff;
-      --ok: #138f57;
+      --good: #1d9357;
       --danger: #c0364b;
-      --player: #0f6fff;
-      --goal: #138f57;
-      --solid: #244777;
-      --hazard: #c0364b;
-      --ghost: rgba(255, 255, 255, 0.45);
     }
-
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
       font-family: "Trebuchet MS", Verdana, sans-serif;
-      background: radial-gradient(circle at 10% -10%, var(--bg-b), transparent 40%), linear-gradient(180deg, var(--bg-a), #f8fbff);
       color: var(--ink);
+      background: radial-gradient(circle at 8% -10%, var(--bg-b), transparent 42%), linear-gradient(180deg, var(--bg-a), #f8fbff);
       display: grid;
       place-items: center;
       padding: 14px;
     }
-
     .shell {
-      width: min(980px, 96vw);
+      width: min(1040px, 96vw);
       display: grid;
       gap: 10px;
     }
-
     .hud {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
+      display: grid;
+      grid-template-columns: 1fr auto;
       gap: 8px;
-      background: var(--panel);
+      align-items: center;
       border: 1px solid var(--line);
       border-radius: 12px;
+      background: var(--panel);
       padding: 10px 12px;
       backdrop-filter: blur(4px);
     }
-
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
       border-radius: 999px;
@@ -59,40 +49,33 @@
       padding: 5px 10px;
       font-size: 0.82rem;
       font-weight: 800;
-      background: rgba(255, 255, 255, 0.55);
+      background: rgba(255,255,255,0.6);
     }
-
+    .tools { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn {
       border: 1px solid var(--line);
       border-radius: 10px;
-      background: rgba(255, 255, 255, 0.7);
+      background: rgba(255,255,255,0.74);
       color: var(--ink);
       font: inherit;
       font-weight: 800;
       padding: 7px 10px;
       cursor: pointer;
     }
-
-    .btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
     canvas {
       width: 100%;
       height: auto;
-      border-radius: 14px;
       border: 1px solid var(--line);
-      box-shadow: 0 12px 24px rgba(16, 41, 78, 0.18);
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(227, 240, 255, 0.95));
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(227,240,255,0.95));
+      box-shadow: 0 12px 24px rgba(16,41,78,0.18);
     }
-
     .note {
       margin: 0;
       font-size: 0.86rem;
-      color: color-mix(in srgb, var(--ink) 72%, white);
+      color: color-mix(in srgb, var(--ink) 70%, white);
     }
-
     .note b { color: var(--ink); }
   </style>
 </head>
@@ -100,155 +83,138 @@
   <section class="shell">
     <div class="hud">
       <div class="chips">
-        <span class="chip">Level: <b id="level">1</b></span>
+        <span class="chip">Map: <b id="mapNum">1</b></span>
+        <span class="chip">Seed: <b id="seedOut">-</b></span>
         <span class="chip">Deaths: <b id="deaths">0</b></span>
         <span class="chip">Best Deaths: <b id="best">-</b></span>
         <span class="chip">Time: <b id="timer">0.00s</b></span>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <div class="tools">
         <select id="difficulty" class="btn" aria-label="Difficulty">
           <option value="rookie">Rookie</option>
           <option value="normal" selected>Normal</option>
           <option value="insane">Insane</option>
         </select>
-        <button id="restart" class="btn" type="button">Restart Level</button>
+        <button id="newMap" class="btn" type="button">New Random Map</button>
+        <button id="restart" class="btn" type="button">Restart</button>
       </div>
     </div>
-
-    <canvas id="game" width="960" height="500"></canvas>
-    <p class="note"><b>Controls:</b> Arrow Keys / WASD to move, Space to jump. Wall-jump + coyote jump are enabled. Reach the green goal.</p>
+    <canvas id="game" width="1000" height="520"></canvas>
+    <p class="note"><b>Controls:</b> Arrow keys / WASD move, Space jump, wall jump on contact. Reach the green portal.</p>
   </section>
 
   <script>
     (function () {
       var THEME_KEY = "gamehub_theme";
+      var BEST_KEY = "parkcore_forge_best_deaths";
       var canvas = document.getElementById("game");
       var ctx = canvas.getContext("2d");
-      var levelEl = document.getElementById("level");
+      var mapNumEl = document.getElementById("mapNum");
+      var seedOutEl = document.getElementById("seedOut");
       var deathsEl = document.getElementById("deaths");
       var bestEl = document.getElementById("best");
       var timerEl = document.getElementById("timer");
       var difficultySelect = document.getElementById("difficulty");
+      var newMapBtn = document.getElementById("newMap");
       var restartBtn = document.getElementById("restart");
 
       var W = canvas.width;
       var H = canvas.height;
+      var FLOOR_Y = H - 36;
       var keys = {};
+      var mapCount = 1;
       var deaths = 0;
-      var best = Number(localStorage.getItem("parkcore_trials_best_deaths") || "-1");
-      var currentLevel = 0;
       var runFrames = 0;
+      var best = Number(localStorage.getItem(BEST_KEY) || "-1");
       var difficulty = "normal";
+      var activeSeed = Date.now() % 1000000;
 
       var DIFFICULTY = {
-        rookie: { accel: 0.78, maxSpeed: 5.8, friction: 0.82, gravity: 0.55, jump: 12.2, wallJump: 11.2, coyote: 10, buffer: 10 },
-        normal: { accel: 0.85, maxSpeed: 6.2, friction: 0.78, gravity: 0.62, jump: 11.6, wallJump: 10.8, coyote: 8, buffer: 8 },
-        insane: { accel: 0.92, maxSpeed: 6.9, friction: 0.76, gravity: 0.7, jump: 11.2, wallJump: 10.4, coyote: 6, buffer: 6 }
+        rookie: { accel: 0.78, maxSpeed: 5.8, friction: 0.84, gravity: 0.52, jump: 12.6, wallJump: 11.8, coyote: 11, buffer: 10, hazardMult: 0.75, movingPlatforms: 1 },
+        normal: { accel: 0.86, maxSpeed: 6.3, friction: 0.8, gravity: 0.62, jump: 11.7, wallJump: 10.9, coyote: 8, buffer: 8, hazardMult: 1.0, movingPlatforms: 2 },
+        insane: { accel: 0.95, maxSpeed: 7.0, friction: 0.76, gravity: 0.71, jump: 11.2, wallJump: 10.3, coyote: 6, buffer: 6, hazardMult: 1.2, movingPlatforms: 3 }
       };
 
       var palettes = {
-        light: {
-          bgA: "#f2f7ff", bgB: "#dfeeff", ink: "#10294e", line: "rgba(28,64,124,0.2)",
-          solid: "#244777", hazard: "#c0364b", player: "#0f6fff", goal: "#138f57", ghost: "rgba(255,255,255,0.45)"
-        },
-        gray: {
-          bgA: "#222933", bgB: "#3d4655", ink: "#e6edf8", line: "rgba(178,194,216,0.24)",
-          solid: "#8aa1c8", hazard: "#ff7d95", player: "#8eb6ff", goal: "#63d39d", ghost: "rgba(255,255,255,0.18)"
-        },
-        black: {
-          bgA: "#0f141b", bgB: "#263041", ink: "#eef3ff", line: "rgba(190,205,232,0.26)",
-          solid: "#9db6e8", hazard: "#ff8fa3", player: "#8db4ff", goal: "#63d39d", ghost: "rgba(255,255,255,0.14)"
-        }
+        light: { bgA: "#f2f7ff", bgB: "#dcecff", ink: "#10294e", line: "rgba(28,64,124,0.2)", solid: "#264a7e", hazard: "#c0364b", player: "#0f6fff", goal: "#1d9357", cloud: "rgba(255,255,255,0.45)" },
+        gray: { bgA: "#232b37", bgB: "#3b4757", ink: "#e6edf8", line: "rgba(178,194,216,0.24)", solid: "#8fa8cf", hazard: "#ff7f97", player: "#8eb6ff", goal: "#63d39d", cloud: "rgba(255,255,255,0.18)" },
+        black: { bgA: "#0f141b", bgB: "#273142", ink: "#eef3ff", line: "rgba(190,205,232,0.26)", solid: "#9db7e9", hazard: "#ff90a5", player: "#8db5ff", goal: "#63d39d", cloud: "rgba(255,255,255,0.14)" }
       };
 
+      function rng(seed) {
+        var s = seed >>> 0;
+        return function () {
+          s = (s * 1664525 + 1013904223) >>> 0;
+          return s / 4294967296;
+        };
+      }
+
       function readTheme() {
-        var value = "light";
-        try {
-          value = localStorage.getItem(THEME_KEY) || "light";
-        } catch (error) {
-          value = "light";
-        }
-        return ["light", "gray", "black"].indexOf(value) === -1 ? "light" : value;
+        var t = "light";
+        try { t = localStorage.getItem(THEME_KEY) || "light"; } catch (error) { t = "light"; }
+        return ["light", "gray", "black"].indexOf(t) === -1 ? "light" : t;
       }
 
       function applyTheme() {
-        var theme = readTheme();
-        var p = palettes[theme];
-        document.body.setAttribute("data-theme", theme);
-        document.documentElement.style.colorScheme = theme === "black" ? "dark" : "light";
+        var p = palettes[readTheme()];
         document.documentElement.style.setProperty("--bg-a", p.bgA);
         document.documentElement.style.setProperty("--bg-b", p.bgB);
         document.documentElement.style.setProperty("--ink", p.ink);
         document.documentElement.style.setProperty("--line", p.line);
+        document.documentElement.style.colorScheme = readTheme() === "black" ? "dark" : "light";
       }
 
-      function syncBestLabel() {
+      function syncBest() {
         bestEl.textContent = best >= 0 ? String(best) : "-";
       }
 
-      var levels = [
-        {
-          spawn: { x: 60, y: 420 },
-          goal: { x: 860, y: 60, w: 40, h: 40 },
-          solids: [
-            { x: 0, y: 460, w: 960, h: 40 },
-            { x: 120, y: 390, w: 160, h: 20 },
-            { x: 340, y: 320, w: 120, h: 20 },
-            { x: 500, y: 250, w: 130, h: 20 },
-            { x: 700, y: 170, w: 150, h: 20 }
-          ],
-          hazards: [
-            { x: 300, y: 450, w: 28, h: 10 },
-            { x: 330, y: 450, w: 28, h: 10 },
-            { x: 360, y: 450, w: 28, h: 10 }
-          ]
-        },
-        {
-          spawn: { x: 56, y: 420 },
-          goal: { x: 882, y: 88, w: 40, h: 40 },
-          solids: [
-            { x: 0, y: 460, w: 960, h: 40 },
-            { x: 0, y: 250, w: 90, h: 210 },
-            { x: 180, y: 390, w: 120, h: 16 },
-            { x: 360, y: 330, w: 120, h: 16 },
-            { x: 550, y: 275, w: 120, h: 16 },
-            { x: 740, y: 215, w: 120, h: 16 },
-            { x: 910, y: 120, w: 50, h: 340 }
-          ],
-          hazards: [
-            { x: 310, y: 450, w: 46, h: 10 },
-            { x: 520, y: 450, w: 46, h: 10 },
-            { x: 705, y: 450, w: 46, h: 10 }
-          ]
-        },
-        {
-          spawn: { x: 80, y: 120 },
-          goal: { x: 880, y: 400, w: 42, h: 42 },
-          solids: [
-            { x: 0, y: 0, w: 30, h: 500 },
-            { x: 930, y: 0, w: 30, h: 500 },
-            { x: 0, y: 460, w: 960, h: 40 },
-            { x: 90, y: 180, w: 130, h: 16 },
-            { x: 280, y: 240, w: 130, h: 16 },
-            { x: 470, y: 300, w: 130, h: 16 },
-            { x: 660, y: 360, w: 130, h: 16 }
-          ],
-          hazards: [
-            { x: 110, y: 442, w: 120, h: 10 },
-            { x: 300, y: 442, w: 120, h: 10 },
-            { x: 490, y: 442, w: 120, h: 10 },
-            { x: 680, y: 442, w: 120, h: 10 }
-          ]
+      function makeMap(seed) {
+        var rand = rng(seed);
+        var cfg = DIFFICULTY[difficulty];
+        var platforms = [
+          { x: 0, y: FLOOR_Y, w: W, h: 36, type: "solid" }
+        ];
+        var hazards = [];
+
+        var x = 120;
+        var y = FLOOR_Y - 64;
+        var i;
+        for (i = 0; i < 14; i++) {
+          var w = 110 + Math.floor(rand() * 90);
+          var dy = Math.floor((rand() - 0.5) * 120);
+          y = Math.max(90, Math.min(FLOOR_Y - 70, y + dy));
+          platforms.push({ x: x, y: y, w: w, h: 16, type: "solid" });
+
+          if (rand() < 0.55 * cfg.hazardMult) {
+            var spikeCount = 2 + Math.floor(rand() * 4);
+            hazards.push({ x: x + 8, y: y - 10, w: spikeCount * 12, h: 10 });
+          }
+
+          x += 95 + Math.floor(rand() * 75);
         }
-      ];
 
-      var state;
+        for (i = 0; i < cfg.movingPlatforms; i++) {
+          var px = 240 + Math.floor(rand() * 520);
+          var py = 130 + Math.floor(rand() * 250);
+          var span = 60 + Math.floor(rand() * 90);
+          var speed = 1 + rand() * 1.4;
+          platforms.push({ x: px, y: py, w: 90, h: 14, type: "moving", baseX: px, span: span, speed: speed, phase: rand() * Math.PI * 2 });
+        }
 
-      function resetLevel() {
-        var L = levels[currentLevel];
+        var goal = { x: Math.min(W - 80, x + 15), y: Math.max(74, y - 40), w: 42, h: 42 };
+        var spawn = { x: 60, y: FLOOR_Y - 24 };
+
+        return { spawn: spawn, goal: goal, platforms: platforms, hazards: hazards };
+      }
+
+      var map = makeMap(activeSeed);
+      var state = null;
+
+      function resetState() {
+        var cfg = DIFFICULTY[difficulty];
         state = {
-          x: L.spawn.x,
-          y: L.spawn.y,
+          x: map.spawn.x,
+          y: map.spawn.y,
           w: 24,
           h: 24,
           vx: 0,
@@ -258,49 +224,69 @@
           jumpBuffer: 0,
           wallDir: 0,
           won: false,
-          winTimer: 0
+          winTimer: 0,
+          prevX: map.spawn.x,
+          prevY: map.spawn.y,
+          cfg: cfg
         };
-        levelEl.textContent = String(currentLevel + 1);
+        mapNumEl.textContent = String(mapCount);
+        seedOutEl.textContent = String(activeSeed);
         deathsEl.textContent = String(deaths);
-        syncBestLabel();
+        syncBest();
+      }
+
+      function hardResetNewMap() {
+        activeSeed = Math.floor(Math.random() * 1000000);
+        map = makeMap(activeSeed);
+        deaths = 0;
+        runFrames = 0;
+        timerEl.textContent = "0.00s";
+        resetState();
       }
 
       function die() {
         deaths += 1;
         deathsEl.textContent = String(deaths);
-        resetLevel();
+        resetState();
       }
 
-      function rectsOverlap(a, b) {
+      function rectOverlap(a, b) {
         return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
       }
 
-      function moveAndCollide(axis) {
-        var L = levels[currentLevel];
-        var solids = L.solids;
-        state.wallDir = 0;
+      function updateMovingPlatforms(t) {
+        map.platforms.forEach(function (p) {
+          if (p.type !== "moving") return;
+          p.x = p.baseX + Math.sin((t * 0.02 * p.speed) + p.phase) * p.span;
+        });
+      }
 
-        for (var i = 0; i < solids.length; i++) {
-          var s = solids[i];
-          if (!rectsOverlap(state, s)) continue;
+      function collideAxis(axis) {
+        state.wallDir = 0;
+        for (var i = 0; i < map.platforms.length; i++) {
+          var p = map.platforms[i];
+          if (!rectOverlap(state, p)) continue;
 
           if (axis === "x") {
             if (state.vx > 0) {
-              state.x = s.x - state.w;
+              state.x = p.x - state.w;
               state.wallDir = 1;
             } else if (state.vx < 0) {
-              state.x = s.x + s.w;
+              state.x = p.x + p.w;
               state.wallDir = -1;
             }
             state.vx = 0;
           } else {
             if (state.vy > 0) {
-              state.y = s.y - state.h;
+              state.y = p.y - state.h;
               state.vy = 0;
               state.grounded = true;
-              state.coyote = DIFFICULTY[difficulty].coyote;
+              state.coyote = state.cfg.coyote;
+              if (p.type === "moving") {
+                state.x += (p.x - state.prevPlatX || 0);
+              }
             } else if (state.vy < 0) {
-              state.y = s.y + s.h;
+              state.y = p.y + p.h;
               state.vy = 0;
             }
           }
@@ -314,36 +300,34 @@
         if (state.won) {
           state.winTimer -= 1;
           if (state.winTimer <= 0) {
-            currentLevel = (currentLevel + 1) % levels.length;
-            resetLevel();
+            mapCount += 1;
+            activeSeed = Math.floor(Math.random() * 1000000);
+            map = makeMap(activeSeed);
+            resetState();
           }
           return;
         }
 
-        var left = !!(keys["arrowleft"] || keys["a"]);
-        var right = !!(keys["arrowright"] || keys["d"]);
-        var jumpPressed = !!keys["jumpPressed"];
-        keys["jumpPressed"] = false;
+        updateMovingPlatforms(runFrames);
+
+        var left = !!(keys.arrowleft || keys.a);
+        var right = !!(keys.arrowright || keys.d);
+        var jumpPressed = !!keys.jumpPressed;
+        keys.jumpPressed = false;
 
         if (jumpPressed) {
-          state.jumpBuffer = DIFFICULTY[difficulty].buffer;
+          state.jumpBuffer = state.cfg.buffer;
         } else if (state.jumpBuffer > 0) {
           state.jumpBuffer -= 1;
         }
 
         state.grounded = false;
-
-        var cfg = DIFFICULTY[difficulty];
-        var accel = cfg.accel;
-        var maxSpeed = cfg.maxSpeed;
-        var friction = cfg.friction;
-
         if (left && !right) {
-          state.vx = Math.max(-maxSpeed, state.vx - accel);
+          state.vx = Math.max(-state.cfg.maxSpeed, state.vx - state.cfg.accel);
         } else if (right && !left) {
-          state.vx = Math.min(maxSpeed, state.vx + accel);
+          state.vx = Math.min(state.cfg.maxSpeed, state.vx + state.cfg.accel);
         } else {
-          state.vx *= friction;
+          state.vx *= state.cfg.friction;
           if (Math.abs(state.vx) < 0.05) state.vx = 0;
         }
 
@@ -351,90 +335,90 @@
 
         if (state.jumpBuffer > 0) {
           if (state.coyote > 0) {
-            state.vy = -cfg.jump;
+            state.vy = -state.cfg.jump;
             state.coyote = 0;
             state.jumpBuffer = 0;
           } else if (state.wallDir !== 0 && state.vy > -4) {
-            state.vy = -cfg.wallJump;
+            state.vy = -state.cfg.wallJump;
             state.vx = state.wallDir === 1 ? -6.6 : 6.6;
             state.jumpBuffer = 0;
           }
         }
 
-        state.vy += cfg.gravity;
+        state.vy += state.cfg.gravity;
         if (state.vy > 14) state.vy = 14;
 
+        state.prevX = state.x;
+        state.prevY = state.y;
+
         state.x += state.vx;
-        moveAndCollide("x");
+        collideAxis("x");
 
         state.y += state.vy;
-        moveAndCollide("y");
+        collideAxis("y");
 
-        var L = levels[currentLevel];
-        for (var i = 0; i < L.hazards.length; i++) {
-          if (rectsOverlap(state, L.hazards[i])) {
+        for (var i = 0; i < map.hazards.length; i++) {
+          if (rectOverlap(state, map.hazards[i])) {
             die();
             return;
           }
         }
 
-        if (state.y > H + 60 || state.y < -120 || state.x < -120 || state.x > W + 120) {
+        if (state.y > H + 80 || state.x < -120 || state.x > W + 120 || state.y < -180) {
           die();
           return;
         }
 
-        if (rectsOverlap(state, L.goal)) {
+        if (rectOverlap(state, map.goal)) {
           state.won = true;
-          state.winTimer = 36;
+          state.winTimer = 38;
           if (best < 0 || deaths < best) {
             best = deaths;
-            localStorage.setItem("parkcore_trials_best_deaths", String(best));
-            syncBestLabel();
+            localStorage.setItem(BEST_KEY, String(best));
+            syncBest();
           }
         }
       }
 
       function draw() {
-        var theme = palettes[readTheme()];
+        var p = palettes[readTheme()];
         ctx.clearRect(0, 0, W, H);
 
         var bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, theme.bgB);
-        bg.addColorStop(1, theme.bgA);
+        bg.addColorStop(0, p.bgB);
+        bg.addColorStop(1, p.bgA);
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
 
-        ctx.fillStyle = theme.ghost;
-        for (var i = 0; i < 7; i++) {
-          var x = ((i * 180) - (performance.now() * 0.02)) % (W + 180);
-          if (x < -160) x += W + 180;
-          ctx.fillRect(x, 60 + i * 20, 120, 16);
+        ctx.fillStyle = p.cloud;
+        for (var i = 0; i < 8; i++) {
+          var cx = ((i * 170) - (performance.now() * 0.018)) % (W + 180);
+          if (cx < -160) cx += W + 180;
+          ctx.fillRect(cx, 62 + i * 18, 120, 16);
         }
 
-        var L = levels[currentLevel];
-
-        ctx.fillStyle = theme.solid;
-        L.solids.forEach(function (s) {
-          ctx.fillRect(s.x, s.y, s.w, s.h);
+        ctx.fillStyle = p.solid;
+        map.platforms.forEach(function (plat) {
+          ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
         });
 
-        ctx.fillStyle = theme.hazard;
-        L.hazards.forEach(function (h) {
-          for (var x = h.x; x < h.x + h.w; x += 10) {
+        ctx.fillStyle = p.hazard;
+        map.hazards.forEach(function (h) {
+          for (var x = h.x; x < h.x + h.w; x += 12) {
             ctx.beginPath();
             ctx.moveTo(x, h.y + h.h);
-            ctx.lineTo(x + 5, h.y);
-            ctx.lineTo(x + 10, h.y + h.h);
+            ctx.lineTo(x + 6, h.y);
+            ctx.lineTo(x + 12, h.y + h.h);
             ctx.fill();
           }
         });
 
-        ctx.fillStyle = theme.goal;
-        ctx.fillRect(L.goal.x, L.goal.y, L.goal.w, L.goal.h);
-        ctx.fillStyle = "rgba(255,255,255,0.6)";
-        ctx.fillRect(L.goal.x + 7, L.goal.y + 7, 12, 12);
+        ctx.fillStyle = p.goal;
+        ctx.fillRect(map.goal.x, map.goal.y, map.goal.w, map.goal.h);
+        ctx.fillStyle = "rgba(255,255,255,0.62)";
+        ctx.fillRect(map.goal.x + 7, map.goal.y + 7, 12, 12);
 
-        ctx.fillStyle = theme.player;
+        ctx.fillStyle = p.player;
         ctx.fillRect(state.x, state.y, state.w, state.h);
 
         if (state.won) {
@@ -443,9 +427,9 @@
           ctx.fillStyle = "#fff";
           ctx.textAlign = "center";
           ctx.font = "800 42px Trebuchet MS, sans-serif";
-          ctx.fillText("Level Clear", W / 2, H / 2 - 12);
+          ctx.fillText("Map Clear", W / 2, H / 2 - 12);
           ctx.font = "700 20px Trebuchet MS, sans-serif";
-          ctx.fillText("Loading next trial...", W / 2, H / 2 + 22);
+          ctx.fillText("Generating next random map...", W / 2, H / 2 + 22);
         }
       }
 
@@ -459,28 +443,24 @@
         var key = (event.key || "").toLowerCase();
         if (key === " " || key === "arrowup" || key === "w") {
           event.preventDefault();
-          keys["jumpPressed"] = true;
+          keys.jumpPressed = true;
         }
         keys[key] = true;
-        if (key === "r") {
-          resetLevel();
-        }
+        if (key === "r") resetState();
       });
 
       document.addEventListener("keyup", function (event) {
         keys[(event.key || "").toLowerCase()] = false;
       });
 
-      restartBtn.addEventListener("click", resetLevel);
       difficultySelect.addEventListener("change", function () {
-        var value = difficultySelect.value;
-        difficulty = Object.prototype.hasOwnProperty.call(DIFFICULTY, value) ? value : "normal";
-        deaths = 0;
-        runFrames = 0;
-        deathsEl.textContent = "0";
-        timerEl.textContent = "0.00s";
-        resetLevel();
+        var val = difficultySelect.value;
+        difficulty = Object.prototype.hasOwnProperty.call(DIFFICULTY, val) ? val : "normal";
+        hardResetNewMap();
       });
+
+      newMapBtn.addEventListener("click", hardResetNewMap);
+      restartBtn.addEventListener("click", resetState);
 
       applyTheme();
       window.addEventListener("focus", applyTheme);
@@ -489,8 +469,9 @@
           applyTheme();
         }
       });
-      syncBestLabel();
-      resetLevel();
+
+      syncBest();
+      resetState();
       frame();
     })();
   </script>

@@ -3,17 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Campus Tower Defense</title>
+  <title>Campus Tower Defense: Redux</title>
   <style>
     :root {
       --bg-a: #eff6ff;
       --bg-b: #dbeafe;
       --ink: #10294e;
-      --panel: rgba(255, 255, 255, 0.82);
-      --line: rgba(28, 64, 124, 0.2);
+      --line: rgba(28,64,124,0.2);
+      --panel: rgba(255,255,255,0.82);
       --accent: #0f6fff;
     }
-
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -25,13 +24,11 @@
       place-items: center;
       padding: 14px;
     }
-
     .shell {
-      width: min(980px, 96vw);
+      width: min(1040px, 96vw);
       display: grid;
       gap: 10px;
     }
-
     .hud {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -43,7 +40,6 @@
       padding: 10px 12px;
       backdrop-filter: blur(4px);
     }
-
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
       border-radius: 999px;
@@ -51,14 +47,13 @@
       padding: 5px 10px;
       font-size: 0.82rem;
       font-weight: 800;
-      background: rgba(255, 255, 255, 0.6);
+      background: rgba(255,255,255,0.6);
     }
-
-    .tools { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tools { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn {
       border: 1px solid var(--line);
       border-radius: 10px;
-      background: rgba(255, 255, 255, 0.74);
+      background: rgba(255,255,255,0.74);
       color: var(--ink);
       font: inherit;
       font-weight: 800;
@@ -66,22 +61,19 @@
       cursor: pointer;
     }
     .btn.active { border-color: var(--accent); color: var(--accent); }
-
     canvas {
       width: 100%;
       height: auto;
-      border-radius: 14px;
       border: 1px solid var(--line);
-      box-shadow: 0 12px 24px rgba(16, 41, 78, 0.18);
+      border-radius: 14px;
       background: #dcecff;
+      box-shadow: 0 12px 24px rgba(16,41,78,0.18);
     }
-
     .note {
       margin: 0;
       font-size: 0.86rem;
-      color: color-mix(in srgb, var(--ink) 72%, white);
+      color: color-mix(in srgb, var(--ink) 70%, white);
     }
-
     .note b { color: var(--ink); }
   </style>
 </head>
@@ -89,10 +81,11 @@
   <section class="shell">
     <div class="hud">
       <div class="chips">
-        <span class="chip">Coins: <b id="coins">120</b></span>
-        <span class="chip">Lives: <b id="lives">20</b></span>
+        <span class="chip">Coins: <b id="coins">0</b></span>
+        <span class="chip">Lives: <b id="lives">0</b></span>
         <span class="chip">Wave: <b id="wave">1</b></span>
-        <span class="chip">Mode: <b id="modeLabel">Normal</b></span>
+        <span class="chip">Mode: <b id="mode">Normal</b></span>
+        <span class="chip">Path Seed: <b id="seedOut">-</b></span>
       </div>
       <div class="tools">
         <select id="difficulty" class="btn" aria-label="Difficulty">
@@ -101,14 +94,16 @@
           <option value="hard">Hard</option>
         </select>
         <button id="speedBtn" class="btn" type="button">Speed 1x</button>
-        <button id="dartBtn" class="btn active" type="button">Dart (40)</button>
-        <button id="blastBtn" class="btn" type="button">Blast (70)</button>
+        <button id="dartBtn" class="btn active" type="button">Dart 40</button>
+        <button id="blastBtn" class="btn" type="button">Blast 70</button>
+        <button id="sniperBtn" class="btn" type="button">Sniper 95</button>
+        <button id="newMapBtn" class="btn" type="button">New Map</button>
         <button id="restartBtn" class="btn" type="button">Restart</button>
       </div>
     </div>
 
-    <canvas id="game" width="960" height="540"></canvas>
-    <p class="note"><b>How to play:</b> Pick a tower type, click empty grass to place. Click placed towers to upgrade (+20). Stop all leaks.</p>
+    <canvas id="game" width="1000" height="560"></canvas>
+    <p class="note"><b>How to play:</b> Place towers on grass, click a tower to upgrade it, press speed for faster rounds. Survive leaks.</p>
   </section>
 
   <script>
@@ -119,109 +114,88 @@
       var coinsEl = document.getElementById("coins");
       var livesEl = document.getElementById("lives");
       var waveEl = document.getElementById("wave");
-      var modeLabelEl = document.getElementById("modeLabel");
+      var modeEl = document.getElementById("mode");
+      var seedOutEl = document.getElementById("seedOut");
       var difficultySelect = document.getElementById("difficulty");
       var speedBtn = document.getElementById("speedBtn");
       var dartBtn = document.getElementById("dartBtn");
       var blastBtn = document.getElementById("blastBtn");
+      var sniperBtn = document.getElementById("sniperBtn");
+      var newMapBtn = document.getElementById("newMapBtn");
       var restartBtn = document.getElementById("restartBtn");
 
       var W = canvas.width;
       var H = canvas.height;
-      var TILE = 60;
-      var GRID_X = 120;
-      var GRID_Y = 30;
-      var COLS = 12;
-      var ROWS = 8;
+      var TILE = 56;
+      var GRID_X = 110;
+      var GRID_Y = 32;
+      var COLS = 14;
+      var ROWS = 9;
 
-      var path = [
-        [0, 6], [1, 6], [2, 6], [3, 6], [3, 5], [3, 4], [4, 4], [5, 4], [6, 4],
-        [6, 5], [6, 6], [7, 6], [8, 6], [9, 6], [10, 6], [11, 6]
-      ];
-
-      var palettes = {
-        light: {
-          bgA: "#eff6ff", bgB: "#dbeafe", ink: "#10294e", line: "rgba(28,64,124,0.2)",
-          grass: "#c6e4b7", grass2: "#b8dca6", path: "#eab97b", path2: "#d79f5f"
-        },
-        gray: {
-          bgA: "#222933", bgB: "#3d4655", ink: "#e6edf8", line: "rgba(178,194,216,0.24)",
-          grass: "#5b6c5a", grass2: "#4f5d4f", path: "#8a7a63", path2: "#766750"
-        },
-        black: {
-          bgA: "#0f141b", bgB: "#263041", ink: "#eef3ff", line: "rgba(190,205,232,0.26)",
-          grass: "#4f644e", grass2: "#435742", path: "#8a765d", path2: "#735f47"
-        }
+      var DIFFICULTY = {
+        rookie: { label: "Rookie", coins: 180, lives: 28, hpScale: 1.8, speedScale: 0.92, spawnBase: 22, waveDelay: 92 },
+        normal: { label: "Normal", coins: 130, lives: 20, hpScale: 2.0, speedScale: 1.0, spawnBase: 18, waveDelay: 76 },
+        hard: { label: "Hard", coins: 95, lives: 15, hpScale: 2.3, speedScale: 1.1, spawnBase: 14, waveDelay: 62 }
       };
 
+      var palettes = {
+        light: { bgA: "#eff6ff", bgB: "#dbeafe", ink: "#10294e", line: "rgba(28,64,124,0.2)", grass: "#c7e4b8", grass2: "#b5d79f", path: "#e8b77a" },
+        gray: { bgA: "#222933", bgB: "#3d4655", ink: "#e6edf8", line: "rgba(178,194,216,0.24)", grass: "#5b6c5a", grass2: "#4e5f4d", path: "#8b7c64" },
+        black: { bgA: "#0f141b", bgB: "#273142", ink: "#eef3ff", line: "rgba(190,205,232,0.26)", grass: "#4f644e", grass2: "#425643", path: "#8a765d" }
+      };
+
+      var state;
+      var difficulty = "normal";
+      var selectedTower = "dart";
+      var tickMultiplier = 1;
+      var pathSeed = Math.floor(Math.random() * 1000000);
+      var pathTiles = [];
+
+      function rng(seed) {
+        var s = seed >>> 0;
+        return function () {
+          s = (s * 1664525 + 1013904223) >>> 0;
+          return s / 4294967296;
+        };
+      }
+
       function readTheme() {
-        var v = "light";
-        try { v = localStorage.getItem(THEME_KEY) || "light"; } catch (error) { v = "light"; }
-        return ["light", "gray", "black"].indexOf(v) === -1 ? "light" : v;
+        var t = "light";
+        try { t = localStorage.getItem(THEME_KEY) || "light"; } catch (error) { t = "light"; }
+        return ["light", "gray", "black"].indexOf(t) === -1 ? "light" : t;
       }
 
       function applyTheme() {
-        var theme = readTheme();
-        var p = palettes[theme];
-        document.body.setAttribute("data-theme", theme);
-        document.documentElement.style.colorScheme = theme === "black" ? "dark" : "light";
+        var p = palettes[readTheme()];
         document.documentElement.style.setProperty("--bg-a", p.bgA);
         document.documentElement.style.setProperty("--bg-b", p.bgB);
         document.documentElement.style.setProperty("--ink", p.ink);
         document.documentElement.style.setProperty("--line", p.line);
+        document.documentElement.style.colorScheme = readTheme() === "black" ? "dark" : "light";
       }
-
-      var state;
-      var selectedType = "dart";
-      var difficulty = "normal";
-      var tickMultiplier = 1;
-
-      var DIFFICULTY = {
-        rookie: {
-          label: "Rookie",
-          coins: 170,
-          lives: 26,
-          runnerHp: 10,
-          tankHp: 32,
-          swiftHp: 8,
-          hpScale: 1.9,
-          speedScale: 0.94,
-          spawnBase: 24,
-          waveDelay: 92
-        },
-        normal: {
-          label: "Normal",
-          coins: 120,
-          lives: 20,
-          runnerHp: 12,
-          tankHp: 38,
-          swiftHp: 9,
-          hpScale: 2.0,
-          speedScale: 1,
-          spawnBase: 18,
-          waveDelay: 75
-        },
-        hard: {
-          label: "Hard",
-          coins: 95,
-          lives: 16,
-          runnerHp: 14,
-          tankHp: 44,
-          swiftHp: 10,
-          hpScale: 2.3,
-          speedScale: 1.08,
-          spawnBase: 14,
-          waveDelay: 62
-        }
-      };
 
       function tileCenter(col, row) {
         return { x: GRID_X + col * TILE + TILE / 2, y: GRID_Y + row * TILE + TILE / 2 };
       }
 
+      function generatePath(seed) {
+        var rand = rng(seed);
+        var row = 3 + Math.floor(rand() * 3);
+        var path = [];
+        var col;
+        for (col = 0; col < COLS; col++) {
+          path.push([col, row]);
+          var dir = rand();
+          if (dir < 0.35) row -= 1;
+          else if (dir > 0.65) row += 1;
+          row = Math.max(1, Math.min(ROWS - 2, row));
+        }
+        return path;
+      }
+
       function isPath(col, row) {
-        for (var i = 0; i < path.length; i++) {
-          if (path[i][0] === col && path[i][1] === row) return true;
+        for (var i = 0; i < pathTiles.length; i++) {
+          if (pathTiles[i][0] === col && pathTiles[i][1] === row) return true;
         }
         return false;
       }
@@ -234,11 +208,56 @@
         coinsEl.textContent = String(state.coins);
         livesEl.textContent = String(state.lives);
         waveEl.textContent = String(state.wave);
-        modeLabelEl.textContent = DIFFICULTY[difficulty].label;
+        modeEl.textContent = DIFFICULTY[difficulty].label;
+        seedOutEl.textContent = String(pathSeed);
       }
 
-      function reset() {
+      function setTowerButtons() {
+        dartBtn.classList.toggle("active", selectedTower === "dart");
+        blastBtn.classList.toggle("active", selectedTower === "blast");
+        sniperBtn.classList.toggle("active", selectedTower === "sniper");
+      }
+
+      function buildWave() {
         var cfg = DIFFICULTY[difficulty];
+        var w = state.wave;
+        var q = [];
+        var i;
+        for (i = 0; i < 7 + w; i++) {
+          q.push({ type: "runner", hp: 12 + Math.floor(w * cfg.hpScale), speed: (1.28 + w * 0.04) * cfg.speedScale, value: 9 });
+        }
+        for (i = 0; i < Math.floor(w / 2); i++) {
+          q.push({ type: "tank", hp: 34 + Math.floor(w * (cfg.hpScale * 2.4)), speed: (0.72 + w * 0.03) * cfg.speedScale, value: 18 });
+        }
+        for (i = 0; i < Math.floor((w + 1) / 3); i++) {
+          q.push({ type: "swift", hp: 9 + Math.floor(w * cfg.hpScale), speed: (1.86 + w * 0.05) * cfg.speedScale, value: 11 });
+        }
+
+        for (i = q.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = q[i]; q[i] = q[j]; q[j] = tmp;
+        }
+        state.spawnQueue = q;
+      }
+
+      function spawnEnemy(spec) {
+        var s = tileCenter(pathTiles[0][0], pathTiles[0][1]);
+        state.enemies.push({
+          x: s.x,
+          y: s.y,
+          hp: spec.hp,
+          maxHp: spec.hp,
+          speed: spec.speed,
+          value: spec.value,
+          kind: spec.type,
+          seg: 0
+        });
+      }
+
+      function resetGame(newSeed) {
+        var cfg = DIFFICULTY[difficulty];
+        if (newSeed) pathSeed = Math.floor(Math.random() * 1000000);
+        pathTiles = generatePath(pathSeed);
         state = {
           t: 0,
           coins: cfg.coins,
@@ -252,49 +271,10 @@
           projectiles: [],
           gameOver: false
         };
-        selectedType = "dart";
-        dartBtn.classList.add("active");
-        blastBtn.classList.remove("active");
-        buildWave(state.wave);
+        tickMultiplier = 1;
+        speedBtn.textContent = "Speed 1x";
+        buildWave();
         syncHud();
-      }
-
-      function buildWave(wave) {
-        var cfg = DIFFICULTY[difficulty];
-        var queue = [];
-        var i;
-        for (i = 0; i < 6 + wave; i++) {
-          queue.push({ type: "runner", hp: cfg.runnerHp + wave * cfg.hpScale, speed: (1.3 + wave * 0.04) * cfg.speedScale, value: 9 });
-        }
-        for (i = 0; i < Math.floor(wave / 2); i++) {
-          queue.push({ type: "tank", hp: cfg.tankHp + wave * (cfg.hpScale * 2.5), speed: (0.7 + wave * 0.03) * cfg.speedScale, value: 18 });
-        }
-        for (i = 0; i < Math.floor((wave + 1) / 3); i++) {
-          queue.push({ type: "swift", hp: cfg.swiftHp + wave * cfg.hpScale, speed: (1.85 + wave * 0.05) * cfg.speedScale, value: 11 });
-        }
-
-        for (i = queue.length - 1; i > 0; i--) {
-          var j = Math.floor(Math.random() * (i + 1));
-          var tmp = queue[i];
-          queue[i] = queue[j];
-          queue[j] = tmp;
-        }
-
-        state.spawnQueue = queue;
-      }
-
-      function spawnEnemy(spec) {
-        var start = tileCenter(path[0][0], path[0][1]);
-        state.enemies.push({
-          x: start.x,
-          y: start.y,
-          hp: spec.hp,
-          maxHp: spec.hp,
-          speed: spec.speed,
-          value: spec.value,
-          kind: spec.type,
-          seg: 0
-        });
       }
 
       function advanceWaves() {
@@ -315,7 +295,7 @@
           if (state.betweenWaves <= 0) {
             state.wave += 1;
             state.betweenWaves = cfg.waveDelay;
-            buildWave(state.wave);
+            buildWave();
             syncHud();
           }
         }
@@ -324,20 +304,20 @@
       function updateEnemies() {
         for (var i = state.enemies.length - 1; i >= 0; i--) {
           var e = state.enemies[i];
-          var targetSeg = Math.min(e.seg + 1, path.length - 1);
-          var target = tileCenter(path[targetSeg][0], path[targetSeg][1]);
+          var ns = Math.min(e.seg + 1, pathTiles.length - 1);
+          var target = tileCenter(pathTiles[ns][0], pathTiles[ns][1]);
           var dx = target.x - e.x;
           var dy = target.y - e.y;
           var d = Math.hypot(dx, dy) || 1;
 
           if (d < e.speed + 0.5) {
-            e.seg = targetSeg;
+            e.seg = ns;
           } else {
             e.x += (dx / d) * e.speed;
             e.y += (dy / d) * e.speed;
           }
 
-          if (e.seg >= path.length - 1 && Math.abs(e.x - target.x) < 3 && Math.abs(e.y - target.y) < 3) {
+          if (e.seg >= pathTiles.length - 1 && Math.abs(e.x - target.x) < 3 && Math.abs(e.y - target.y) < 3) {
             state.enemies.splice(i, 1);
             state.lives -= 1;
             syncHud();
@@ -358,17 +338,17 @@
           t.cooldown -= 1;
           if (t.cooldown > 0) return;
 
-          var center = tileCenter(t.col, t.row);
+          var c = tileCenter(t.col, t.row);
           var chosen = null;
-          var bestSeg = -1;
-
+          var best = -1;
           for (var i = 0; i < state.enemies.length; i++) {
             var e = state.enemies[i];
-            var dist = Math.hypot(e.x - center.x, e.y - center.y);
+            var dist = Math.hypot(e.x - c.x, e.y - c.y);
             if (dist > t.range) continue;
-            if (e.seg > bestSeg) {
+            var priority = t.kind === "sniper" ? e.maxHp : e.seg;
+            if (priority > best) {
+              best = priority;
               chosen = e;
-              bestSeg = e.seg;
             }
           }
 
@@ -376,13 +356,13 @@
 
           t.cooldown = t.fireRate;
           state.projectiles.push({
-            x: center.x,
-            y: center.y,
+            x: c.x,
+            y: c.y,
             tx: chosen,
-            speed: t.kind === "blast" ? 5.2 : 7,
+            speed: t.kind === "blast" ? 5.4 : (t.kind === "sniper" ? 10 : 7),
             damage: t.damage,
-            splash: t.kind === "blast" ? 34 : 0,
-            color: t.kind === "blast" ? "#fb7185" : "#0ea5e9"
+            splash: t.kind === "blast" ? 36 : 0,
+            color: t.kind === "blast" ? "#fb7185" : (t.kind === "sniper" ? "#a855f7" : "#0ea5e9")
           });
         });
       }
@@ -418,15 +398,13 @@
       }
 
       function update() {
-        for (var tick = 0; tick < tickMultiplier; tick++) {
+        for (var k = 0; k < tickMultiplier; k++) {
           state.t += 1;
           advanceWaves();
           updateEnemies();
           updateTowers();
           updateProjectiles();
-          if (state.gameOver) {
-            break;
-          }
+          if (state.gameOver) break;
         }
       }
 
@@ -442,28 +420,23 @@
           for (var r = 0; r < ROWS; r++) {
             var x = GRID_X + c * TILE;
             var y = GRID_Y + r * TILE;
-            var pathTile = isPath(c, r);
-            ctx.fillStyle = pathTile ? p.path : ((c + r) % 2 ? p.grass : p.grass2);
+            ctx.fillStyle = isPath(c, r) ? p.path : ((c + r) % 2 ? p.grass : p.grass2);
             ctx.fillRect(x + 1, y + 1, TILE - 2, TILE - 2);
           }
         }
-
-        ctx.strokeStyle = "rgba(0,0,0,0.08)";
-        ctx.strokeRect(GRID_X, GRID_Y, COLS * TILE, ROWS * TILE);
       }
 
       function drawTowers() {
         state.towers.forEach(function (t) {
-          var center = tileCenter(t.col, t.row);
-          ctx.fillStyle = t.kind === "blast" ? "#fb7185" : "#0ea5e9";
+          var c = tileCenter(t.col, t.row);
+          ctx.fillStyle = t.kind === "blast" ? "#fb7185" : (t.kind === "sniper" ? "#a855f7" : "#0ea5e9");
           ctx.beginPath();
-          ctx.arc(center.x, center.y, 16, 0, Math.PI * 2);
+          ctx.arc(c.x, c.y, 16, 0, Math.PI * 2);
           ctx.fill();
-
           ctx.fillStyle = "#0f172a";
           ctx.font = "700 12px Trebuchet MS, sans-serif";
           ctx.textAlign = "center";
-          ctx.fillText(String(t.level), center.x, center.y + 4);
+          ctx.fillText(String(t.level), c.x, c.y + 4);
         });
       }
 
@@ -474,9 +447,8 @@
           ctx.beginPath();
           ctx.arc(e.x, e.y, 12, 0, Math.PI * 2);
           ctx.fill();
-
           var ratio = Math.max(0, e.hp / e.maxHp);
-          ctx.fillStyle = "rgba(15,23,42,0.5)";
+          ctx.fillStyle = "rgba(15,23,42,0.45)";
           ctx.fillRect(e.x - 14, e.y - 20, 28, 4);
           ctx.fillStyle = "#22c55e";
           ctx.fillRect(e.x - 14, e.y - 20, 28 * ratio, 4);
@@ -494,14 +466,14 @@
 
       function drawOverlay() {
         if (!state.gameOver) return;
-        ctx.fillStyle = "rgba(2, 6, 23, 0.64)";
+        ctx.fillStyle = "rgba(2,6,23,0.62)";
         ctx.fillRect(0, 0, W, H);
         ctx.fillStyle = "#fff";
         ctx.textAlign = "center";
         ctx.font = "800 42px Trebuchet MS, sans-serif";
-        ctx.fillText("Game Over", W / 2, H / 2 - 12);
+        ctx.fillText("Game Over", W / 2, H / 2 - 10);
         ctx.font = "700 20px Trebuchet MS, sans-serif";
-        ctx.fillText("Press Restart", W / 2, H / 2 + 22);
+        ctx.fillText("Try a new map or lower difficulty", W / 2, H / 2 + 24);
       }
 
       function draw() {
@@ -518,34 +490,49 @@
         requestAnimationFrame(frame);
       }
 
-      function buyTower(col, row) {
-        if (isPath(col, row) || towerAt(col, row) || state.gameOver) return;
+      function placeTower(col, row) {
+        if (state.gameOver || isPath(col, row) || towerAt(col, row)) return;
 
-        var cost = selectedType === "blast" ? 70 : 40;
-        if (state.coins < cost) return;
+        var def = {
+          dart: { cost: 40, range: 172, damage: 8, fireRate: 24 },
+          blast: { cost: 70, range: 124, damage: 16, fireRate: 46 },
+          sniper: { cost: 95, range: 400, damage: 20, fireRate: 58 }
+        }[selectedTower];
 
-        state.coins -= cost;
+        if (!def || state.coins < def.cost) return;
+
+        state.coins -= def.cost;
         state.towers.push({
           col: col,
           row: row,
-          kind: selectedType,
+          kind: selectedTower,
           level: 1,
-          range: selectedType === "blast" ? 120 : 170,
-          damage: selectedType === "blast" ? 16 : 8,
-          fireRate: selectedType === "blast" ? 46 : 24,
+          range: def.range,
+          damage: def.damage,
+          fireRate: def.fireRate,
           cooldown: 8
         });
         syncHud();
       }
 
       function upgradeTower(t) {
-        var cost = 20 + (t.level - 1) * 12;
-        if (state.coins < cost || t.level >= 4) return;
+        var cost = 22 + (t.level - 1) * 14;
+        if (state.coins < cost || t.level >= 5) return;
         state.coins -= cost;
         t.level += 1;
-        t.damage += t.kind === "blast" ? 7 : 3;
-        t.range += 10;
-        t.fireRate = Math.max(12, t.fireRate - 2);
+        if (t.kind === "blast") {
+          t.damage += 7;
+          t.range += 8;
+          t.fireRate = Math.max(24, t.fireRate - 2);
+        } else if (t.kind === "sniper") {
+          t.damage += 10;
+          t.range += 14;
+          t.fireRate = Math.max(30, t.fireRate - 3);
+        } else {
+          t.damage += 3;
+          t.range += 10;
+          t.fireRate = Math.max(12, t.fireRate - 2);
+        }
         syncHud();
       }
 
@@ -560,30 +547,15 @@
         var row = Math.floor((y - GRID_Y) / TILE);
         if (col < 0 || row < 0 || col >= COLS || row >= ROWS) return;
 
-        var tower = towerAt(col, row);
-        if (tower) {
-          upgradeTower(tower);
-        } else {
-          buyTower(col, row);
-        }
-      });
-
-      dartBtn.addEventListener("click", function () {
-        selectedType = "dart";
-        dartBtn.classList.add("active");
-        blastBtn.classList.remove("active");
-      });
-
-      blastBtn.addEventListener("click", function () {
-        selectedType = "blast";
-        blastBtn.classList.add("active");
-        dartBtn.classList.remove("active");
+        var t = towerAt(col, row);
+        if (t) upgradeTower(t);
+        else placeTower(col, row);
       });
 
       difficultySelect.addEventListener("change", function () {
-        var value = difficultySelect.value;
-        difficulty = Object.prototype.hasOwnProperty.call(DIFFICULTY, value) ? value : "normal";
-        reset();
+        var val = difficultySelect.value;
+        difficulty = Object.prototype.hasOwnProperty.call(DIFFICULTY, val) ? val : "normal";
+        resetGame(false);
       });
 
       speedBtn.addEventListener("click", function () {
@@ -591,16 +563,19 @@
         speedBtn.textContent = tickMultiplier === 1 ? "Speed 1x" : "Speed 2x";
       });
 
-      restartBtn.addEventListener("click", reset);
+      dartBtn.addEventListener("click", function () { selectedTower = "dart"; setTowerButtons(); });
+      blastBtn.addEventListener("click", function () { selectedTower = "blast"; setTowerButtons(); });
+      sniperBtn.addEventListener("click", function () { selectedTower = "sniper"; setTowerButtons(); });
+      newMapBtn.addEventListener("click", function () { resetGame(true); });
+      restartBtn.addEventListener("click", function () { resetGame(false); });
 
       applyTheme();
       window.addEventListener("focus", applyTheme);
       window.addEventListener("storage", function (event) {
-        if (event.key === THEME_KEY) {
-          applyTheme();
-        }
+        if (event.key === THEME_KEY) applyTheme();
       });
-      reset();
+      setTowerButtons();
+      resetGame(false);
       frame();
     })();
   </script>
