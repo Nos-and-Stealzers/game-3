@@ -270,18 +270,18 @@
       };
 
       var TOWER_DEFS = {
-        dart: { name: "Dart", cost: 45, range: 178, damage: 8, fireRate: 22, pierce: 2, projectileSpeed: 7.4 },
+        dart: { name: "Dart", cost: 45, range: 178, damage: 9, fireRate: 22, pierce: 3, projectileSpeed: 7.4 },
         blast: { name: "Blast", cost: 82, range: 130, damage: 18, fireRate: 44, pierce: 1, projectileSpeed: 5.5 },
         sniper: { name: "Sniper", cost: 118, range: 420, damage: 23, fireRate: 56, pierce: 3, projectileSpeed: 10.8 }
       };
 
       var BLOON_TYPES = {
         red: { hp: 14, speed: 1.12, value: 6, radius: 10, leak: 1, color: "#ef4444", children: [] },
-        blue: { hp: 24, speed: 1.25, value: 10, radius: 10, leak: 1, color: "#3b82f6", children: [{ type: "red", count: 2 }] },
-        green: { hp: 38, speed: 1.38, value: 14, radius: 11, leak: 1, color: "#22c55e", children: [{ type: "blue", count: 2 }] },
-        yellow: { hp: 54, speed: 1.66, value: 18, radius: 11, leak: 1, color: "#f59e0b", children: [{ type: "green", count: 2 }] },
-        black: { hp: 78, speed: 1.05, value: 27, radius: 12, leak: 2, color: "#7c3aed", children: [{ type: "yellow", count: 3 }] },
-        boss: { hp: 520, speed: 0.82, value: 150, radius: 18, leak: 10, color: "#64748b", children: [{ type: "black", count: 5 }] }
+        blue: { hp: 24, speed: 1.25, value: 10, radius: 10, leak: 1, color: "#3b82f6", children: [{ type: "red", count: 1 }] },
+        green: { hp: 38, speed: 1.38, value: 14, radius: 11, leak: 1, color: "#22c55e", children: [{ type: "blue", count: 1 }] },
+        yellow: { hp: 54, speed: 1.66, value: 18, radius: 11, leak: 1, color: "#f59e0b", children: [{ type: "green", count: 1 }] },
+        black: { hp: 78, speed: 1.05, value: 27, radius: 12, leak: 2, color: "#7c3aed", children: [{ type: "yellow", count: 2 }] },
+        boss: { hp: 520, speed: 0.82, value: 150, radius: 18, leak: 10, color: "#64748b", children: [{ type: "black", count: 3 }] }
       };
 
       function rng(seed) {
@@ -495,6 +495,7 @@
         var wave = state.wave;
         var q = [];
         var recipe = buildRoundRecipe(wave);
+        var hasBoss = recipe.some(function (r) { return r.type === "boss" && r.count > 0; });
         var r;
         for (r = 0; r < recipe.length; r++) {
           for (var i = 0; i < recipe[r].count; i++) {
@@ -510,6 +511,7 @@
 
         state.spawnQueue = q;
         state.roundLabel = roundLabelFromRecipe(recipe);
+        state.waveHadBoss = hasBoss;
         state.spawnDelay = Math.max(8, cfg.spawnBase - Math.floor(wave * 0.45));
         syncHud();
       }
@@ -580,7 +582,8 @@
           projectiles: [],
           gameOver: false,
           resultRecorded: false,
-          roundLabel: ""
+          roundLabel: "",
+          waveHadBoss: false
         };
         tickMultiplier = 1;
         speedBtn.textContent = "Speed 1x";
@@ -605,7 +608,9 @@
         if (state.enemies.length === 0) {
           state.betweenWaves -= 1;
           if (state.betweenWaves <= 0) {
-            state.coins += 12 + Math.floor(state.wave * 1.8);
+            var clearBonus = 14 + Math.floor(state.wave * 1.9);
+            if (state.waveHadBoss) clearBonus += 90 + Math.floor(state.wave * 4.2);
+            state.coins += clearBonus;
             state.wave += 1;
             state.betweenWaves = cfg.waveDelay;
             buildWave();
