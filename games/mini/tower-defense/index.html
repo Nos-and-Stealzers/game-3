@@ -75,6 +75,50 @@
       color: color-mix(in srgb, var(--ink) 70%, white);
     }
     .note b { color: var(--ink); }
+
+    .meta-panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      padding: 10px 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+      align-items: start;
+    }
+
+    .mini-label {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: color-mix(in srgb, var(--ink) 80%, white);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .leaderboard {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .leaderboard th,
+    .leaderboard td {
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      padding: 5px 4px;
+    }
+
+    .leaderboard th {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: color-mix(in srgb, var(--ink) 75%, white);
+    }
   </style>
 </head>
 <body>
@@ -104,11 +148,39 @@
 
     <canvas id="game" width="1000" height="560"></canvas>
     <p class="note"><b>How to play:</b> Place towers on grass, click a tower to upgrade it, press speed for faster rounds. Survive leaks.</p>
+
+    <section class="meta-panel">
+      <div class="meta-grid">
+        <div>
+          <span class="mini-label">Tower Skin</span>
+          <select id="skinSelect" class="btn" aria-label="Tower skin"></select>
+        </div>
+        <div>
+          <span class="mini-label">Progress</span>
+          <div class="chips">
+            <span class="chip">Best Wave: <b id="bestWaveOut">1</b></span>
+            <span class="chip">Unlocked Skins: <b id="skinsOut">1</b></span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <span class="mini-label">Recent Runs</span>
+        <table class="leaderboard" aria-label="Tower defense leaderboard">
+          <thead>
+            <tr><th>#</th><th>Wave</th><th>Seed</th><th>Mode</th><th>Lives Left</th></tr>
+          </thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+      </div>
+    </section>
   </section>
 
   <script>
     (function () {
       var THEME_KEY = "gamehub_theme";
+      var BEST_WAVE_KEY = "tds_redux_best_wave";
+      var SKIN_KEY = "tds_redux_skin";
+      var LEADERBOARD_KEY = "tds_redux_leaderboard";
       var canvas = document.getElementById("game");
       var ctx = canvas.getContext("2d");
       var coinsEl = document.getElementById("coins");
@@ -116,6 +188,10 @@
       var waveEl = document.getElementById("wave");
       var modeEl = document.getElementById("mode");
       var seedOutEl = document.getElementById("seedOut");
+      var bestWaveEl = document.getElementById("bestWaveOut");
+      var skinsEl = document.getElementById("skinsOut");
+      var skinSelect = document.getElementById("skinSelect");
+      var leaderboardBody = document.getElementById("leaderboardBody");
       var difficultySelect = document.getElementById("difficulty");
       var speedBtn = document.getElementById("speedBtn");
       var dartBtn = document.getElementById("dartBtn");
@@ -150,6 +226,37 @@
       var tickMultiplier = 1;
       var pathSeed = Math.floor(Math.random() * 1000000);
       var pathTiles = [];
+      var bestWave = Number(localStorage.getItem(BEST_WAVE_KEY) || "1");
+      var skinId = localStorage.getItem(SKIN_KEY) || "classic";
+      var leaderboard = [];
+
+      try {
+        leaderboard = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
+        if (!Array.isArray(leaderboard)) leaderboard = [];
+      } catch (error) {
+        leaderboard = [];
+      }
+
+      var skins = {
+        classic: {
+          name: "Classic",
+          unlockAt: 1,
+          tower: { dart: "#0ea5e9", blast: "#fb7185", sniper: "#a855f7" },
+          projectile: { dart: "#0ea5e9", blast: "#fb7185", sniper: "#a855f7" }
+        },
+        neon: {
+          name: "Neon",
+          unlockAt: 10,
+          tower: { dart: "#67e8f9", blast: "#f97316", sniper: "#fde047" },
+          projectile: { dart: "#67e8f9", blast: "#fb923c", sniper: "#fef08a" }
+        },
+        obsidian: {
+          name: "Obsidian",
+          unlockAt: 20,
+          tower: { dart: "#94a3b8", blast: "#f43f5e", sniper: "#38bdf8" },
+          projectile: { dart: "#cbd5e1", blast: "#fb7185", sniper: "#7dd3fc" }
+        }
+      };
 
       function rng(seed) {
         var s = seed >>> 0;
@@ -210,6 +317,81 @@
         waveEl.textContent = String(state.wave);
         modeEl.textContent = DIFFICULTY[difficulty].label;
         seedOutEl.textContent = String(pathSeed);
+        if (state.wave > bestWave) {
+          bestWave = state.wave;
+          localStorage.setItem(BEST_WAVE_KEY, String(bestWave));
+        }
+        bestWaveEl.textContent = String(bestWave);
+      }
+
+      function unlockedSkinIds() {
+        return Object.keys(skins).filter(function (id) {
+          return bestWave >= skins[id].unlockAt;
+        });
+      }
+
+      function ensureSkinUnlocked() {
+        var unlocked = unlockedSkinIds();
+        if (unlocked.indexOf(skinId) === -1) skinId = unlocked[0] || "classic";
+        localStorage.setItem(SKIN_KEY, skinId);
+      }
+
+      function saveLeaderboard() {
+        localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+      }
+
+      function syncMetaUi() {
+        var unlocked = unlockedSkinIds();
+        skinsEl.textContent = String(unlocked.length);
+        bestWaveEl.textContent = String(bestWave);
+
+        skinSelect.innerHTML = "";
+        unlocked.forEach(function (id) {
+          var opt = document.createElement("option");
+          opt.value = id;
+          opt.textContent = skins[id].name;
+          skinSelect.appendChild(opt);
+        });
+
+        ensureSkinUnlocked();
+        skinSelect.value = skinId;
+
+        leaderboardBody.innerHTML = "";
+        if (!leaderboard.length) {
+          var empty = document.createElement("tr");
+          empty.innerHTML = "<td colspan=\"5\">No runs recorded yet.</td>";
+          leaderboardBody.appendChild(empty);
+          return;
+        }
+
+        leaderboard.forEach(function (entry, idx) {
+          var tr = document.createElement("tr");
+          tr.innerHTML = "<td>" + (idx + 1) + "</td>" +
+            "<td>" + entry.wave + "</td>" +
+            "<td>" + entry.seed + "</td>" +
+            "<td>" + entry.mode + "</td>" +
+            "<td>" + entry.lives + "</td>";
+          leaderboardBody.appendChild(tr);
+        });
+      }
+
+      function recordRun() {
+        if (!state || state.resultRecorded) return;
+        state.resultRecorded = true;
+        leaderboard.push({
+          wave: state.wave,
+          seed: pathSeed,
+          mode: DIFFICULTY[difficulty].label,
+          lives: Math.max(0, state.lives)
+        });
+
+        leaderboard.sort(function (a, b) {
+          if (a.wave !== b.wave) return b.wave - a.wave;
+          return b.lives - a.lives;
+        });
+        leaderboard = leaderboard.slice(0, 12);
+        saveLeaderboard();
+        syncMetaUi();
       }
 
       function setTowerButtons() {
@@ -269,12 +451,14 @@
           towers: [],
           enemies: [],
           projectiles: [],
-          gameOver: false
+          gameOver: false,
+          resultRecorded: false
         };
         tickMultiplier = 1;
         speedBtn.textContent = "Speed 1x";
         buildWave();
         syncHud();
+        syncMetaUi();
       }
 
       function advanceWaves() {
@@ -321,7 +505,10 @@
             state.enemies.splice(i, 1);
             state.lives -= 1;
             syncHud();
-            if (state.lives <= 0) state.gameOver = true;
+            if (state.lives <= 0) {
+              state.gameOver = true;
+              recordRun();
+            }
             continue;
           }
 
@@ -362,7 +549,7 @@
             speed: t.kind === "blast" ? 5.4 : (t.kind === "sniper" ? 10 : 7),
             damage: t.damage,
             splash: t.kind === "blast" ? 36 : 0,
-            color: t.kind === "blast" ? "#fb7185" : (t.kind === "sniper" ? "#a855f7" : "#0ea5e9")
+            color: (skins[skinId] || skins.classic).projectile[t.kind]
           });
         });
       }
@@ -429,7 +616,7 @@
       function drawTowers() {
         state.towers.forEach(function (t) {
           var c = tileCenter(t.col, t.row);
-          ctx.fillStyle = t.kind === "blast" ? "#fb7185" : (t.kind === "sniper" ? "#a855f7" : "#0ea5e9");
+          ctx.fillStyle = (skins[skinId] || skins.classic).tower[t.kind];
           ctx.beginPath();
           ctx.arc(c.x, c.y, 16, 0, Math.PI * 2);
           ctx.fill();
@@ -558,6 +745,12 @@
         resetGame(false);
       });
 
+      skinSelect.addEventListener("change", function () {
+        skinId = skinSelect.value;
+        ensureSkinUnlocked();
+        syncMetaUi();
+      });
+
       speedBtn.addEventListener("click", function () {
         tickMultiplier = tickMultiplier === 1 ? 2 : 1;
         speedBtn.textContent = tickMultiplier === 1 ? "Speed 1x" : "Speed 2x";
@@ -574,6 +767,8 @@
       window.addEventListener("storage", function (event) {
         if (event.key === THEME_KEY) applyTheme();
       });
+      ensureSkinUnlocked();
+      syncMetaUi();
       setTowerButtons();
       resetGame(false);
       frame();

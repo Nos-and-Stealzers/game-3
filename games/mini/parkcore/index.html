@@ -77,6 +77,50 @@
       color: color-mix(in srgb, var(--ink) 70%, white);
     }
     .note b { color: var(--ink); }
+
+    .meta-panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      padding: 10px 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+      align-items: start;
+    }
+
+    .mini-label {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: color-mix(in srgb, var(--ink) 80%, white);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .leaderboard {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .leaderboard th,
+    .leaderboard td {
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      padding: 5px 4px;
+    }
+
+    .leaderboard th {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: color-mix(in srgb, var(--ink) 75%, white);
+    }
   </style>
 </head>
 <body>
@@ -101,12 +145,40 @@
     </div>
     <canvas id="game" width="1000" height="520"></canvas>
     <p class="note"><b>Controls:</b> Arrow keys / WASD move, Space jump, wall jump on contact. Reach the green portal.</p>
+
+    <section class="meta-panel">
+      <div class="meta-grid">
+        <div>
+          <span class="mini-label">Player Skin</span>
+          <select id="skinSelect" class="btn" aria-label="Player skin"></select>
+        </div>
+        <div>
+          <span class="mini-label">Progress</span>
+          <div class="chips">
+            <span class="chip">Maps Cleared: <b id="clearsOut">0</b></span>
+            <span class="chip">Unlocked Skins: <b id="skinsOut">1</b></span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <span class="mini-label">Recent Clears</span>
+        <table class="leaderboard" aria-label="Parkcore leaderboard">
+          <thead>
+            <tr><th>#</th><th>Map</th><th>Seed</th><th>Deaths</th><th>Time</th><th>Mode</th></tr>
+          </thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+      </div>
+    </section>
   </section>
 
   <script>
     (function () {
       var THEME_KEY = "gamehub_theme";
       var BEST_KEY = "parkcore_forge_best_deaths";
+      var CLEARS_KEY = "parkcore_forge_clears";
+      var SKIN_KEY = "parkcore_forge_skin";
+      var LEADERBOARD_KEY = "parkcore_forge_leaderboard";
       var canvas = document.getElementById("game");
       var ctx = canvas.getContext("2d");
       var mapNumEl = document.getElementById("mapNum");
@@ -114,6 +186,10 @@
       var deathsEl = document.getElementById("deaths");
       var bestEl = document.getElementById("best");
       var timerEl = document.getElementById("timer");
+      var clearsEl = document.getElementById("clearsOut");
+      var skinsEl = document.getElementById("skinsOut");
+      var skinSelect = document.getElementById("skinSelect");
+      var leaderboardBody = document.getElementById("leaderboardBody");
       var difficultySelect = document.getElementById("difficulty");
       var newMapBtn = document.getElementById("newMap");
       var restartBtn = document.getElementById("restart");
@@ -126,8 +202,18 @@
       var deaths = 0;
       var runFrames = 0;
       var best = Number(localStorage.getItem(BEST_KEY) || "-1");
+      var clears = Number(localStorage.getItem(CLEARS_KEY) || "0");
       var difficulty = "normal";
       var activeSeed = Date.now() % 1000000;
+      var skinId = localStorage.getItem(SKIN_KEY) || "classic";
+      var leaderboard = [];
+
+      try {
+        leaderboard = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
+        if (!Array.isArray(leaderboard)) leaderboard = [];
+      } catch (error) {
+        leaderboard = [];
+      }
 
       var DIFFICULTY = {
         rookie: { accel: 0.78, maxSpeed: 5.8, friction: 0.84, gravity: 0.52, jump: 12.6, wallJump: 11.8, coyote: 11, buffer: 10, hazardMult: 0.75, movingPlatforms: 1 },
@@ -139,6 +225,13 @@
         light: { bgA: "#f2f7ff", bgB: "#dcecff", ink: "#10294e", line: "rgba(28,64,124,0.2)", solid: "#264a7e", hazard: "#c0364b", player: "#0f6fff", goal: "#1d9357", cloud: "rgba(255,255,255,0.45)" },
         gray: { bgA: "#232b37", bgB: "#3b4757", ink: "#e6edf8", line: "rgba(178,194,216,0.24)", solid: "#8fa8cf", hazard: "#ff7f97", player: "#8eb6ff", goal: "#63d39d", cloud: "rgba(255,255,255,0.18)" },
         black: { bgA: "#0f141b", bgB: "#273142", ink: "#eef3ff", line: "rgba(190,205,232,0.26)", solid: "#9db7e9", hazard: "#ff90a5", player: "#8db5ff", goal: "#63d39d", cloud: "rgba(255,255,255,0.14)" }
+      };
+
+      var skins = {
+        classic: { name: "Classic", unlockAt: 0, fill: "#0f6fff" },
+        neon: { name: "Neon", unlockAt: 6, fill: "#d8ff4e" },
+        ember: { name: "Ember", unlockAt: 15, fill: "#ffb45f" },
+        cobalt: { name: "Cobalt", unlockAt: 28, fill: "#88bcff" }
       };
 
       function rng(seed) {
@@ -166,6 +259,78 @@
 
       function syncBest() {
         bestEl.textContent = best >= 0 ? String(best) : "-";
+      }
+
+      function unlockedSkinIds() {
+        return Object.keys(skins).filter(function (id) {
+          return clears >= skins[id].unlockAt;
+        });
+      }
+
+      function ensureSkinUnlocked() {
+        var unlocked = unlockedSkinIds();
+        if (unlocked.indexOf(skinId) === -1) {
+          skinId = unlocked[0] || "classic";
+        }
+        localStorage.setItem(SKIN_KEY, skinId);
+      }
+
+      function storeLeaderboard() {
+        localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+      }
+
+      function syncProgressUi() {
+        clearsEl.textContent = String(clears);
+        var unlocked = unlockedSkinIds();
+        skinsEl.textContent = String(unlocked.length);
+
+        skinSelect.innerHTML = "";
+        unlocked.forEach(function (id) {
+          var opt = document.createElement("option");
+          opt.value = id;
+          opt.textContent = skins[id].name;
+          skinSelect.appendChild(opt);
+        });
+        ensureSkinUnlocked();
+        skinSelect.value = skinId;
+
+        leaderboardBody.innerHTML = "";
+        if (!leaderboard.length) {
+          var emptyRow = document.createElement("tr");
+          emptyRow.innerHTML = "<td colspan=\"6\">No clears yet. Finish maps to fill this board.</td>";
+          leaderboardBody.appendChild(emptyRow);
+          return;
+        }
+
+        leaderboard.forEach(function (entry, index) {
+          var tr = document.createElement("tr");
+          tr.innerHTML = "<td>" + (index + 1) + "</td>" +
+            "<td>" + entry.map + "</td>" +
+            "<td>" + entry.seed + "</td>" +
+            "<td>" + entry.deaths + "</td>" +
+            "<td>" + entry.time.toFixed(2) + "s</td>" +
+            "<td>" + entry.mode + "</td>";
+          leaderboardBody.appendChild(tr);
+        });
+      }
+
+      function recordClear() {
+        leaderboard.push({
+          map: mapCount,
+          seed: activeSeed,
+          deaths: deaths,
+          time: runFrames / 60,
+          mode: difficulty
+        });
+
+        leaderboard.sort(function (a, b) {
+          if (a.map !== b.map) return b.map - a.map;
+          if (a.deaths !== b.deaths) return a.deaths - b.deaths;
+          return a.time - b.time;
+        });
+
+        leaderboard = leaderboard.slice(0, 12);
+        storeLeaderboard();
       }
 
       function makeMap(seed) {
@@ -372,6 +537,10 @@
         if (rectOverlap(state, map.goal)) {
           state.won = true;
           state.winTimer = 38;
+          clears += 1;
+          localStorage.setItem(CLEARS_KEY, String(clears));
+          recordClear();
+          syncProgressUi();
           if (best < 0 || deaths < best) {
             best = deaths;
             localStorage.setItem(BEST_KEY, String(best));
@@ -418,7 +587,7 @@
         ctx.fillStyle = "rgba(255,255,255,0.62)";
         ctx.fillRect(map.goal.x + 7, map.goal.y + 7, 12, 12);
 
-        ctx.fillStyle = p.player;
+        ctx.fillStyle = (skins[skinId] || skins.classic).fill;
         ctx.fillRect(state.x, state.y, state.w, state.h);
 
         if (state.won) {
@@ -459,6 +628,12 @@
         hardResetNewMap();
       });
 
+      skinSelect.addEventListener("change", function () {
+        skinId = skinSelect.value;
+        ensureSkinUnlocked();
+        syncProgressUi();
+      });
+
       newMapBtn.addEventListener("click", hardResetNewMap);
       restartBtn.addEventListener("click", resetState);
 
@@ -471,6 +646,8 @@
       });
 
       syncBest();
+      ensureSkinUnlocked();
+      syncProgressUi();
       resetState();
       frame();
     })();
