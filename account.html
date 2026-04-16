@@ -277,29 +277,37 @@
       <p id="cloudAutoSyncStatus" class="muted">Autosave heartbeat: initializing...</p>
 
       <section class="panel">
-        <h2>Sign In</h2>
+        <h2>Account Access</h2>
         <div class="grid">
           <label class="field">
             <span class="label">Email</span>
             <input id="authEmail" class="input" type="email" placeholder="you@example.com" autocomplete="email">
           </label>
-          <label class="field">
-            <span class="label">Password</span>
-            <input id="authPassword" class="input" type="password" placeholder="Password" autocomplete="current-password">
-          </label>
         </div>
-        <p class="muted">Create account once, verify email, then sign in. Cloud load/save buttons were removed because sync is now always automatic.</p>
+        <p class="muted">Both account creation and login require an email verification code.</p>
         <div class="row">
-          <button id="authSignInBtn" type="button" class="btn primary">Sign In</button>
-          <button id="authSignUpBtn" type="button" class="btn">Create Account</button>
-          <button id="resendVerifyBtn" type="button" class="btn">Resend Verification</button>
-        </div>
-        <div class="row">
-          <button id="authSignOutBtn" type="button" class="btn warn">Sign Out</button>
+          <button id="authSignUpBtn" type="button" class="btn primary">Sign In (Make Account)</button>
+          <button id="authSignInBtn" type="button" class="btn">Log In (Existing Account)</button>
+          <button id="authSignOutBtn" type="button" class="btn warn">Log Out</button>
           <a href="index.html" class="btn">Back to Hub</a>
-          <a href="settings.html" class="btn">Settings</a>
-          <a id="adminPortalBtn" href="admin.html" class="btn hidden">Open Admin Panel</a>
+          <a id="adminPortalBtn" href="admin.html" class="btn hidden">Admin</a>
         </div>
+
+        <section id="verifyPanel" class="panel hidden">
+          <h2>Enter Verification Code</h2>
+          <div class="grid">
+            <label class="field">
+              <span class="label">Code</span>
+              <input id="verifyCodeInput" class="input" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">
+            </label>
+          </div>
+          <p id="verifyHint" class="muted">Enter the code sent to your email.</p>
+          <div class="row">
+            <button id="verifyCodeBtn" type="button" class="btn primary">Verify Code</button>
+            <button id="resendVerifyBtn" type="button" class="btn">Resend Code</button>
+            <button id="cancelVerifyBtn" type="button" class="btn">Cancel</button>
+          </div>
+        </section>
       </section>
 
       <p class="muted">Need account help? Check <a href="privacy.html">Privacy and Terms</a> for usage rules and account notes.</p>
@@ -308,6 +316,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.config.js"></script>
+  <script src="js/friend-message-toast.js"></script>
   <script>
     var FAVORITES_KEY = "gamehub_favorites";
     var RECENTS_KEY = "gamehub_recent";
@@ -329,11 +338,15 @@
     };
 
     var authEmail = document.getElementById("authEmail");
-    var authPassword = document.getElementById("authPassword");
     var authSignInBtn = document.getElementById("authSignInBtn");
     var authSignUpBtn = document.getElementById("authSignUpBtn");
     var resendVerifyBtn = document.getElementById("resendVerifyBtn");
     var authSignOutBtn = document.getElementById("authSignOutBtn");
+    var verifyPanel = document.getElementById("verifyPanel");
+    var verifyCodeInput = document.getElementById("verifyCodeInput");
+    var verifyCodeBtn = document.getElementById("verifyCodeBtn");
+    var cancelVerifyBtn = document.getElementById("cancelVerifyBtn");
+    var verifyHint = document.getElementById("verifyHint");
     var authStatus = document.getElementById("authStatus");
     var cloudAutoSyncStatus = document.getElementById("cloudAutoSyncStatus");
     var adminPortalBtn = document.getElementById("adminPortalBtn");
@@ -344,6 +357,8 @@
     var cloudPullInFlight = false;
     var autoCloudLoadedUserId = "";
     var AUTO_SYNC_INTERVAL_MS = 60000;
+    var pendingAuthMode = "";
+    var pendingAuthEmail = "";
 
     function isAdminEmail(email) {
       if (typeof email !== "string") {
@@ -444,6 +459,92 @@
       authSignUpBtn.disabled = disabled;
       resendVerifyBtn.disabled = disabled;
       authSignOutBtn.disabled = disabled;
+      verifyCodeBtn.disabled = disabled;
+      cancelVerifyBtn.disabled = disabled;
+    }
+
+    function showVerifyPanel(show) {
+      verifyPanel.classList.toggle("hidden", !show);
+      if (show) {
+        setTimeout(function () {
+          verifyCodeInput.focus();
+        }, 0);
+      }
+    }
+
+    function clearPendingVerification() {
+      pendingAuthMode = "";
+      pendingAuthEmail = "";
+      verifyCodeInput.value = "";
+      verifyHint.textContent = "Enter the code sent to your email.";
+      showVerifyPanel(false);
+    }
+
+    function normalizeCode(value) {
+      return String(value || "").replace(/\s+/g, "").trim();
+    }
+
+    async function startEmailCodeChallenge(mode) {
+      if (!supabaseClient) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      var email = authEmail.value.trim();
+      if (!email) {
+        throw new Error("Enter your email first.");
+      }
+
+      var shouldCreateUser = mode === "signup";
+      var otpResult = await supabaseClient.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: shouldCreateUser,
+          data: {
+            auth_flow: "email_code"
+          }
+        }
+      });
+
+      if (otpResult.error) {
+        throw otpResult.error;
+      }
+
+      pendingAuthMode = mode;
+      pendingAuthEmail = email;
+      verifyHint.textContent = shouldCreateUser
+        ? "A verification code was sent. Enter it here to finish creating your account."
+        : "A verification code was sent. Enter it here to log in.";
+      showVerifyPanel(true);
+      setStatus("Verification code sent to " + email + ".", "ok");
+    }
+
+    async function verifyEmailCode() {
+      if (!supabaseClient) {
+        throw new Error("Supabase is not configured.");
+      }
+      if (!pendingAuthEmail) {
+        throw new Error("Start Sign In or Log In first to request a code.");
+      }
+
+      var code = normalizeCode(verifyCodeInput.value);
+      if (!code) {
+        throw new Error("Enter your verification code.");
+      }
+
+      var verify = await supabaseClient.auth.verifyOtp({
+        email: pendingAuthEmail,
+        token: code,
+        type: "email"
+      });
+
+      if (verify.error) {
+        throw verify.error;
+      }
+
+      var user = verify.data && verify.data.user ? verify.data.user : null;
+      await autoLoadCloudForUser(user);
+      setStatus("Verification complete. Signed in.", "ok");
+      clearPendingVerification();
     }
 
     function getSupabaseConfig() {
@@ -594,6 +695,39 @@
       }
     }
 
+    async function ensureUsernameComplete(user) {
+      if (!supabaseClient || !user || !user.id) {
+        return true;
+      }
+
+      try {
+        var result = await supabaseClient
+          .from("user_settings")
+          .select("username")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (result && result.error) {
+          return true;
+        }
+
+        var username = result && result.data && typeof result.data.username === "string"
+          ? result.data.username.trim().toLowerCase()
+          : "";
+        var valid = /^[a-z0-9_]{3,24}$/.test(username);
+        if (valid) {
+          return true;
+        }
+
+        setStatus("Username required: finish profile setup to continue.", "warn");
+        setTimeout(function () {
+          window.location.href = "settings.html#profile";
+        }, 900);
+        return false;
+      } catch (_error) {
+        return true;
+      }
+    }
+
     function restartCloudPeriodicSync() {
       if (cloudPeriodicSyncTimer) {
         clearInterval(cloudPeriodicSyncTimer);
@@ -643,6 +777,11 @@
         var user = auth && auth.data ? auth.data.user : null;
 
         if (user) {
+          var hasUsername = await ensureUsernameComplete(user);
+          if (!hasUsername) {
+            restartCloudPeriodicSync();
+            return;
+          }
           await autoLoadCloudForUser(user);
         } else {
           setAdminPortalVisibility("");
@@ -656,7 +795,11 @@
             setAdminPortalVisibility("");
             setStatus("Signed out.", "warn");
           } else {
-            autoLoadCloudForUser(sessionUser);
+            ensureUsernameComplete(sessionUser).then(function (hasUsername) {
+              if (hasUsername) {
+                autoLoadCloudForUser(sessionUser);
+              }
+            });
           }
           restartCloudPeriodicSync();
         });
@@ -671,85 +814,42 @@
 
     authSignInBtn.addEventListener("click", async function () {
       try {
-        if (!supabaseClient) {
-          throw new Error("Supabase is not configured.");
-        }
-        var email = authEmail.value.trim();
-        var password = authPassword.value;
-        if (!email || !password) {
-          throw new Error("Enter both email and password.");
-        }
-
-        var result = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
-        if (result.error) {
-          throw result.error;
-        }
-
-        await autoLoadCloudForUser(result.data && result.data.user ? result.data.user : null);
+        await startEmailCodeChallenge("login");
       } catch (error) {
-        setStatus(error && error.message ? error.message : "Sign in failed.", "error");
+        setStatus(error && error.message ? error.message : "Log in failed.", "error");
       }
     });
 
     authSignUpBtn.addEventListener("click", async function () {
       try {
-        if (!supabaseClient) {
-          throw new Error("Supabase is not configured.");
-        }
-        var email = authEmail.value.trim();
-        var password = authPassword.value;
-        if (!email || !password) {
-          throw new Error("Enter both email and password.");
-        }
-
-        var result = await supabaseClient.auth.signUp({
-          email: email,
-          password: password,
-          options: {
-            emailRedirectTo: window.location.origin + "/account.html?verified=1"
-          }
-        });
-
-        if (result.error) {
-          throw result.error;
-        }
-
-        setStatus("Account created. Redirecting to Privacy and Terms...", "ok");
-        setTimeout(function () {
-          window.location.href = "privacy.html";
-        }, 1200);
+        await startEmailCodeChallenge("signup");
       } catch (error) {
-        setStatus(error && error.message ? error.message : "Sign up failed.", "error");
+        setStatus(error && error.message ? error.message : "Sign in (make account) failed.", "error");
       }
     });
 
     resendVerifyBtn.addEventListener("click", async function () {
       try {
-        if (!supabaseClient) {
-          throw new Error("Supabase is not configured.");
+        if (pendingAuthMode !== "signup" && pendingAuthMode !== "login") {
+          throw new Error("Start Sign In or Log In first.");
         }
-
-        var email = authEmail.value.trim();
-        if (!email) {
-          throw new Error("Enter your email first.");
-        }
-
-        var resend = await supabaseClient.auth.resend({
-          type: "signup",
-          email: email,
-          options: {
-            emailRedirectTo: window.location.origin + "/account.html?verified=1"
-          }
-        });
-
-        if (resend.error) {
-          throw resend.error;
-        }
-
-        setStatus("Verification email sent. Check inbox/spam.", "ok");
+        await startEmailCodeChallenge(pendingAuthMode);
       } catch (error) {
         setStatus(error && error.message ? error.message : "Resend failed.", "error");
       }
+    });
+
+    verifyCodeBtn.addEventListener("click", async function () {
+      try {
+        await verifyEmailCode();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Verification failed.", "error");
+      }
+    });
+
+    cancelVerifyBtn.addEventListener("click", function () {
+      clearPendingVerification();
+      setStatus("Verification canceled.", "warn");
     });
 
     authSignOutBtn.addEventListener("click", async function () {
@@ -761,20 +861,13 @@
         if (result.error) {
           throw result.error;
         }
+        clearPendingVerification();
         setAdminPortalVisibility("");
         setStatus("Signed out.", "warn");
       } catch (error) {
         setStatus(error && error.message ? error.message : "Sign out failed.", "error");
       }
     });
-
-    var params = new URLSearchParams(window.location.search);
-    if (params.get("verified") === "1") {
-      setStatus("Email verified. Sign in to load your cloud data.", "ok");
-      params.delete("verified");
-      var query = params.toString();
-      window.history.replaceState({}, "", window.location.pathname + (query ? ("?" + query) : ""));
-    }
 
     initSupabase();
   </script>

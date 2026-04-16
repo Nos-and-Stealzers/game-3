@@ -292,7 +292,7 @@
 
         .toolbar {
             display: grid;
-            grid-template-columns: 1fr 220px 220px 220px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 10px;
             margin-bottom: 12px;
         }
@@ -303,6 +303,7 @@
             border-radius: 16px;
             box-shadow: var(--panel-shadow);
             padding: 16px;
+            min-width: 0;
         }
 
         .settings-panel {
@@ -585,6 +586,10 @@
             gap: 12px;
         }
 
+        .grid > * {
+            min-width: 0;
+        }
+
         .recent-row {
             display: flex;
             gap: 12px;
@@ -627,6 +632,7 @@
             flex-direction: column;
             transition: transform 0.14s ease, box-shadow 0.14s ease;
             animation: cardIn 0.3s ease-out both;
+            min-width: 0;
         }
 
         .card:hover {
@@ -659,6 +665,7 @@
             flex-direction: column;
             gap: 8px;
             flex: 1;
+            min-width: 0;
         }
 
         .chip-row {
@@ -706,6 +713,7 @@
             font-size: 1.02rem;
             color: var(--ink);
             line-height: 1.18;
+            overflow-wrap: anywhere;
         }
 
         .desc {
@@ -714,6 +722,7 @@
             line-height: 1.38;
             font-size: 0.9rem;
             flex: 1;
+            overflow-wrap: anywhere;
         }
 
         .actions {
@@ -788,6 +797,7 @@
             gap: 10px;
             flex-wrap: wrap;
             font-weight: 700;
+            overflow-wrap: anywhere;
         }
 
         .site-footer a {

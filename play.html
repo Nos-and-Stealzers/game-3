@@ -267,6 +267,8 @@
         var RECENTS_KEY = "gamehub_recent";
         var THEME_KEY = "gamehub_theme";
         var FAST_MODE_KEY = "gamehub_fast_mode";
+        var PERFORMANCE_PROFILE_KEY = "gamehub_performance_profile";
+        var DIRECT_LAUNCH_THRESHOLD_MB_KEY = "gamehub_direct_launch_threshold_mb";
         var CATALOG_VERSION = "20260415-4";
 
         var storageFallback = {};
@@ -401,6 +403,61 @@
             return !!(game && game.preferDirect === true && typeof game.direct === "string" && game.direct.length > 0);
         }
 
+        function shouldForceDirectForPerformance(game, profile) {
+            if (!game || typeof game !== "object") {
+                return false;
+            }
+
+            if (["quick", "turbo", "ultra"].indexOf(profile) === -1) {
+                return false;
+            }
+
+            if (typeof game.direct !== "string" || !game.direct.length) {
+                return false;
+            }
+
+            var id = String(game.id || "").toLowerCase();
+            if (id.indexOf("fnaf-") === 0) {
+                return true;
+            }
+
+            if (String(game.platform || "").toLowerCase() !== "local") {
+                return false;
+            }
+
+            return estimateLocalGameSizeMb(game) >= readDirectLaunchThresholdMb();
+        }
+
+        function readDirectLaunchThresholdMb() {
+            var raw = readSetting(DIRECT_LAUNCH_THRESHOLD_MB_KEY, "80");
+            var parsed = parseInt(raw, 10);
+            if (!Number.isFinite(parsed)) {
+                return 80;
+            }
+            return Math.max(50, Math.min(2000, parsed));
+        }
+
+        function estimateLocalGameSizeMb(game) {
+            var estimates = {
+                "snow-rider": 70,
+                "fnaf-1": 40,
+                "fnaf-2": 60,
+                "fnaf-3": 45,
+                "fnaf-4": 55,
+                "fnaf-world": 260,
+                "fnaf-sl": 210,
+                "fnaf-ps": 90,
+                "fnaf-ucn": 240,
+                "minecraft-eaglercraft": 190,
+                "mini-parkcore": 35,
+                "mini-tower-defense": 30,
+                "sweet-bakery": 25
+            };
+
+            var id = String(game && game.id || "");
+            return estimates[id] || 0;
+        }
+
         function isBlockedCatalogGame(game) {
             if (!game || typeof game !== "object") {
                 return true;
@@ -441,6 +498,7 @@
 
         async function initPlayer() {
             var fastMode = applyUiSettings();
+            var performanceProfile = readSetting(PERFORMANCE_PROFILE_KEY, "normal");
             var params = new URLSearchParams(window.location.search);
             var key = params.get("game") || "snow-rider";
             var games = await loadCatalog();
@@ -466,6 +524,12 @@
 
             if (shouldPreferDirect(game)) {
                 setStatus("warn", "Opening direct mode for better performance...");
+                window.location.replace(game.direct);
+                return;
+            }
+
+            if (shouldForceDirectForPerformance(game, performanceProfile)) {
+                setStatus("warn", "Performance profile active. Opening direct mode for faster startup...");
                 window.location.replace(game.direct);
                 return;
             }
@@ -497,7 +561,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.config.js"></script>
-    <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { intervalMs: 60000, captureIndexedDb: false };</script>
+    <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { intervalMs: 60000, captureIndexedDb: true };</script>
     <script src="js/cloud-autosync.js"></script>
 </body>
 </html>

@@ -158,6 +158,14 @@
       align-items: center;
     }
 
+    .filters.activity {
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f7fbff;
+    }
+
     .select {
       border: 1px solid #c2d2ef;
       border-radius: 10px;
@@ -173,6 +181,39 @@
       font-size: .82rem;
       line-height: 1.3;
       margin: 0;
+    }
+
+    .bulk-toolbar {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f7fbff;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .bulk-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: #304f83;
+      font-size: .83rem;
+      font-weight: 800;
+    }
+
+    .bulk-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .bulk-actions .btn {
+      min-height: 34px;
+      padding: 6px 10px;
+      font-size: .8rem;
     }
 
     .stats-list {
@@ -389,6 +430,65 @@
       color: #a23434;
     }
 
+    .presence-stack {
+      display: grid;
+      gap: 4px;
+    }
+
+    .presence-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .presence-chip {
+      display: inline-flex;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid #c8d7f4;
+      background: #eff5ff;
+      color: #395681;
+      font-size: .72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .2px;
+    }
+
+    .presence-chip.online {
+      background: #e8fff2;
+      border-color: #9fdcba;
+      color: #1f6b41;
+    }
+
+    .presence-chip.offline {
+      background: #eef1f7;
+      border-color: #cfd7e7;
+      color: #5a687f;
+    }
+
+    .presence-chip.intab {
+      background: #edf5ff;
+      border-color: #b4ccf4;
+      color: #2f5da0;
+    }
+
+    .presence-chip.outtab {
+      background: #fff6df;
+      border-color: #efcf91;
+      color: #7b5800;
+    }
+
+    .json-inline {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .75rem;
+      color: #4b608b;
+      max-width: 360px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     .row-actions {
       display: flex;
       gap: 6px;
@@ -436,6 +536,19 @@
       min-height: 36px;
     }
 
+    .pager {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pager-label {
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 700;
+    }
+
     @media (max-width: 860px) {
       .tab-btn,
       .inline-actions .btn,
@@ -466,6 +579,7 @@
       <nav class="admin-tabs" aria-label="Admin sections">
         <button type="button" class="tab-btn active" data-admin-tab="overview">Overview</button>
         <button type="button" class="tab-btn" data-admin-tab="users">Users</button>
+        <button type="button" class="tab-btn" data-admin-tab="activity">Activity</button>
         <button type="button" class="tab-btn" data-admin-tab="tools">Tools</button>
       </nav>
 
@@ -534,9 +648,12 @@
             <table>
               <thead>
                 <tr>
+                  <th><input id="selectAllVisibleChk" type="checkbox" aria-label="Select all visible users"></th>
                   <th>Email</th>
+                  <th>User ID</th>
                   <th>Created</th>
                   <th>Last Sign-In</th>
+                  <th>Presence</th>
                   <th>Status</th>
                   <th>Reason</th>
                   <th>Actions</th>
@@ -544,6 +661,69 @@
               </thead>
               <tbody id="rows"></tbody>
             </table>
+          </div>
+          <div class="bulk-toolbar">
+            <div class="bulk-head">
+              <span id="selectedCountLabel">0 selected</span>
+              <span class="toolbar-note">Use bulk actions to moderate all selected users at once.</span>
+            </div>
+            <div class="bulk-actions">
+              <button id="selectVisibleBtn" type="button" class="btn">Select visible</button>
+              <button id="clearSelectionBtn" type="button" class="btn">Clear selection</button>
+              <button id="bulkCopyEmailsBtn" type="button" class="btn">Copy selected emails</button>
+              <button id="bulkBanBtn" type="button" class="btn">Ban selected</button>
+              <button id="bulkUnbanBtn" type="button" class="btn">Unban selected</button>
+              <button id="bulkDeleteBtn" type="button" class="btn danger">Delete selected</button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-panel" data-admin-tab-panel="activity" hidden>
+        <section class="panel table-panel">
+          <h2>Admin Activity Log</h2>
+          <p class="subtle">Recent moderation actions with actor, target, and details.</p>
+          <div class="filters activity">
+            <select id="activityActionFilter" class="select">
+              <option value="">All actions</option>
+              <option value="ban">Ban</option>
+              <option value="unban">Unban</option>
+              <option value="delete_account">Delete account</option>
+            </select>
+            <input id="activityActorFilter" class="input" type="search" placeholder="Actor email contains...">
+            <input id="activityTargetFilter" class="input" type="search" placeholder="Target email contains...">
+            <input id="activityFromFilter" class="select" type="datetime-local" aria-label="Activity from timestamp">
+            <input id="activityToFilter" class="select" type="datetime-local" aria-label="Activity to timestamp">
+            <select id="activityPageSize" class="select">
+              <option value="25">25 rows</option>
+              <option value="50" selected>50 rows</option>
+              <option value="120">120 rows</option>
+            </select>
+            <button id="applyActivityFiltersBtn" type="button" class="btn">Apply Filters</button>
+            <button id="resetActivityFiltersBtn" type="button" class="btn">Reset</button>
+          </div>
+          <div class="inline-actions">
+            <button id="refreshActivityBtn" type="button" class="btn primary">Refresh Activity</button>
+            <span id="activityMeta" class="toolbar-note">Loading activity...</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Actor</th>
+                  <th>Action</th>
+                  <th>Target</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="activityRows"></tbody>
+            </table>
+          </div>
+          <div class="pager">
+            <button id="activityPrevBtn" type="button" class="btn">Previous</button>
+            <button id="activityNextBtn" type="button" class="btn">Next</button>
+            <span id="activityPageLabel" class="pager-label">Page 1</span>
           </div>
         </section>
       </section>
@@ -591,8 +771,30 @@
     var refreshBtn = document.getElementById("refreshBtn");
     var exportBtn = document.getElementById("exportBtn");
     var exportVisibleBtn = document.getElementById("exportVisibleBtn");
+    var refreshActivityBtn = document.getElementById("refreshActivityBtn");
+    var activityMeta = document.getElementById("activityMeta");
+    var activityRows = document.getElementById("activityRows");
+    var activityActionFilter = document.getElementById("activityActionFilter");
+    var activityActorFilter = document.getElementById("activityActorFilter");
+    var activityTargetFilter = document.getElementById("activityTargetFilter");
+    var activityFromFilter = document.getElementById("activityFromFilter");
+    var activityToFilter = document.getElementById("activityToFilter");
+    var activityPageSize = document.getElementById("activityPageSize");
+    var applyActivityFiltersBtn = document.getElementById("applyActivityFiltersBtn");
+    var resetActivityFiltersBtn = document.getElementById("resetActivityFiltersBtn");
+    var activityPrevBtn = document.getElementById("activityPrevBtn");
+    var activityNextBtn = document.getElementById("activityNextBtn");
+    var activityPageLabel = document.getElementById("activityPageLabel");
     var statusFilter = document.getElementById("statusFilter");
     var sortSelect = document.getElementById("sortSelect");
+    var selectAllVisibleChk = document.getElementById("selectAllVisibleChk");
+    var selectedCountLabel = document.getElementById("selectedCountLabel");
+    var selectVisibleBtn = document.getElementById("selectVisibleBtn");
+    var clearSelectionBtn = document.getElementById("clearSelectionBtn");
+    var bulkCopyEmailsBtn = document.getElementById("bulkCopyEmailsBtn");
+    var bulkBanBtn = document.getElementById("bulkBanBtn");
+    var bulkUnbanBtn = document.getElementById("bulkUnbanBtn");
+    var bulkDeleteBtn = document.getElementById("bulkDeleteBtn");
     var auditNote = document.getElementById("auditNote");
     var sessionStatus = document.getElementById("sessionStatus");
     var summaryList = document.getElementById("summaryList");
@@ -606,7 +808,23 @@
 
     var supabaseClient = null;
     var allUsers = [];
+    var activityItems = [];
     var lastLoadedAt = "";
+    var selectedUserIds = {};
+    var adminLiveRefreshTimer = null;
+    var ADMIN_LIVE_REFRESH_MS = 15000;
+    var usersFetchInFlight = false;
+    var activityFetchInFlight = false;
+    var activityHasMore = false;
+    var activityQuery = {
+      limit: 50,
+      offset: 0,
+      action: "",
+      actor: "",
+      target: "",
+      from: "",
+      to: ""
+    };
 
     function storageGet(key) {
       try {
@@ -632,7 +850,7 @@
     }
 
     function setActiveAdminTab(tabName) {
-      var activeTab = ["overview", "users", "tools"].indexOf(tabName) !== -1 ? tabName : "overview";
+      var activeTab = ["overview", "users", "activity", "tools"].indexOf(tabName) !== -1 ? tabName : "overview";
       adminTabs.forEach(function (button) {
         var isActive = button.getAttribute("data-admin-tab") === activeTab;
         button.classList.toggle("active", isActive);
@@ -640,6 +858,9 @@
       adminTabPanels.forEach(function (panel) {
         panel.hidden = panel.getAttribute("data-admin-tab-panel") !== activeTab;
       });
+      if (activeTab === "activity") {
+        fetchActivity().catch(function () {});
+      }
     }
 
     function setStatus(message, state) {
@@ -721,6 +942,45 @@
       return filtered;
     }
 
+    function getSelectedUsers() {
+      var selectedIds = Object.keys(selectedUserIds).filter(function (id) {
+        return !!selectedUserIds[id];
+      });
+      return allUsers.filter(function (row) {
+        return selectedIds.indexOf(String(row.user_id || "")) !== -1;
+      });
+    }
+
+    function pruneSelection() {
+      var valid = {};
+      allUsers.forEach(function (row) {
+        var userId = String(row.user_id || "");
+        if (selectedUserIds[userId]) {
+          valid[userId] = true;
+        }
+      });
+      selectedUserIds = valid;
+    }
+
+    function renderSelectionState() {
+      var selectedRows = getSelectedUsers();
+      var visibleRows = getFilteredUsers();
+      var visibleSelectedCount = visibleRows.filter(function (row) {
+        return !!selectedUserIds[String(row.user_id || "")];
+      }).length;
+
+      selectedCountLabel.textContent = selectedRows.length + " selected";
+      selectAllVisibleChk.checked = visibleRows.length > 0 && visibleSelectedCount === visibleRows.length;
+      selectAllVisibleChk.indeterminate = visibleSelectedCount > 0 && visibleSelectedCount < visibleRows.length;
+
+      var hasSelection = selectedRows.length > 0;
+      bulkCopyEmailsBtn.disabled = !hasSelection;
+      bulkBanBtn.disabled = !hasSelection;
+      bulkUnbanBtn.disabled = !hasSelection;
+      bulkDeleteBtn.disabled = !hasSelection;
+      clearSelectionBtn.disabled = !hasSelection;
+    }
+
     function renderOverview(filteredUsers) {
       var total = allUsers.length;
       var activeCount = allUsers.filter(function (row) { return !row.banned; }).length;
@@ -739,7 +999,7 @@
         return '<li><span>' + escapeHtml(row.email || "(no email)") + '</span><span>' + escapeHtml(statusLabel + " · " + secondary) + '</span></li>';
       }).join("") : '<li><span>No accounts match the current filters.</span><span>Try another search.</span></li>';
 
-      setSessionStatus("Loaded " + total + " accounts" + (lastLoadedAt ? " at " + lastLoadedAt : ".") + (getCurrentAuditNote() ? " Audit note ready." : ""));
+      setSessionStatus("Loaded " + total + " accounts" + (lastLoadedAt ? " at " + lastLoadedAt : ".") + (Object.keys(selectedUserIds).length ? " Selection active." : "") + (getCurrentAuditNote() ? " Audit note ready." : ""));
     }
 
     function renderAllowlist() {
@@ -749,16 +1009,86 @@
     }
 
     function toCsv(rows) {
-      var headers = ["email", "created_at", "last_sign_in_at", "banned", "ban_reason"];
+      var headers = ["email", "created_at", "last_sign_in_at", "presence_status", "presence_updated_at", "is_online", "in_tab", "banned", "ban_reason"];
       var lines = [headers.join(",")];
       rows.forEach(function (row) {
-        var values = [row.email, row.created_at, row.last_sign_in_at, row.banned ? "yes" : "no", row.ban_reason || ""];
+        var values = [
+          row.email,
+          row.created_at,
+          row.last_sign_in_at,
+          row.presence_status || "",
+          row.presence_updated_at || "",
+          row.is_online ? "yes" : "no",
+          row.in_tab ? "yes" : "no",
+          row.banned ? "yes" : "no",
+          row.ban_reason || ""
+        ];
         lines.push(values.map(function (value) {
           var text = String(value == null ? "" : value).replace(/"/g, '""');
           return '"' + text + '"';
         }).join(","));
       });
       return lines.join("\n");
+    }
+
+    function formatPresenceLabel(value) {
+      var status = String(value || "offline").toLowerCase();
+      if (status === "playing") {
+        return "Playing";
+      }
+      if (status === "online") {
+        return "Online";
+      }
+      if (status === "away") {
+        return "Away";
+      }
+      if (status === "background") {
+        return "Background";
+      }
+      return "Offline";
+    }
+
+    function formatDetails(value) {
+      if (!value || typeof value !== "object") {
+        return "-";
+      }
+      try {
+        var text = JSON.stringify(value);
+        return text.length > 220 ? text.slice(0, 220) + "..." : text;
+      } catch (error) {
+        return "{}";
+      }
+    }
+
+    function toIsoFromDatetimeLocal(value) {
+      var trimmed = String(value || "").trim();
+      if (!trimmed) {
+        return null;
+      }
+      var asDate = new Date(trimmed);
+      if (isNaN(asDate.getTime())) {
+        return null;
+      }
+      return asDate.toISOString();
+    }
+
+    function collectActivityFilters(resetOffset) {
+      activityQuery.limit = Math.max(1, Math.min(300, parseInt(activityPageSize.value || "50", 10) || 50));
+      activityQuery.action = String(activityActionFilter.value || "").trim();
+      activityQuery.actor = String(activityActorFilter.value || "").trim();
+      activityQuery.target = String(activityTargetFilter.value || "").trim();
+      activityQuery.from = String(activityFromFilter.value || "").trim();
+      activityQuery.to = String(activityToFilter.value || "").trim();
+      if (resetOffset) {
+        activityQuery.offset = 0;
+      }
+    }
+
+    function renderActivityPager() {
+      var pageIndex = Math.floor(activityQuery.offset / Math.max(1, activityQuery.limit));
+      activityPageLabel.textContent = "Page " + (pageIndex + 1);
+      activityPrevBtn.disabled = activityQuery.offset <= 0 || activityFetchInFlight;
+      activityNextBtn.disabled = !activityHasMore || activityFetchInFlight;
     }
 
     function downloadText(filename, content) {
@@ -789,35 +1119,34 @@
     function renderRows() {
       var filtered = getFilteredUsers();
       if (!filtered.length) {
-        rowsEl.innerHTML = '<tr><td colspan="6" class="small">No accounts found.</td></tr>';
+        rowsEl.innerHTML = '<tr><td colspan="9" class="small">No accounts found.</td></tr>';
         renderOverview(filtered);
+        renderSelectionState();
         return;
       }
-
-      var status = statusFilter.value || "all";
-      var sortValue = sortSelect.value || "recent";
-      filtered = filtered.filter(function (row) {
-        return status === "all" || getUserState(row) === status;
-      }).sort(function (a, b) {
-        if (sortValue === "email") {
-          return String(a.email || "").localeCompare(String(b.email || ""));
-        }
-        if (sortValue === "created") {
-          return parseTime(b.created_at) - parseTime(a.created_at);
-        }
-        return parseTime(b.last_sign_in_at) - parseTime(a.last_sign_in_at);
-      });
 
       rowsEl.innerHTML = filtered.map(function (row) {
         var statusBadge = row.banned
           ? '<span class="badge banned">Banned</span>'
           : '<span class="badge">Active</span>';
+        var userId = String(row.user_id || "");
+        var isSelected = !!selectedUserIds[userId];
 
         return [
-          '<tr data-user-id="' + row.user_id + '" data-email="' + escapeHtml(row.email || '') + '">',
+          '<tr data-user-id="' + userId + '" data-email="' + escapeHtml(row.email || '') + '">',
+          '<td><input type="checkbox" data-select-user="' + userId + '" ' + (isSelected ? 'checked' : '') + ' aria-label="Select user"></td>',
           '<td><div class="email">' + escapeHtml(row.email || '(no email)') + '</div></td>',
+          '<td class="small">' + escapeHtml(userId) + '</td>',
           '<td>' + escapeHtml(formatDate(row.created_at)) + '</td>',
           '<td>' + escapeHtml(formatDate(row.last_sign_in_at)) + '</td>',
+          '<td><div class="presence-stack">'
+            + '<div class="presence-row">'
+              + '<span class="presence-chip ' + (row.is_online ? 'online' : 'offline') + '">' + (row.is_online ? 'Online' : 'Offline') + '</span>'
+              + '<span class="presence-chip ' + (row.in_tab ? 'intab' : 'outtab') + '">' + (row.in_tab ? 'In tab' : 'Out tab') + '</span>'
+            + '</div>'
+            + '<div class="small">' + escapeHtml(formatPresenceLabel(row.presence_status)) + ' · ' + escapeHtml(formatDate(row.presence_updated_at)) + '</div>'
+            + (row.current_game_title ? ('<div class="small">Game: ' + escapeHtml(row.current_game_title) + '</div>') : '')
+            + '</div></td>',
           '<td>' + statusBadge + '</td>',
           '<td class="small">' + escapeHtml(row.ban_reason || '-') + '</td>',
           '<td>',
@@ -834,6 +1163,7 @@
       }).join('');
 
       renderOverview(filtered);
+      renderSelectionState();
     }
 
     function escapeHtml(value) {
@@ -845,22 +1175,100 @@
         .replace(/'/g, "&#39;");
     }
 
-    async function fetchUsers() {
-      setStatus("Loading users...", "warn");
-      var result = await supabaseClient.rpc("admin_list_users");
-      if (result.error) {
-        throw result.error;
+    async function fetchUsers(options) {
+      var silent = options && options.silent === true;
+      if (usersFetchInFlight) {
+        return;
       }
-      allUsers = Array.isArray(result.data) ? result.data : [];
-      lastLoadedAt = new Date().toLocaleString();
-      renderRows();
-      setStatus("Loaded " + allUsers.length + " account(s).", "ok");
+      usersFetchInFlight = true;
+      if (!silent) {
+        setStatus("Loading users...", "warn");
+      }
+      try {
+        var result = await supabaseClient.rpc("admin_list_users");
+        if (result.error) {
+          throw result.error;
+        }
+        allUsers = Array.isArray(result.data) ? result.data : [];
+        pruneSelection();
+        lastLoadedAt = new Date().toLocaleString();
+        renderRows();
+        if (!silent) {
+          setStatus("Loaded " + allUsers.length + " account(s).", "ok");
+        }
+      } finally {
+        usersFetchInFlight = false;
+      }
     }
 
-    async function setUserBan(userId, banValue) {
+    async function fetchActivity(options) {
+      if (!supabaseClient || activityFetchInFlight) {
+        return;
+      }
+      var shouldResetOffset = options && options.resetOffset === true;
+      collectActivityFilters(shouldResetOffset);
+      activityFetchInFlight = true;
+      renderActivityPager();
+      try {
+        var result = await supabaseClient.rpc("admin_list_activity_filtered", {
+          limit_count: activityQuery.limit,
+          offset_count: activityQuery.offset,
+          action_filter: activityQuery.action || null,
+          actor_email_filter: activityQuery.actor || null,
+          target_email_filter: activityQuery.target || null,
+          from_ts: toIsoFromDatetimeLocal(activityQuery.from),
+          to_ts: toIsoFromDatetimeLocal(activityQuery.to)
+        });
+        if (result.error) {
+          throw result.error;
+        }
+        activityItems = Array.isArray(result.data) ? result.data : [];
+        activityHasMore = activityItems.length >= activityQuery.limit;
+        activityRows.innerHTML = activityItems.length ? activityItems.map(function (item) {
+          return [
+            '<tr>',
+            '<td>' + escapeHtml(formatDate(item.created_at)) + '</td>',
+            '<td><div class="email">' + escapeHtml(item.actor_email || '(unknown)') + '</div></td>',
+            '<td><span class="badge">' + escapeHtml(item.action || 'action') + '</span></td>',
+            '<td><div class="small">' + escapeHtml(item.target_email || String(item.target_user_id || '-')) + '</div></td>',
+            '<td><pre class="json-inline">' + escapeHtml(formatDetails(item.details)) + '</pre></td>',
+            '</tr>'
+          ].join('');
+        }).join('') : '<tr><td colspan="5" class="small">No admin activity recorded yet.</td></tr>';
+        activityMeta.textContent = 'Showing ' + activityItems.length + ' event(s) from offset ' + activityQuery.offset + '. Last updated ' + new Date().toLocaleTimeString() + '.';
+      } finally {
+        activityFetchInFlight = false;
+        renderActivityPager();
+      }
+    }
+
+    function startAdminLiveRefresh() {
+      if (adminLiveRefreshTimer) {
+        clearInterval(adminLiveRefreshTimer);
+      }
+      adminLiveRefreshTimer = setInterval(function () {
+        if (document.hidden) {
+          return;
+        }
+        fetchUsers({ silent: true }).catch(function () {});
+        if (document.querySelector('[data-admin-tab="activity"].active')) {
+          fetchActivity().catch(function () {});
+        }
+      }, ADMIN_LIVE_REFRESH_MS);
+    }
+
+    async function setUserBan(userId, banValue, forcedReason) {
       var reason = "";
       if (banValue) {
-        reason = window.prompt("Ban reason (optional):", "") || "";
+        if (typeof forcedReason === "string") {
+          reason = forcedReason;
+        } else {
+          var prompted = window.prompt("Ban reason (optional):", "");
+          if (prompted === null) {
+            throw new Error("Ban canceled.");
+          }
+          reason = prompted || "";
+        }
       }
       var result = await supabaseClient.rpc("admin_set_ban", {
         target_user_id: userId,
@@ -923,9 +1331,26 @@
           setSessionStatus("Delete action recorded.");
         }
         await fetchUsers();
+        await fetchActivity({ resetOffset: true });
       } catch (error) {
         setStatus(error && error.message ? error.message : "Admin action failed.", "error");
       }
+    });
+
+    rowsEl.addEventListener("change", function (event) {
+      var checkbox = event.target.closest("input[data-select-user]");
+      if (!(checkbox instanceof HTMLInputElement)) {
+        return;
+      }
+      var userId = checkbox.getAttribute("data-select-user") || "";
+      if (!userId) {
+        return;
+      }
+      selectedUserIds[userId] = checkbox.checked;
+      if (!checkbox.checked) {
+        delete selectedUserIds[userId];
+      }
+      renderSelectionState();
     });
 
     searchInput.addEventListener("input", renderRows);
@@ -941,9 +1366,74 @@
     refreshBtn.addEventListener("click", async function () {
       try {
         await fetchUsers();
+        await fetchActivity();
       } catch (error) {
         setStatus(error && error.message ? error.message : "Unable to refresh users.", "error");
       }
+    });
+
+    refreshActivityBtn.addEventListener("click", async function () {
+      try {
+        await fetchActivity();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Unable to refresh activity.", "error");
+      }
+    });
+
+    applyActivityFiltersBtn.addEventListener("click", async function () {
+      try {
+        await fetchActivity({ resetOffset: true });
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Unable to apply activity filters.", "error");
+      }
+    });
+
+    resetActivityFiltersBtn.addEventListener("click", async function () {
+      activityActionFilter.value = "";
+      activityActorFilter.value = "";
+      activityTargetFilter.value = "";
+      activityFromFilter.value = "";
+      activityToFilter.value = "";
+      activityPageSize.value = "50";
+      try {
+        await fetchActivity({ resetOffset: true });
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Unable to reset activity filters.", "error");
+      }
+    });
+
+    activityPrevBtn.addEventListener("click", async function () {
+      if (activityQuery.offset <= 0) {
+        return;
+      }
+      activityQuery.offset = Math.max(0, activityQuery.offset - activityQuery.limit);
+      try {
+        await fetchActivity();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Unable to load previous activity page.", "error");
+      }
+    });
+
+    activityNextBtn.addEventListener("click", async function () {
+      if (!activityHasMore) {
+        return;
+      }
+      activityQuery.offset += activityQuery.limit;
+      try {
+        await fetchActivity();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Unable to load next activity page.", "error");
+      }
+    });
+
+    [activityActionFilter, activityActorFilter, activityTargetFilter, activityFromFilter, activityToFilter, activityPageSize].forEach(function (element) {
+      element.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          fetchActivity({ resetOffset: true }).catch(function (error) {
+            setStatus(error && error.message ? error.message : "Unable to apply activity filters.", "error");
+          });
+        }
+      });
     });
 
     exportBtn.addEventListener("click", function () {
@@ -956,6 +1446,116 @@
         return (statusFilter.value || "all") === "all" || getUserState(row) === statusFilter.value;
       })));
       setSessionStatus("Exported filtered accounts.");
+    });
+
+    selectAllVisibleChk.addEventListener("change", function () {
+      var visible = getFilteredUsers();
+      visible.forEach(function (row) {
+        var userId = String(row.user_id || "");
+        if (!userId) {
+          return;
+        }
+        if (selectAllVisibleChk.checked) {
+          selectedUserIds[userId] = true;
+        } else {
+          delete selectedUserIds[userId];
+        }
+      });
+      renderRows();
+    });
+
+    selectVisibleBtn.addEventListener("click", function () {
+      getFilteredUsers().forEach(function (row) {
+        var userId = String(row.user_id || "");
+        if (userId) {
+          selectedUserIds[userId] = true;
+        }
+      });
+      renderRows();
+      setSessionStatus("Visible users selected.");
+    });
+
+    clearSelectionBtn.addEventListener("click", function () {
+      selectedUserIds = {};
+      renderRows();
+      setSessionStatus("Selection cleared.");
+    });
+
+    bulkCopyEmailsBtn.addEventListener("click", async function () {
+      var selected = getSelectedUsers();
+      if (!selected.length) {
+        return;
+      }
+      try {
+        var emails = selected.map(function (row) { return String(row.email || "").trim(); }).filter(function (value) { return !!value; });
+        await copyText(emails.join("\n"));
+        setStatus("Copied " + emails.length + " email(s).", "ok");
+        setSessionStatus("Bulk copy complete.");
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Unable to copy selected emails.", "error");
+      }
+    });
+
+    bulkBanBtn.addEventListener("click", async function () {
+      var selected = getSelectedUsers();
+      if (!selected.length) {
+        return;
+      }
+      var reason = window.prompt("Ban reason for selected users (optional):", "");
+      if (reason === null) {
+        return;
+      }
+      try {
+        for (var i = 0; i < selected.length; i++) {
+          await setUserBan(selected[i].user_id, true, reason || "");
+        }
+        setStatus("Banned " + selected.length + " user(s).", "ok");
+        setSessionStatus("Bulk ban complete.");
+        await fetchUsers();
+        await fetchActivity();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Bulk ban failed.", "error");
+      }
+    });
+
+    bulkUnbanBtn.addEventListener("click", async function () {
+      var selected = getSelectedUsers();
+      if (!selected.length) {
+        return;
+      }
+      try {
+        for (var i = 0; i < selected.length; i++) {
+          await setUserBan(selected[i].user_id, false);
+        }
+        setStatus("Unbanned " + selected.length + " user(s).", "ok");
+        setSessionStatus("Bulk unban complete.");
+        await fetchUsers();
+        await fetchActivity();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Bulk unban failed.", "error");
+      }
+    });
+
+    bulkDeleteBtn.addEventListener("click", async function () {
+      var selected = getSelectedUsers();
+      if (!selected.length) {
+        return;
+      }
+      if (!window.confirm("Delete " + selected.length + " selected account(s)? This cannot be undone.")) {
+        return;
+      }
+      try {
+        for (var i = 0; i < selected.length; i++) {
+          await deleteUser(selected[i].user_id, selected[i].email);
+        }
+        selectedUserIds = {};
+        setStatus("Deleted " + selected.length + " user(s).", "ok");
+        setSessionStatus("Bulk delete complete.");
+        await fetchUsers();
+        await fetchActivity();
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Bulk delete failed.", "error");
+      }
     });
 
     auditNote.addEventListener("input", function () {
@@ -972,6 +1572,7 @@
       supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
       renderAllowlist();
       setActiveAdminTab("overview");
+      startAdminLiveRefresh();
       try {
         var auth = await supabaseClient.auth.getUser();
         var user = auth && auth.data ? auth.data.user : null;
@@ -990,6 +1591,7 @@
 
         setSessionStatus("Signed in as " + email + ".");
         await fetchUsers();
+        await fetchActivity({ resetOffset: true });
       } catch (error) {
         setStatus(error && error.message ? error.message : "Admin panel init failed.", "error");
       }

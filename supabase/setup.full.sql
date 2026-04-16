@@ -55,6 +55,10 @@ alter table public.user_settings add column if not exists pronouns text;
 alter table public.user_settings add column if not exists accent_color text;
 alter table public.user_settings add column if not exists updated_at timestamptz not null default now();
 
+create unique index if not exists user_settings_username_unique_idx
+  on public.user_settings (lower(username))
+  where nullif(trim(coalesce(username, '')), '') is not null;
+
 create table if not exists public.user_presence (
   user_id uuid primary key references auth.users(id) on delete cascade,
   status text not null default 'online',
@@ -89,6 +93,31 @@ create table if not exists public.friend_messages (
 );
 
 alter table public.friend_messages enable row level security;
+
+create table if not exists public.admin_activity_logs (
+  id uuid primary key default gen_random_uuid(),
+  actor_user_id uuid not null references auth.users(id) on delete cascade,
+  actor_email text not null,
+  target_user_id uuid references auth.users(id) on delete set null,
+  target_email text,
+  action text not null,
+  details jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+alter table public.admin_activity_logs enable row level security;
+
+create index if not exists admin_activity_logs_created_at_idx
+  on public.admin_activity_logs (created_at desc);
+
+create index if not exists admin_activity_logs_action_idx
+  on public.admin_activity_logs (action);
+
+create index if not exists admin_activity_logs_actor_email_idx
+  on public.admin_activity_logs (actor_email);
+
+create index if not exists admin_activity_logs_target_email_idx
+  on public.admin_activity_logs (target_email);
 
 create or replace function public.is_admin_email(email_input text)
 returns boolean
@@ -220,6 +249,9 @@ language plpgsql
 security definer
 set search_path = public, auth
 as $$
+declare
+  clean_username text;
+  clean_display_name text;
 begin
   if auth.uid() is null then
     raise exception 'Not authorized.';
@@ -231,6 +263,30 @@ begin
 
   if target_user_id <> auth.uid() then
     raise exception 'You can only update your own settings.';
+  end if;
+
+  clean_username := lower(trim(coalesce(payload ->> 'username', '')));
+  clean_display_name := nullif(trim(coalesce(payload ->> 'displayName', payload ->> 'display_name', '')), '');
+
+  if clean_username = '' then
+    raise exception 'Username is required.';
+  end if;
+
+  if clean_username !~ '^[a-z0-9_]{3,24}$' then
+    raise exception 'Username must be 3-24 chars: lowercase letters, numbers, underscore.';
+  end if;
+
+  if clean_display_name is not null and clean_username = '' then
+    raise exception 'Set a username before setting a display name.';
+  end if;
+
+  if exists (
+    select 1
+    from public.user_settings us
+    where us.user_id <> auth.uid()
+      and lower(trim(coalesce(us.username, ''))) = clean_username
+  ) then
+    raise exception 'Username is already taken.';
   end if;
 
   insert into public.user_settings (
@@ -252,8 +308,8 @@ begin
   )
   values (
     auth.uid(),
-    coalesce(payload ->> 'displayName', payload ->> 'display_name'),
-    coalesce(payload ->> 'username', ''),
+    clean_display_name,
+    clean_username,
     coalesce(payload ->> 'language', 'en'),
     coalesce(payload ->> 'timeZone', payload ->> 'time_zone', 'UTC'),
     coalesce((payload ->> 'emailUpdates')::boolean, false),
@@ -396,7 +452,9 @@ begin
 end;
 $$;
 
-create or replace function public.upsert_friend_link(friend_email text, note text default null, can_message boolean default true)
+drop function if exists public.upsert_friend_link(text, text, boolean);
+
+create or replace function public.upsert_friend_link(target_username text, note text default null, can_message boolean default true)
 returns boolean
 language plpgsql
 security definer
@@ -405,29 +463,56 @@ as $$
 declare
   target_user_id uuid;
   target_email text;
+  target_profile_username text;
+  requester_email text;
+  requester_username text;
+  normalized_username text;
 begin
   if auth.uid() is null then
     raise exception 'Not authorized.';
   end if;
 
-  select id, lower(coalesce(email, '')) into target_user_id, target_email
-  from auth.users
-  where lower(coalesce(email, '')) = lower(trim(coalesce(friend_email, '')))
+  normalized_username := lower(trim(replace(coalesce(target_username, ''), '@', '')));
+  if normalized_username = '' then
+    raise exception 'Friend username is required.';
+  end if;
+
+  if normalized_username !~ '^[a-z0-9_]{3,24}$' then
+    raise exception 'Friend username must be 3-24 chars: lowercase letters, numbers, underscore.';
+  end if;
+
+  select us.user_id, lower(coalesce(au.email, '')), lower(coalesce(us.username, ''))
+    into target_user_id, target_email, target_profile_username
+  from public.user_settings us
+  left join auth.users au on au.id = us.user_id
+  where lower(trim(coalesce(us.username, ''))) = normalized_username
   limit 1;
 
   if target_user_id is null then
-    raise exception 'No account found for that email.';
+    raise exception 'No account found for @%.' , normalized_username;
   end if;
 
   if target_user_id = auth.uid() then
     raise exception 'You cannot add yourself.';
   end if;
 
+  select lower(coalesce(email, '')) into requester_email
+  from auth.users
+  where id = auth.uid();
+
+  select lower(trim(coalesce(username, ''))) into requester_username
+  from public.user_settings
+  where user_id = auth.uid();
+
+  if coalesce(requester_username, '') = '' then
+    raise exception 'Set your username before adding friends.';
+  end if;
+
   insert into public.friend_links (owner_user_id, friend_user_id, friend_email, note, can_message, updated_at)
   values (
     auth.uid(),
     target_user_id,
-    target_email,
+    case when coalesce(target_profile_username, '') <> '' then target_profile_username || '@gamehub.local' else target_email end,
     nullif(trim(coalesce(note, '')), ''),
     coalesce(can_message, true),
     now()
@@ -438,6 +523,21 @@ begin
         note = excluded.note,
         can_message = excluded.can_message,
         updated_at = now();
+
+  insert into public.friend_links (owner_user_id, friend_user_id, friend_email, note, can_message, updated_at)
+  values (
+    target_user_id,
+    auth.uid(),
+    requester_username || '@gamehub.local',
+    coalesce(
+      nullif(trim(coalesce(note, '')), ''),
+      'Incoming request from @' || requester_username
+    ),
+    false,
+    now()
+  )
+  on conflict (owner_user_id, friend_user_id)
+  do nothing;
 
   return true;
 end;
@@ -484,7 +584,7 @@ as $$
   select
     fl.friend_user_id,
     fl.friend_email,
-    coalesce(nullif(trim(us.display_name), ''), split_part(fl.friend_email, '@', 1), fl.friend_email) as display_name,
+    coalesce(nullif(trim(us.display_name), ''), nullif(trim(us.username), ''), split_part(fl.friend_email, '@', 1), fl.friend_email) as display_name,
     coalesce(nullif(trim(us.username), ''), split_part(fl.friend_email, '@', 1)) as username,
     case
       when reciprocal.is_mutual and coalesce(pres.updated_at, now() - interval '1 day') > now() - interval '15 minutes' then pres.current_game_id
@@ -551,10 +651,15 @@ begin
   end if;
 
   if not exists (
-    select 1 from public.friend_links fl
+    select 1
+    from public.friend_links fl
+    join public.friend_links reverse_link
+      on reverse_link.owner_user_id = recipient_user_id
+     and reverse_link.friend_user_id = auth.uid()
     where fl.owner_user_id = auth.uid()
       and fl.friend_user_id = recipient_user_id
       and fl.can_message = true
+      and reverse_link.can_message = true
   ) then
     raise exception 'You can only message mutual friends.';
   end if;
@@ -656,6 +761,58 @@ create policy "Admins can update all profiles"
   using (public.current_user_is_admin())
   with check (public.current_user_is_admin());
 
+drop policy if exists "Admins can read admin activity logs" on public.admin_activity_logs;
+
+create policy "Admins can read admin activity logs"
+  on public.admin_activity_logs
+  for select
+  using (public.current_user_is_admin());
+
+create or replace function public.admin_log_action(
+  target_user_id uuid,
+  target_email text,
+  action text,
+  details jsonb default '{}'::jsonb
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  actor_email text;
+begin
+  if not public.current_user_is_admin() then
+    raise exception 'Not authorized.';
+  end if;
+
+  select lower(coalesce(email, '')) into actor_email
+  from auth.users
+  where id = auth.uid();
+
+  insert into public.admin_activity_logs (
+    actor_user_id,
+    actor_email,
+    target_user_id,
+    target_email,
+    action,
+    details,
+    created_at
+  )
+  values (
+    auth.uid(),
+    coalesce(actor_email, ''),
+    target_user_id,
+    nullif(lower(trim(coalesce(target_email, ''))), ''),
+    left(trim(coalesce(action, 'unknown')), 64),
+    coalesce(details, '{}'::jsonb),
+    now()
+  );
+
+  return true;
+end;
+$$;
+
 create or replace function public.admin_list_users()
 returns table (
   user_id uuid,
@@ -663,7 +820,12 @@ returns table (
   created_at timestamptz,
   last_sign_in_at timestamptz,
   banned boolean,
-  ban_reason text
+  ban_reason text,
+  presence_status text,
+  presence_updated_at timestamptz,
+  current_game_title text,
+  is_online boolean,
+  in_tab boolean
 )
 language sql
 security definer
@@ -675,11 +837,123 @@ as $$
     u.created_at,
     u.last_sign_in_at,
     coalesce(p.banned, false) as banned,
-    p.ban_reason
+    p.ban_reason,
+    coalesce(pres.status, 'offline') as presence_status,
+    pres.updated_at as presence_updated_at,
+    pres.current_game_title,
+    (
+      coalesce(us.show_online, true)
+      and coalesce(p.banned, false) = false
+      and pres.updated_at is not null
+      and pres.updated_at > now() - interval '2 minutes'
+      and coalesce(pres.status, 'offline') <> 'background'
+    ) as is_online,
+    (
+      coalesce(us.show_online, true)
+      and coalesce(p.banned, false) = false
+      and pres.updated_at is not null
+      and pres.updated_at > now() - interval '2 minutes'
+      and coalesce(pres.status, 'offline') in ('online', 'playing')
+    ) as in_tab
   from auth.users u
   left join public.user_profiles p on p.user_id = u.id
+  left join public.user_presence pres on pres.user_id = u.id
+  left join public.user_settings us on us.user_id = u.id
   where public.current_user_is_admin()
   order by u.created_at desc;
+$$;
+
+create or replace function public.admin_list_activity(limit_count integer default 120, offset_count integer default 0)
+returns table (
+  id uuid,
+  actor_user_id uuid,
+  actor_email text,
+  target_user_id uuid,
+  target_email text,
+  action text,
+  details jsonb,
+  created_at timestamptz
+)
+language sql
+security definer
+set search_path = public, auth
+as $$
+  select
+    l.id,
+    l.actor_user_id,
+    l.actor_email,
+    l.target_user_id,
+    l.target_email,
+    l.action,
+    l.details,
+    l.created_at
+  from public.admin_activity_logs l
+  where public.current_user_is_admin()
+  order by l.created_at desc
+  limit greatest(1, least(coalesce(limit_count, 120), 300))
+  offset greatest(0, coalesce(offset_count, 0));
+$$;
+
+create or replace function public.admin_list_activity_filtered(
+  limit_count integer default 120,
+  offset_count integer default 0,
+  action_filter text default null,
+  actor_email_filter text default null,
+  target_email_filter text default null,
+  from_ts timestamptz default null,
+  to_ts timestamptz default null
+)
+returns table (
+  id uuid,
+  actor_user_id uuid,
+  actor_email text,
+  target_user_id uuid,
+  target_email text,
+  action text,
+  details jsonb,
+  created_at timestamptz
+)
+language sql
+security definer
+set search_path = public, auth
+as $$
+  select
+    l.id,
+    l.actor_user_id,
+    l.actor_email,
+    l.target_user_id,
+    l.target_email,
+    l.action,
+    l.details,
+    l.created_at
+  from public.admin_activity_logs l
+  where public.current_user_is_admin()
+    and (
+      action_filter is null
+      or action_filter = ''
+      or lower(l.action) = lower(action_filter)
+    )
+    and (
+      actor_email_filter is null
+      or actor_email_filter = ''
+      or l.actor_email ilike ('%' || actor_email_filter || '%')
+    )
+    and (
+      target_email_filter is null
+      or target_email_filter = ''
+      or coalesce(l.target_email, '') ilike ('%' || target_email_filter || '%')
+    )
+    and (
+      from_ts is null
+      or l.created_at >= from_ts
+    )
+    and (
+      to_ts is null
+      or l.created_at <= to_ts
+    )
+  order by l.created_at desc
+  limit greatest(1, least(coalesce(limit_count, 120), 300))
+  offset greatest(0, coalesce(offset_count, 0));
 $$;
 
 create or replace function public.admin_set_ban(target_user_id uuid, should_ban boolean, reason text default null)
@@ -690,6 +964,7 @@ set search_path = public, auth
 as $$
 declare
   target_email text;
+  normalized_reason text;
 begin
   if not public.current_user_is_admin() then
     raise exception 'Not authorized.';
@@ -711,8 +986,10 @@ begin
     raise exception 'User not found.';
   end if;
 
+  normalized_reason := nullif(trim(coalesce(reason, '')), '');
+
   insert into public.user_profiles (user_id, email, banned, ban_reason, updated_at)
-  values (target_user_id, target_email, should_ban, reason, now())
+  values (target_user_id, target_email, should_ban, normalized_reason, now())
   on conflict (user_id)
   do update
     set email = excluded.email,
@@ -724,6 +1001,16 @@ begin
     delete from public.user_saves where user_id = target_user_id;
   end if;
 
+  perform public.admin_log_action(
+    target_user_id,
+    target_email,
+    case when should_ban then 'ban' else 'unban' end,
+    jsonb_build_object(
+      'reason', normalized_reason,
+      'cleared_user_saves', should_ban
+    )
+  );
+
   return true;
 end;
 $$;
@@ -734,6 +1021,8 @@ language plpgsql
 security definer
 set search_path = public, auth
 as $$
+declare
+  target_email text;
 begin
   if not public.current_user_is_admin() then
     raise exception 'Not authorized.';
@@ -747,21 +1036,38 @@ begin
     raise exception 'You cannot delete your own account.';
   end if;
 
+  select lower(coalesce(email, '')) into target_email
+  from auth.users
+  where id = target_user_id;
+
   delete from public.user_saves where user_id = target_user_id;
   delete from public.user_profiles where user_id = target_user_id;
   delete from auth.users where id = target_user_id;
+
+  perform public.admin_log_action(
+    target_user_id,
+    target_email,
+    'delete_account',
+    jsonb_build_object('hard_delete', true)
+  );
 
   return true;
 end;
 $$;
 
 revoke all on function public.admin_list_users() from public;
+revoke all on function public.admin_list_activity(integer, integer) from public;
+revoke all on function public.admin_list_activity_filtered(integer, integer, text, text, text, timestamptz, timestamptz) from public;
 revoke all on function public.admin_set_ban(uuid, boolean, text) from public;
 revoke all on function public.admin_delete_account(uuid) from public;
+revoke all on function public.admin_log_action(uuid, text, text, jsonb) from public;
 
 grant execute on function public.admin_list_users() to authenticated;
+grant execute on function public.admin_list_activity(integer, integer) to authenticated;
+grant execute on function public.admin_list_activity_filtered(integer, integer, text, text, text, timestamptz, timestamptz) to authenticated;
 grant execute on function public.admin_set_ban(uuid, boolean, text) to authenticated;
 grant execute on function public.admin_delete_account(uuid) to authenticated;
+grant execute on function public.admin_log_action(uuid, text, text, jsonb) to authenticated;
 grant execute on function public.upsert_my_user_settings(uuid, jsonb) to authenticated;
 grant execute on function public.upsert_my_presence(text, text, text, boolean) to authenticated;
 grant execute on function public.upsert_friend_link(text, text, boolean) to authenticated;
@@ -770,3 +1076,27 @@ grant execute on function public.list_my_friends() to authenticated;
 grant execute on function public.send_friend_message(uuid, text) to authenticated;
 grant execute on function public.list_my_unread_friend_messages(integer) to authenticated;
 grant execute on function public.mark_friend_message_read(uuid) to authenticated;
+
+-- Quick smoke tests (safe to run in SQL Editor after this script)
+-- These checks confirm objects exist and core admin RPCs are registered.
+select 'user_saves table exists' as check_name, to_regclass('public.user_saves') is not null as ok;
+select 'user_profiles table exists' as check_name, to_regclass('public.user_profiles') is not null as ok;
+select 'user_settings table exists' as check_name, to_regclass('public.user_settings') is not null as ok;
+select 'user_presence table exists' as check_name, to_regclass('public.user_presence') is not null as ok;
+select 'friend_links table exists' as check_name, to_regclass('public.friend_links') is not null as ok;
+select 'friend_messages table exists' as check_name, to_regclass('public.friend_messages') is not null as ok;
+select 'admin_activity_logs table exists' as check_name, to_regclass('public.admin_activity_logs') is not null as ok;
+
+select 'admin_list_users rpc exists' as check_name,
+  to_regprocedure('public.admin_list_users()') is not null as ok;
+select 'admin_list_activity rpc exists' as check_name,
+  to_regprocedure('public.admin_list_activity(integer,integer)') is not null as ok;
+select 'admin_list_activity_filtered rpc exists' as check_name,
+  to_regprocedure('public.admin_list_activity_filtered(integer,integer,text,text,text,timestamptz,timestamptz)') is not null as ok;
+select 'admin_set_ban rpc exists' as check_name,
+  to_regprocedure('public.admin_set_ban(uuid,boolean,text)') is not null as ok;
+select 'admin_delete_account rpc exists' as check_name,
+  to_regprocedure('public.admin_delete_account(uuid)') is not null as ok;
+
+-- Optional: should return 0 rows when not signed in as an admin.
+select count(*) as admin_list_users_preview_count from public.admin_list_users();

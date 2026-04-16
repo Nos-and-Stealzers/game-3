@@ -153,7 +153,13 @@
   }
 
   function shouldTrackStorageKey(key) {
-    return typeof key === "string" && key.indexOf(HUB_PREFIX) !== 0;
+    if (typeof key !== "string" || key.indexOf(HUB_PREFIX) === 0) {
+      return false;
+    }
+    if (/^sb-.*-auth-token$/i.test(key) || key === "supabase.auth.token") {
+      return false;
+    }
+    return true;
   }
 
   function snapshotTrackedStorage() {

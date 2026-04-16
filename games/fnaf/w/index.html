@@ -123,6 +123,63 @@
             margin: 1vh 0;
             font-size: 1.4vw;
         }
+
+        .recovery-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            color: #fff;
+            font-family: monospace;
+            padding: 20px;
+        }
+
+        .recovery-card {
+            width: min(560px, 94vw);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 10px;
+            background: rgba(12, 12, 12, 0.92);
+            padding: 16px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .recovery-card h3 {
+            margin: 0;
+            font-size: clamp(16px, 2.2vw, 22px);
+        }
+
+        .recovery-card p {
+            margin: 0;
+            color: #e3e3e3;
+            font-size: clamp(12px, 1.6vw, 15px);
+            line-height: 1.4;
+        }
+
+        .recovery-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .recovery-btn {
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 8px;
+            background: #171717;
+            color: #fff;
+            font-family: inherit;
+            padding: 8px 12px;
+            cursor: pointer;
+            min-height: 40px;
+        }
+
+        .recovery-btn.primary {
+            background: #0c6ff2;
+            border-color: #0c6ff2;
+        }
     </style>
 </head>
 
@@ -142,11 +199,22 @@
     </div>
     <div class="glitch"></div>
     <img src="resources/vignette.png" class="vignette">
+    <div id="recoveryOverlay" class="recovery-overlay" role="alert" aria-live="assertive">
+        <div class="recovery-card">
+            <h3>Game Recovery</h3>
+            <p id="recoveryMessage">A runtime issue was detected. You can try a quick recover or reload the game.</p>
+            <div class="recovery-actions">
+                <button id="recoverNowBtn" type="button" class="recovery-btn">Quick Recover</button>
+                <button id="reloadGameBtn" type="button" class="recovery-btn primary">Reload Game</button>
+                <button id="closeRecoveryBtn" type="button" class="recovery-btn">Dismiss</button>
+            </div>
+        </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="../../../js/fnaf-save-sync.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../../../js/supabase.config.js"></script>
-    <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { pagehideOnly: true, runOnStart: false, captureIndexedDb: false };</script>
+    <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { pagehideOnly: true, runOnStart: false, captureIndexedDb: true };</script>
     <script src="../../../js/cloud-autosync.js"></script>
     <script src="../../../js/fnaf-input-fix.js"></script>
 </body>
@@ -156,7 +224,18 @@
     let gametitle, runtimecanvas
     gametitle = document.title;
     runtimecanvas = "resources/fnafw.cch";
+    const recoveryOverlay = document.getElementById('recoveryOverlay');
+    const recoveryMessage = document.getElementById('recoveryMessage');
+    const recoverNowBtn = document.getElementById('recoverNowBtn');
+    const reloadGameBtn = document.getElementById('reloadGameBtn');
+    const closeRecoveryBtn = document.getElementById('closeRecoveryBtn');
     const inputStability = window.installFnafInputStability ? window.installFnafInputStability("MMFCanvas") : null;
+    const isLowSpecDevice = (typeof navigator !== 'undefined') && (
+        (typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 4) ||
+        (typeof navigator.deviceMemory === 'number' && navigator.deviceMemory > 0 && navigator.deviceMemory <= 4)
+    );
+    let autoRuntimeRestartUsed = false;
+    let runtimeStartFn = null;
     // Prevents touchscreen move
     window.addEventListener("scroll", preventMotion, false);
     window.addEventListener("touchmove", preventMotion, false);
@@ -166,16 +245,11 @@
         event.stopPropagation();
     }
     // Fullscreen Key
-    document.addEventListener('keydown', function (event) {
-        var key = (event.key || '').toLowerCase();
-        if (key !== 'f' || event.ctrlKey || event.metaKey || event.altKey) {
-            return;
-        }
+    function toggleCanvasFullscreen() {
         var canvas = document.querySelector('canvas');
         if (!canvas) {
             return;
         }
-        event.preventDefault();
         if (document.fullscreenElement) {
             if (document.exitFullscreen) {
                 document.exitFullscreen();
@@ -185,12 +259,137 @@
         if (canvas.requestFullscreen) {
             canvas.requestFullscreen();
         }
+    }
+
+    function showRecoveryOverlay(message) {
+        if (recoveryMessage) {
+            recoveryMessage.textContent = message || 'A runtime issue was detected. You can try a quick recover or reload the game.';
+        }
+        if (recoveryOverlay) {
+            recoveryOverlay.style.display = 'flex';
+        }
+    }
+
+    function hideRecoveryOverlay() {
+        if (recoveryOverlay) {
+            recoveryOverlay.style.display = 'none';
+        }
+    }
+
+    function isCanvasMostlyBlack() {
+        var canvas = document.getElementById('MMFCanvas');
+        if (!canvas || canvas.style.display === 'none' || !canvas.width || !canvas.height) {
+            return false;
+        }
+
+        var ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) {
+            return false;
+        }
+
+        var samplePoints = [
+            [canvas.width * 0.5, canvas.height * 0.5],
+            [canvas.width * 0.2, canvas.height * 0.2],
+            [canvas.width * 0.8, canvas.height * 0.2],
+            [canvas.width * 0.2, canvas.height * 0.8],
+            [canvas.width * 0.8, canvas.height * 0.8]
+        ];
+        var darkCount = 0;
+
+        for (var i = 0; i < samplePoints.length; i++) {
+            var x = Math.max(0, Math.min(canvas.width - 1, Math.floor(samplePoints[i][0])));
+            var y = Math.max(0, Math.min(canvas.height - 1, Math.floor(samplePoints[i][1])));
+            var pixel = ctx.getImageData(x, y, 1, 1).data;
+            var brightness = (pixel[0] + pixel[1] + pixel[2]) / 3;
+            if (brightness < 8) {
+                darkCount++;
+            }
+        }
+
+        return darkCount === samplePoints.length;
+    }
+
+    function quickRecover() {
+        try {
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        } catch (error) {
+        }
+
+        try {
+            window.dispatchEvent(new Event('resize'));
+            window.dispatchEvent(new Event('focus'));
+            if (inputStability) {
+                inputStability.releaseStuckInput();
+                inputStability.focusCanvas();
+            }
+        } catch (error) {
+        }
+
+        hideRecoveryOverlay();
+
+        setTimeout(function () {
+            if (!autoRuntimeRestartUsed && typeof runtimeStartFn === 'function' && isCanvasMostlyBlack()) {
+                autoRuntimeRestartUsed = true;
+                showRecoveryOverlay('Quick Recover did not clear the black screen. Attempting one automatic runtime restart...');
+                try {
+                    runtimeStartFn();
+                    setTimeout(hideRecoveryOverlay, 1200);
+                } catch (error) {
+                    showRecoveryOverlay('Auto restart failed. Please use Reload Game.');
+                }
+            }
+        }, isLowSpecDevice ? 4500 : 6000);
+    }
+
+    document.addEventListener('keydown', function (event) {
+        var key = (event.key || '').toLowerCase();
+        if (key !== 'f') {
+            return;
+        }
+        if (event.ctrlKey && event.shiftKey) {
+            event.preventDefault();
+            toggleCanvasFullscreen();
+            return;
+        }
+        if (event.ctrlKey || event.metaKey || event.altKey) {
+            return;
+        }
+        event.preventDefault();
+        toggleCanvasFullscreen();
+    });
+
+    if (recoverNowBtn) {
+        recoverNowBtn.addEventListener('click', quickRecover);
+    }
+    if (reloadGameBtn) {
+        reloadGameBtn.addEventListener('click', function () {
+            window.location.reload();
+        });
+    }
+    if (closeRecoveryBtn) {
+        closeRecoveryBtn.addEventListener('click', hideRecoveryOverlay);
+    }
+
+    window.addEventListener('error', function (event) {
+        var message = (event && event.message) ? String(event.message) : 'Runtime error detected.';
+        showRecoveryOverlay('Runtime error: ' + message + ' Try Quick Recover first, then Reload Game if needed.');
+    });
+
+    window.addEventListener('unhandledrejection', function (event) {
+        var reason = event && event.reason;
+        var message = reason && reason.message ? String(reason.message) : String(reason || 'Unhandled promise rejection');
+        showRecoveryOverlay('Runtime rejection: ' + message + ' Try Quick Recover first, then Reload Game if needed.');
     });
     // -----------------
     window.onload = function () {
         const map = new Map();
         const REQUEST_TIMEOUT_MS = 30000;
+        const BACKGROUND_REQUEST_TIMEOUT_MS = 180000;
         const MAX_REQUEST_RETRIES = 2;
+        let blackFrameStreak = 0;
+        let blackFrameWatcherId = null;
 
         function normalizePercent(percent) {
             if (!Number.isFinite(percent)) return 0;
@@ -212,11 +411,67 @@
             updateProgress('ERROR: ' + message + ' (refresh to retry)', 0);
         }
 
+        function normalizeResourcePath(value) {
+            var raw = String(value || "").trim();
+            if (!raw) {
+                return "";
+            }
+
+            try {
+                var parsed = new URL(raw, window.location.href);
+                raw = parsed.pathname || "";
+            } catch (error) {
+                raw = raw.split("?")[0].split("#")[0];
+            }
+
+            raw = raw.replace(/^\/+/, "").replace(/^\.\//, "");
+            return raw;
+        }
+
+        function resourceBasename(value) {
+            var normalized = normalizeResourcePath(value);
+            if (!normalized) {
+                return "";
+            }
+            var pieces = normalized.split("/");
+            return pieces[pieces.length - 1] || "";
+        }
+
+        function resolveMappedResourceUrl(value) {
+            var normalized = normalizeResourcePath(value);
+            if (!normalized) {
+                return "";
+            }
+
+            if (map.has(normalized)) {
+                return map.get(normalized);
+            }
+
+            var fileName = resourceBasename(normalized);
+            if (fileName && map.has(fileName)) {
+                return map.get(fileName);
+            }
+
+            return "";
+        }
+
+        function mapResource(filePath, objectUrl) {
+            var normalized = normalizeResourcePath(filePath);
+            var fileName = resourceBasename(filePath);
+
+            if (normalized) {
+                map.set(normalized, objectUrl);
+            }
+            if (fileName) {
+                map.set(fileName, objectUrl);
+            }
+        }
+
         async function fetchWithRetry(url, options = {}, retries = MAX_REQUEST_RETRIES) {
             let lastError = null;
             for (let attempt = 0; attempt <= retries; attempt++) {
                 const controller = new AbortController();
-                const timeoutMs = document.hidden ? REQUEST_TIMEOUT_MS * 6 : REQUEST_TIMEOUT_MS;
+                const timeoutMs = document.hidden ? BACKGROUND_REQUEST_TIMEOUT_MS : REQUEST_TIMEOUT_MS;
                 const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                 try {
                     const response = await fetch(url, { ...options, signal: controller.signal });
@@ -244,24 +499,20 @@
         async function intercept() {
             const ogfetch = window.fetch;
             window.fetch = async function (input, init) {
-                if (typeof input === 'string' && input.startsWith('resources/')) {
-                    const fileName = input.split('/').pop();
-                    if (map.has(fileName)) {
-                        return ogfetch(map.get(fileName), init);
-                    }
+                var requestUrl = typeof input === "string" ? input : (input && typeof input.url === "string" ? input.url : "");
+                var mappedUrl = resolveMappedResourceUrl(requestUrl);
+                if (mappedUrl) {
+                    return ogfetch(mappedUrl, init);
                 }
                 return ogfetch(input, init);
             };
 
             const ogopen = XMLHttpRequest.prototype.open;
             XMLHttpRequest.prototype.open = function (method, url) {
-                if (url.startsWith('resources/')) {
-                    const fileName = url.split('/').pop();
-                    if (map.has(fileName)) {
-                        url = map.get(fileName);
-                    }
-                }
-                return ogopen.apply(this, arguments);
+                var mappedUrl = resolveMappedResourceUrl(url);
+                var nextUrl = mappedUrl || url;
+                var args = Array.prototype.slice.call(arguments, 2);
+                return ogopen.call.apply(ogopen, [this, method, nextUrl].concat(args));
             };
 
             const types = [HTMLImageElement, HTMLAudioElement, HTMLVideoElement];
@@ -273,11 +524,9 @@
                         enumerable: true,
                         get: descriptor.get,
                         set: function (val) {
-                            if (typeof val === 'string' && val.startsWith('resources/')) {
-                                const fileName = val.split('/').pop();
-                                if (map.has(fileName)) {
-                                    val = map.get(fileName);
-                                }
+                            var mappedUrl = resolveMappedResourceUrl(val);
+                            if (mappedUrl) {
+                                val = mappedUrl;
                             }
                             descriptor.set.call(this, val);
                         }
@@ -319,7 +568,7 @@
                 const file = zip.files[files[i]];
                 const blob = await file.async("blob");
                 const url = URL.createObjectURL(blob);
-                map.set(files[i], url);
+                mapResource(files[i], url);
                 updateProgress('BOOTING UP ARCHIVE...', calculateHalfProgress(i + 1, totalFiles, 50));
             }
         }
@@ -331,7 +580,31 @@
             const script = document.createElement('script');
             script.src = 'src/Runtime.js';
             script.onload = () => {
-                new Runtime("MMFCanvas", runtimecanvas);
+                runtimeStartFn = function () {
+                    new Runtime("MMFCanvas", runtimecanvas);
+                };
+                runtimeStartFn();
+                if (blackFrameWatcherId) {
+                    clearInterval(blackFrameWatcherId);
+                }
+                var pollIntervalMs = isLowSpecDevice ? 2000 : 3000;
+                var blackStreakLimit = isLowSpecDevice ? 5 : 6;
+                blackFrameWatcherId = setInterval(function () {
+                    if (document.hidden) {
+                        blackFrameStreak = 0;
+                        return;
+                    }
+                    if (isCanvasMostlyBlack()) {
+                        blackFrameStreak++;
+                    } else {
+                        blackFrameStreak = 0;
+                    }
+
+                    if (blackFrameStreak >= blackStreakLimit) {
+                        blackFrameStreak = 0;
+                        showRecoveryOverlay('Detected a prolonged black screen after gameplay. Try Quick Recover. If that fails, use Reload Game.');
+                    }
+                }, pollIntervalMs);
             };
             script.onerror = () => {
                 showLoadError('RUNTIME LOAD FAILED');

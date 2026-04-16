@@ -64,6 +64,10 @@
   var TOAST_CONTAINER_ID = "gamehub-social-toasts";
   var FRIEND_MESSAGE_LAST_SEEN_KEY = "gamehub_friend_message_last_seen_at";
   var SOCIAL_POLL_INTERVAL_MS = 20000;
+  var DIAG_OVERLAY_ID = "gamehub-diag-overlay";
+  var DIAG_MAX_ITEMS = 120;
+  var diagLogs = [];
+  var diagVisible = false;
 
   function storageGet(key) {
     try {
@@ -404,6 +408,133 @@
     }, 7000);
   }
 
+  function addDiagLog(level, message) {
+    var text = String(message || "").trim();
+    if (!text) {
+      return;
+    }
+    diagLogs.push({
+      level: level,
+      message: text,
+      at: new Date().toISOString()
+    });
+    if (diagLogs.length > DIAG_MAX_ITEMS) {
+      diagLogs.shift();
+    }
+    renderDiagOverlay();
+  }
+
+  function ensureDiagOverlay() {
+    var root = document.getElementById(DIAG_OVERLAY_ID);
+    if (root) {
+      return root;
+    }
+
+    var style = document.createElement("style");
+    style.textContent = "" +
+      "#" + DIAG_OVERLAY_ID + "{position:fixed;inset:8px;display:none;z-index:2147483646;background:rgba(8,10,14,.96);color:#eaf0ff;border:1px solid rgba(99,118,161,.62);border-radius:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}" +
+      "#" + DIAG_OVERLAY_ID + ".show{display:grid;grid-template-rows:auto 1fr}" +
+      "#" + DIAG_OVERLAY_ID + " .head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(99,118,161,.42)}" +
+      "#" + DIAG_OVERLAY_ID + " .title{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b8c8ef}" +
+      "#" + DIAG_OVERLAY_ID + " .hint{font-size:11px;color:#96a6cc}" +
+      "#" + DIAG_OVERLAY_ID + " .body{overflow:auto;padding:10px 12px;display:grid;gap:6px}" +
+      "#" + DIAG_OVERLAY_ID + " .item{border:1px solid rgba(88,103,136,.45);border-left:3px solid #7d8fb7;background:rgba(18,23,33,.92);border-radius:8px;padding:7px 8px;line-height:1.35;font-size:12px;white-space:pre-wrap;word-break:break-word}" +
+      "#" + DIAG_OVERLAY_ID + " .item.warn{border-left-color:#f0b23d}" +
+      "#" + DIAG_OVERLAY_ID + " .item.error{border-left-color:#ff6f6f}";
+    document.head.appendChild(style);
+
+    root = document.createElement("section");
+    root.id = DIAG_OVERLAY_ID;
+    root.innerHTML = "" +
+      '<div class="head">' +
+      '<div>' +
+      '<div class="title">School Chromebook Diagnostics</div>' +
+      '<div class="hint">Ctrl+Shift+F to toggle · Captures errors and warnings</div>' +
+      '</div>' +
+      '<button type="button" id="gamehubDiagClose" style="background:#1f2738;border:1px solid rgba(99,118,161,.55);color:#dce7ff;border-radius:7px;padding:4px 8px;cursor:pointer">Close</button>' +
+      '</div>' +
+      '<div class="body" id="gamehubDiagBody"></div>';
+    document.body.appendChild(root);
+
+    var closeBtn = document.getElementById("gamehubDiagClose");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () {
+        diagVisible = false;
+        renderDiagOverlay();
+      });
+    }
+    return root;
+  }
+
+  function renderDiagOverlay() {
+    var root = ensureDiagOverlay();
+    var body = document.getElementById("gamehubDiagBody");
+    if (!root || !body) {
+      return;
+    }
+    root.classList.toggle("show", diagVisible);
+    window.__GAMEHUB_DIAG_OVERLAY_ACTIVE__ = diagVisible;
+    if (!diagVisible) {
+      return;
+    }
+
+    if (!diagLogs.length) {
+      body.innerHTML = '<div class="item">No warnings/errors captured yet.</div>';
+      return;
+    }
+
+    body.innerHTML = diagLogs.slice().reverse().map(function (entry) {
+      var stamp = new Date(entry.at).toLocaleTimeString();
+      var safe = String(entry.message)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      return '<div class="item ' + entry.level + '">[' + stamp + '] ' + entry.level.toUpperCase() + '\n' + safe + '</div>';
+    }).join("");
+  }
+
+  function installDiagnosticsOverlay() {
+    if (window.__GAMEHUB_DIAG_OVERLAY_INSTALLED__) {
+      return;
+    }
+    window.__GAMEHUB_DIAG_OVERLAY_INSTALLED__ = true;
+
+    var originalWarn = console.warn;
+    var originalError = console.error;
+    console.warn = function () {
+      try { addDiagLog("warn", Array.prototype.slice.call(arguments).map(String).join(" ")); } catch (_error) {}
+      return originalWarn.apply(console, arguments);
+    };
+    console.error = function () {
+      try { addDiagLog("error", Array.prototype.slice.call(arguments).map(String).join(" ")); } catch (_error) {}
+      return originalError.apply(console, arguments);
+    };
+
+    window.addEventListener("error", function (event) {
+      var msg = event && (event.message || (event.error && event.error.message)) ? (event.message || event.error.message) : "Unhandled error";
+      addDiagLog("error", String(msg));
+    });
+    window.addEventListener("unhandledrejection", function (event) {
+      var reason = event && event.reason;
+      var msg = reason && reason.message ? reason.message : String(reason || "Unhandled rejection");
+      addDiagLog("warn", msg);
+    });
+
+    document.addEventListener("keydown", function (event) {
+      var key = (event.key || "").toLowerCase();
+      if (key !== "f" || !event.ctrlKey || !event.shiftKey) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === "function") {
+        event.stopImmediatePropagation();
+      }
+      diagVisible = !diagVisible;
+      renderDiagOverlay();
+    }, true);
+  }
+
   function inferCurrentGameContext() {
     var current = window.__GAMEHUB_CURRENT_GAME__ || {};
     if (current && typeof current === "object") {
@@ -438,11 +569,23 @@
     }
 
     var context = inferCurrentGameContext();
+    var isHidden = document.visibilityState === "hidden";
+    var isFocused = typeof document.hasFocus === "function" ? document.hasFocus() : true;
+    var presenceStatus = "online";
+
+    if (isHidden) {
+      presenceStatus = "background";
+    } else if (!isFocused) {
+      presenceStatus = "away";
+    } else if (context.gameTitle) {
+      presenceStatus = "playing";
+    }
+
     try {
       await supabaseClient.rpc("upsert_my_presence", {
         current_game_id: context.gameId || null,
         current_game_title: context.gameTitle || null,
-        status: context.gameTitle ? "playing" : "online",
+        status: presenceStatus,
         message_opt_in: true
       });
     } catch (error) {
@@ -862,6 +1005,9 @@
   }
 
   function start() {
+    window.__GAMEHUB_SOCIAL_SYNC_ACTIVE__ = true;
+    installDiagnosticsOverlay();
+
     if (timer) {
       clearInterval(timer);
     }

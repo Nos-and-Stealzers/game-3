@@ -74,16 +74,30 @@ The script reports status codes and key headers like `X-Frame-Options` and `Cont
 1. Create or open your Supabase project.
 2. In Supabase SQL Editor, run `supabase/setup.sql`.
 3. In Supabase Auth settings, enable Email auth.
-4. Open `js/supabase.config.js` and fill in:
+4. In Supabase Auth -> Email Templates, make the OTP email code-first (not link-first).
+	- Subject suggestion: `Your Classroom 6X verification code`
+	- Body suggestion:
+
+	```text
+	Use this code to verify your sign-in:
+
+	{{ .Token }}
+
+	This code expires soon. If you did not request this, you can ignore this email.
+	```
+	- Keep `{{ .Token }}` in the template so code verification works.
+5. Open `js/supabase.config.js` and fill in:
 	- `url`: your Supabase project URL
 	- `anonKey`: your Supabase anon public key
    - Or open `account.html` and paste these into `Supabase setup`, then click `Save Setup` (stored in local browser storage)
-5. Reload the site and use Settings -> Account Cloud Save:
+6. Reload the site and use Settings -> Account Cloud Save:
 	- Click `Save your data` to open the dedicated sign-in page
 	- Sign Up or Sign In on `account.html`
+	- Enter the emailed verification code on `account.html` (no redirect required)
 	- Toggle `Cloud Auto Sync` on/off as desired
 	- `Cloud Save` to upload local favorites/settings/game data snapshot
 	- `Cloud Load` to pull saved data back
+	- Important settings changes require verification; once verified, the session stays trusted for 30 minutes
 	- After sign-in, auto-sync runs every 60 seconds on hub/account/player pages and local game pages (`snow-rider`, `sweet-bakery`, `minecraft-eaglercraft`, and local FNAF pages)
 	- `Cloud Auto Sync Status` in hub/account shows the latest autosave heartbeat
 	- Cloud payload now includes safe extra localStorage + game save map + bounded IndexedDB + sessionStorage + same-origin cookies + Supabase auth token keys for login continuity
@@ -91,6 +105,33 @@ The script reports status codes and key headers like `X-Frame-Options` and `Cont
 If config is empty, the UI will show `Supabase: not configured.` and stay local-only.
 
 Browser security limits still apply: data from other domains/websites cannot be read by this site, and HttpOnly/secure cross-site cookies are not accessible to JavaScript for backup/restore.
+
+### Required Supabase tasks after this update
+
+1. Re-run the latest SQL script in Supabase SQL Editor:
+	- Use `supabase/setup.full.sql` (recommended) so admin RPCs and grants are present.
+	- This script is rerunnable and will refresh policies/functions.
+2. In Supabase Auth -> Sign In / Providers -> Email:
+	- Keep email OTP enabled.
+	- Keep magic-link fallback disabled if you want strict code-only flow.
+3. In Supabase Auth -> Email Templates:
+	- Use a code-first template that includes `{{ .Token }}`.
+	- Suggested subject: `Your Classroom 6X verification code`.
+4. Make sure your admin account email is listed in:
+	- `ADMIN_EMAILS` in `account.html`
+	- `ADMIN_EMAILS` in `admin.html`
+	- `public.is_admin_email(...)` in `supabase/setup.full.sql`
+5. Test once with a real account:
+	- Sign in on `account.html` using a code.
+	- Change profile/security settings on `settings.html` and verify the 30-minute trusted session window.
+	- Open `admin.html` and confirm user list + moderation actions load.
+
+### Migration order note (important)
+
+- Keep dependent RPCs in safe create order when editing SQL scripts.
+- If one function calls another, define the callee first or keep the caller self-contained.
+- Example: `admin_list_activity` should not fail if `admin_list_activity_filtered` is moved/edited later.
+- Running `supabase/setup.full.sql` from top to bottom avoids most order issues.
 
 ### Prompt for Supabase AI
 

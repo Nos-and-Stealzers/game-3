@@ -18,6 +18,14 @@
       return "sweet-bakery-local";
     }
 
+    if (/\/games\/mini\/parkcore\/index\.html$/i.test(path)) {
+      return "parkcore-sprint";
+    }
+
+    if (/\/games\/mini\/tower-defense\/index\.html$/i.test(path)) {
+      return "tower-defense-grid";
+    }
+
     if (/\/games\/minecraft\/eaglercraft\/index\.html$/i.test(path)) {
       return "minecraft-eaglercraft";
     }
@@ -65,7 +73,13 @@
   }
 
   function shouldTrackStorageKey(key) {
-    return typeof key === "string" && key.indexOf(HUB_PREFIX) !== 0;
+    if (typeof key !== "string" || key.indexOf(HUB_PREFIX) === 0) {
+      return false;
+    }
+    if (/^sb-.*-auth-token$/i.test(key) || key === "supabase.auth.token") {
+      return false;
+    }
+    return true;
   }
 
   function snapshotTrackedStorage() {

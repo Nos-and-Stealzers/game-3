@@ -146,9 +146,10 @@
     <script src="../../../js/fnaf-save-sync.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../../../js/supabase.config.js"></script>
-    <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { pagehideOnly: true, runOnStart: false, captureIndexedDb: false };</script>
+    <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { pagehideOnly: true, runOnStart: false, captureIndexedDb: true };</script>
     <script src="../../../js/cloud-autosync.js"></script>
     <script src="../../../js/fnaf-input-fix.js"></script>
+    <script src="../../../js/fnaf-recovery.js"></script>
 </body>
 <!--Made by irv77-->
 <script>
@@ -157,6 +158,19 @@
     gametitle = document.title;
     runtimecanvas = "resources/fnafps.cch";
     const inputStability = window.installFnafInputStability ? window.installFnafInputStability("MMFCanvas") : null;
+    const recovery = window.createFnafRecovery ? window.createFnafRecovery({
+        canvasId: "MMFCanvas",
+        inputStability: inputStability,
+        restartRuntime: function () {
+            new Runtime("MMFCanvas", runtimecanvas);
+            if (recovery) {
+                recovery.onRuntimeStarted();
+            }
+        }
+    }) : null;
+    if (recovery) {
+        recovery.bind();
+    }
     // Prevents touchscreen move
     window.addEventListener("scroll", preventMotion, false);
     window.addEventListener("touchmove", preventMotion, false);
@@ -167,6 +181,9 @@
     }
     // Fullscreen Key
     document.addEventListener('keydown', function (event) {
+        if (window.__GAMEHUB_FNAF_RECOVERY_ACTIVE__) {
+            return;
+        }
         var key = (event.key || '').toLowerCase();
         if (key !== 'f' || event.ctrlKey || event.metaKey || event.altKey) {
             return;
@@ -332,6 +349,9 @@
             script.src = 'src/Runtime.js';
             script.onload = () => {
                 new Runtime("MMFCanvas", runtimecanvas);
+                if (recovery) {
+                    recovery.onRuntimeStarted();
+                }
             };
             script.onerror = () => {
                 showLoadError('RUNTIME LOAD FAILED');
