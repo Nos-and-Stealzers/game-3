@@ -59,6 +59,11 @@
   var loadedUserId = "";
   var timer = null;
   var client = null;
+  var socialTimer = null;
+  var socialInFlight = false;
+  var TOAST_CONTAINER_ID = "gamehub-social-toasts";
+  var FRIEND_MESSAGE_LAST_SEEN_KEY = "gamehub_friend_message_last_seen_at";
+  var SOCIAL_POLL_INTERVAL_MS = 20000;
 
   function storageGet(key) {
     try {
@@ -338,6 +343,197 @@
       } catch (error) {
       }
     });
+  }
+
+  function ensureToastHost() {
+    var host = document.getElementById(TOAST_CONTAINER_ID);
+    if (host) {
+      return host;
+    }
+
+    host = document.createElement("div");
+    host.id = TOAST_CONTAINER_ID;
+    host.style.position = "fixed";
+    host.style.right = "16px";
+    host.style.bottom = "16px";
+    host.style.zIndex = "2147483647";
+    host.style.display = "grid";
+    host.style.gap = "8px";
+    host.style.pointerEvents = "none";
+    host.style.maxWidth = "min(360px, calc(100vw - 32px))";
+    document.body.appendChild(host);
+    return host;
+  }
+
+  function showToast(title, body) {
+    var host = ensureToastHost();
+    var toast = document.createElement("div");
+    toast.style.pointerEvents = "auto";
+    toast.style.border = "1px solid rgba(130, 160, 220, 0.45)";
+    toast.style.borderRadius = "14px";
+    toast.style.background = "rgba(16, 24, 38, 0.96)";
+    toast.style.color = "#fff";
+    toast.style.boxShadow = "0 18px 32px rgba(0, 0, 0, 0.28)";
+    toast.style.padding = "12px 14px";
+    toast.style.backdropFilter = "blur(10px)";
+    toast.style.display = "grid";
+    toast.style.gap = "4px";
+
+    var titleEl = document.createElement("div");
+    titleEl.style.fontWeight = "800";
+    titleEl.style.fontSize = "0.92rem";
+    titleEl.textContent = title;
+
+    var bodyEl = document.createElement("div");
+    bodyEl.style.fontSize = "0.84rem";
+    bodyEl.style.lineHeight = "1.4";
+    bodyEl.style.color = "rgba(255, 255, 255, 0.88)";
+    bodyEl.textContent = body;
+
+    toast.appendChild(titleEl);
+    toast.appendChild(bodyEl);
+    host.appendChild(toast);
+
+    setTimeout(function () {
+      if (toast.parentNode === host) {
+        host.removeChild(toast);
+      }
+      if (!host.children.length && host.parentNode) {
+        host.parentNode.removeChild(host);
+      }
+    }, 7000);
+  }
+
+  function inferCurrentGameContext() {
+    var current = window.__GAMEHUB_CURRENT_GAME__ || {};
+    if (current && typeof current === "object") {
+      return {
+        gameId: typeof current.id === "string" ? current.id : "",
+        gameTitle: typeof current.title === "string" ? current.title : (typeof current.name === "string" ? current.name : "")
+      };
+    }
+
+    var path = String(window.location.pathname || "").toLowerCase();
+    var gameId = "";
+    if (/\/snow-rider\.html$/i.test(path)) {
+      gameId = "snow-rider";
+    } else if (/\/games\/sweet-bakery\/index\.html$/i.test(path)) {
+      gameId = "sweet-bakery";
+    } else if (/\/games\/minecraft\/eaglercraft\/index\.html$/i.test(path)) {
+      gameId = "minecraft-eaglercraft";
+    } else if (/\/games\/fnaf\//i.test(path)) {
+      var parts = path.split("/");
+      gameId = parts.length > 2 ? parts[parts.length - 2] || parts[parts.length - 1] : "fnaf";
+    }
+
+    return {
+      gameId: gameId,
+      gameTitle: String(document.title || "").trim()
+    };
+  }
+
+  async function syncMyPresence(supabaseClient, user) {
+    if (!supabaseClient || !user || !user.id || typeof supabaseClient.rpc !== "function") {
+      return;
+    }
+
+    var context = inferCurrentGameContext();
+    try {
+      await supabaseClient.rpc("upsert_my_presence", {
+        current_game_id: context.gameId || null,
+        current_game_title: context.gameTitle || null,
+        status: context.gameTitle ? "playing" : "online",
+        message_opt_in: true
+      });
+    } catch (error) {
+    }
+  }
+
+  function getFriendMessageCursor() {
+    var raw = storageGet(FRIEND_MESSAGE_LAST_SEEN_KEY);
+    var time = Date.parse(raw || "");
+    return isNaN(time) ? 0 : time;
+  }
+
+  function setFriendMessageCursor(timeValue) {
+    if (!timeValue) {
+      return;
+    }
+    storageSet(FRIEND_MESSAGE_LAST_SEEN_KEY, new Date(timeValue).toISOString());
+  }
+
+  async function pollUnreadFriendMessages(supabaseClient, user) {
+    if (!supabaseClient || !user || !user.id || typeof supabaseClient.rpc !== "function") {
+      return;
+    }
+
+    try {
+      var result = await supabaseClient.rpc("list_my_unread_friend_messages", { limit_count: 10 });
+      if (result && result.error) {
+        return;
+      }
+
+      var rows = Array.isArray(result && result.data) ? result.data : [];
+      if (!rows.length) {
+        return;
+      }
+
+      var lastSeen = getFriendMessageCursor();
+      var newestSeen = lastSeen;
+
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i] || {};
+        var createdAt = Date.parse(row.created_at || "") || 0;
+        if (!createdAt || createdAt <= lastSeen) {
+          continue;
+        }
+
+        var senderName = String(row.sender_display_name || row.sender_email || "Friend");
+        var senderGame = String(row.sender_current_game_title || "").trim();
+        var body = String(row.body || "").trim();
+        var title = senderGame ? (senderName + " · " + senderGame) : senderName;
+        showToast(title, body || "New friend message received.");
+
+        newestSeen = Math.max(newestSeen, createdAt);
+        if (row.message_id) {
+          try {
+            await supabaseClient.rpc("mark_friend_message_read", { message_id: row.message_id });
+          } catch (markError) {
+          }
+        }
+      }
+
+      if (newestSeen > lastSeen) {
+        setFriendMessageCursor(newestSeen);
+      }
+    } catch (error) {
+    }
+  }
+
+  async function runSocialSync() {
+    if (socialInFlight) {
+      return;
+    }
+
+    var supabaseClient = await getSupabaseClient();
+    if (!supabaseClient) {
+      return;
+    }
+
+    socialInFlight = true;
+    try {
+      var auth = await supabaseClient.auth.getUser();
+      var user = auth && auth.data ? auth.data.user : null;
+      if (!user) {
+        return;
+      }
+
+      await syncMyPresence(supabaseClient, user);
+      await pollUnreadFriendMessages(supabaseClient, user);
+    } catch (error) {
+    } finally {
+      socialInFlight = false;
+    }
   }
 
   function applyExtraLocalStorage(extraLocalStorage) {
@@ -620,6 +816,8 @@
       if (applied) {
         storageSet(CLOUD_LAST_SYNC_KEY, new Date().toISOString());
       }
+      syncMyPresence(supabaseClient, user);
+      pollUnreadFriendMessages(supabaseClient, user);
       return applied;
     } catch (error) {
       return false;
@@ -656,6 +854,7 @@
       }
 
       storageSet(CLOUD_LAST_SYNC_KEY, new Date().toISOString());
+      await syncMyPresence(supabaseClient, user);
     } catch (error) {
     } finally {
       inFlight = false;
@@ -681,11 +880,15 @@
       timer = setInterval(runCloudSync, AUTOSYNC_INTERVAL_MS);
     }
 
+    socialTimer = setInterval(runSocialSync, SOCIAL_POLL_INTERVAL_MS);
+    runSocialSync();
+
     window.addEventListener("pagehide", runCloudSync);
     window.addEventListener("beforeunload", runCloudSync);
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") {
         runCloudSync();
+        runSocialSync();
       }
     });
   }

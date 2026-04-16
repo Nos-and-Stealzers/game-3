@@ -55,6 +55,189 @@
       overflow: hidden;
     }
 
+    .admin-frame {
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .admin-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tab-btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f7fbff;
+      color: #27406d;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: .84rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .tab-panel[hidden] {
+      display: none !important;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fff, #f8fbff);
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .card .label {
+      color: var(--muted);
+      font-size: .74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .card .value {
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .card .hint {
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.35;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(29, 49, 97, 0.06);
+      padding: 12px;
+    }
+
+    .panel h2 {
+      margin: 0 0 4px;
+      font-size: 1rem;
+    }
+
+    .panel .subtle {
+      margin: 0;
+      color: var(--muted);
+      font-size: .88rem;
+      line-height: 1.4;
+    }
+
+    .panel-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .select {
+      border: 1px solid #c2d2ef;
+      border-radius: 10px;
+      padding: 9px 11px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+      font-weight: 700;
+    }
+
+    .toolbar-note {
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.3;
+      margin: 0;
+    }
+
+    .stats-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .stats-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8fbff;
+      font-size: .86rem;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .stats-list span:last-child {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .utility-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .utility-box {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f8fbff;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .utility-box strong {
+      color: var(--text);
+      font-size: .92rem;
+    }
+
+    .utility-box p {
+      margin: 0;
+      color: var(--muted);
+      font-size: .84rem;
+      line-height: 1.35;
+    }
+
+    .notice {
+      border-radius: 12px;
+      border: 1px solid #c8d7f4;
+      background: #eef5ff;
+      color: #31548f;
+      padding: 10px 12px;
+      font-size: .88rem;
+      font-weight: 700;
+    }
+
     .top {
       padding: 16px;
       border-bottom: 1px solid var(--line);
@@ -104,15 +287,6 @@
       background: var(--danger-bg);
       border-color: var(--danger-line);
       color: #8c2f2f;
-    }
-
-    .controls {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
     }
 
     .input {
@@ -227,6 +401,18 @@
       min-height: 32px;
     }
 
+    .table-panel {
+      overflow: hidden;
+      display: grid;
+      gap: 10px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
     .btn.danger {
       border-color: #e8a9a9;
       background: #ffefee;
@@ -240,15 +426,30 @@
       line-height: 1.3;
     }
 
+    .inline-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .inline-actions .btn {
+      min-height: 36px;
+    }
+
     @media (max-width: 860px) {
-      .controls {
-        flex-direction: column;
-        align-items: stretch;
+      .tab-btn,
+      .inline-actions .btn,
+      .inline-actions a.btn {
+        width: 100%;
       }
 
-      .controls .btn,
-      .controls a.btn {
-        width: 100%;
+      .dashboard-grid,
+      .utility-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .input {
+        min-width: 0;
       }
     }
   </style>
@@ -257,31 +458,120 @@
   <main class="shell">
     <section class="top">
       <h1 class="title">Admin Account Manager</h1>
-      <p class="sub">Ban, unban, and delete accounts. Admin access is restricted to your approved admin emails only.</p>
+      <p class="sub">Ban, unban, and delete accounts. Admin access is restricted to your approved admin emails only, with quick stats and utility tabs for faster review.</p>
       <p id="status" class="status">Checking authentication...</p>
     </section>
 
-    <section class="controls">
-      <input id="searchInput" class="input" type="search" placeholder="Search email...">
-      <button id="refreshBtn" type="button" class="btn primary">Refresh</button>
-      <a href="index.html" class="btn">Back to Hub</a>
-      <a href="account.html" class="btn">Account</a>
-    </section>
+    <section class="admin-frame">
+      <nav class="admin-tabs" aria-label="Admin sections">
+        <button type="button" class="tab-btn active" data-admin-tab="overview">Overview</button>
+        <button type="button" class="tab-btn" data-admin-tab="users">Users</button>
+        <button type="button" class="tab-btn" data-admin-tab="tools">Tools</button>
+      </nav>
 
-    <section class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Created</th>
-            <th>Last Sign-In</th>
-            <th>Status</th>
-            <th>Reason</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
+      <section class="tab-panel" data-admin-tab-panel="overview">
+        <div class="dashboard-grid">
+          <article class="card">
+            <div class="label">Total users</div>
+            <div id="statTotal" class="value">0</div>
+            <div class="hint">All accounts returned by the admin list RPC.</div>
+          </article>
+          <article class="card">
+            <div class="label">Active</div>
+            <div id="statActive" class="value">0</div>
+            <div class="hint">Accounts not currently banned.</div>
+          </article>
+          <article class="card">
+            <div class="label">Banned</div>
+            <div id="statBanned" class="value">0</div>
+            <div class="hint">Accounts blocked from sign-in.</div>
+          </article>
+          <article class="card">
+            <div class="label">Recent sign-ins</div>
+            <div id="statRecent" class="value">0</div>
+            <div class="hint">Users with a sign-in during the last 7 days.</div>
+          </article>
+        </div>
+
+        <div class="panel-stack" style="margin-top: 12px;">
+          <section class="panel">
+            <h2>Moderation Snapshot</h2>
+            <p class="subtle">A quick scan of the user list before diving into actions.</p>
+            <ul id="summaryList" class="stats-list"></ul>
+          </section>
+          <section class="panel">
+            <h2>Quick Actions</h2>
+            <p class="subtle">Refresh the user list, export the visible rows, or jump to account sign-in.</p>
+            <div class="inline-actions">
+              <button id="refreshBtn" type="button" class="btn primary">Refresh</button>
+              <button id="exportBtn" type="button" class="btn">Export CSV</button>
+              <a href="account.html" class="btn">Account</a>
+              <a href="index.html" class="btn">Back to Hub</a>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-admin-tab-panel="users" hidden>
+        <section class="panel table-panel">
+          <h2>Accounts</h2>
+          <p class="subtle">Search, filter, and moderate accounts from one place.</p>
+          <div class="filters">
+            <input id="searchInput" class="input" type="search" placeholder="Search email...">
+            <select id="statusFilter" class="select">
+              <option value="all">All statuses</option>
+              <option value="active">Active only</option>
+              <option value="banned">Banned only</option>
+            </select>
+            <select id="sortSelect" class="select">
+              <option value="recent">Sort: Recent sign-ins</option>
+              <option value="created">Sort: Newest accounts</option>
+              <option value="email">Sort: Email A-Z</option>
+            </select>
+          </div>
+          <p class="toolbar-note">The table updates instantly as you type. Use the status filter to narrow down active or banned users.</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Created</th>
+                  <th>Last Sign-In</th>
+                  <th>Status</th>
+                  <th>Reason</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-panel" data-admin-tab-panel="tools" hidden>
+        <div class="utility-grid">
+          <article class="panel utility-box">
+            <strong>Admin allowlist</strong>
+            <p>These emails can access the panel. Add or remove accounts in the script if needed.</p>
+            <div id="allowlistList"></div>
+          </article>
+          <article class="panel utility-box">
+            <strong>Visible user export</strong>
+            <p>Export the currently filtered rows from the Users tab as CSV for offline review.</p>
+            <button id="exportVisibleBtn" type="button" class="btn primary">Export visible rows</button>
+          </article>
+          <article class="panel utility-box">
+            <strong>Audit note</strong>
+            <p>Write down a summary before making destructive changes. It helps keep moderation decisions consistent.</p>
+            <textarea id="auditNote" class="input" rows="4" placeholder="Reason, context, follow-up"></textarea>
+          </article>
+          <article class="panel utility-box">
+            <strong>Session note</strong>
+            <p>Useful when you want to keep a short record during a moderation pass.</p>
+            <div id="sessionStatus" class="notice">No action selected yet.</div>
+          </article>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -299,9 +589,24 @@
     var rowsEl = document.getElementById("rows");
     var searchInput = document.getElementById("searchInput");
     var refreshBtn = document.getElementById("refreshBtn");
+    var exportBtn = document.getElementById("exportBtn");
+    var exportVisibleBtn = document.getElementById("exportVisibleBtn");
+    var statusFilter = document.getElementById("statusFilter");
+    var sortSelect = document.getElementById("sortSelect");
+    var auditNote = document.getElementById("auditNote");
+    var sessionStatus = document.getElementById("sessionStatus");
+    var summaryList = document.getElementById("summaryList");
+    var allowlistList = document.getElementById("allowlistList");
+    var statTotal = document.getElementById("statTotal");
+    var statActive = document.getElementById("statActive");
+    var statBanned = document.getElementById("statBanned");
+    var statRecent = document.getElementById("statRecent");
+    var adminTabs = Array.prototype.slice.call(document.querySelectorAll("[data-admin-tab]"));
+    var adminTabPanels = Array.prototype.slice.call(document.querySelectorAll("[data-admin-tab-panel]"));
 
     var supabaseClient = null;
     var allUsers = [];
+    var lastLoadedAt = "";
 
     function storageGet(key) {
       try {
@@ -316,6 +621,25 @@
         return false;
       }
       return !!ADMIN_EMAILS[email.trim().toLowerCase()];
+    }
+
+    function getCurrentAuditNote() {
+      return String(auditNote.value || "").trim();
+    }
+
+    function setSessionStatus(message) {
+      sessionStatus.textContent = message;
+    }
+
+    function setActiveAdminTab(tabName) {
+      var activeTab = ["overview", "users", "tools"].indexOf(tabName) !== -1 ? tabName : "overview";
+      adminTabs.forEach(function (button) {
+        var isActive = button.getAttribute("data-admin-tab") === activeTab;
+        button.classList.toggle("active", isActive);
+      });
+      adminTabPanels.forEach(function (panel) {
+        panel.hidden = panel.getAttribute("data-admin-tab-panel") !== activeTab;
+      });
     }
 
     function setStatus(message, state) {
@@ -357,22 +681,132 @@
       return new Date(time).toLocaleString();
     }
 
+    function parseTime(value) {
+      var time = Date.parse(value || "");
+      return isNaN(time) ? 0 : time;
+    }
+
+    function getUserState(row) {
+      return row && row.banned ? "banned" : "active";
+    }
+
+    function getRecentSignInCount(list) {
+      var weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      return list.filter(function (row) {
+        return parseTime(row.last_sign_in_at) >= weekAgo;
+      }).length;
+    }
+
     function getFilteredUsers() {
       var term = searchInput.value.trim().toLowerCase();
-      if (!term) {
-        return allUsers.slice();
-      }
-      return allUsers.filter(function (row) {
-        return String(row.email || "").toLowerCase().indexOf(term) !== -1;
+      var status = statusFilter.value || "all";
+      var sortValue = sortSelect.value || "recent";
+
+      var filtered = allUsers.filter(function (row) {
+        var matchesText = !term || String(row.email || "").toLowerCase().indexOf(term) !== -1;
+        var matchesStatus = status === "all" || getUserState(row) === status;
+        return matchesText && matchesStatus;
       });
+
+      filtered.sort(function (a, b) {
+        if (sortValue === "email") {
+          return String(a.email || "").localeCompare(String(b.email || ""));
+        }
+        if (sortValue === "created") {
+          return parseTime(b.created_at) - parseTime(a.created_at);
+        }
+        return parseTime(b.last_sign_in_at) - parseTime(a.last_sign_in_at);
+      });
+
+      return filtered;
+    }
+
+    function renderOverview(filteredUsers) {
+      var total = allUsers.length;
+      var activeCount = allUsers.filter(function (row) { return !row.banned; }).length;
+      var bannedCount = allUsers.filter(function (row) { return !!row.banned; }).length;
+      var recentCount = getRecentSignInCount(allUsers);
+
+      statTotal.textContent = String(total);
+      statActive.textContent = String(activeCount);
+      statBanned.textContent = String(bannedCount);
+      statRecent.textContent = String(recentCount);
+
+      var topUsers = (filteredUsers && filteredUsers.length ? filteredUsers : allUsers).slice(0, 5);
+      summaryList.innerHTML = topUsers.length ? topUsers.map(function (row) {
+        var statusLabel = row.banned ? "Banned" : "Active";
+        var secondary = row.banned && row.ban_reason ? row.ban_reason : formatDate(row.last_sign_in_at);
+        return '<li><span>' + escapeHtml(row.email || "(no email)") + '</span><span>' + escapeHtml(statusLabel + " · " + secondary) + '</span></li>';
+      }).join("") : '<li><span>No accounts match the current filters.</span><span>Try another search.</span></li>';
+
+      setSessionStatus("Loaded " + total + " accounts" + (lastLoadedAt ? " at " + lastLoadedAt : ".") + (getCurrentAuditNote() ? " Audit note ready." : ""));
+    }
+
+    function renderAllowlist() {
+      allowlistList.innerHTML = Object.keys(ADMIN_EMAILS).map(function (email) {
+        return '<div class="badge" style="margin: 0 6px 6px 0;">' + escapeHtml(email) + '</div>';
+      }).join("");
+    }
+
+    function toCsv(rows) {
+      var headers = ["email", "created_at", "last_sign_in_at", "banned", "ban_reason"];
+      var lines = [headers.join(",")];
+      rows.forEach(function (row) {
+        var values = [row.email, row.created_at, row.last_sign_in_at, row.banned ? "yes" : "no", row.ban_reason || ""];
+        lines.push(values.map(function (value) {
+          var text = String(value == null ? "" : value).replace(/"/g, '""');
+          return '"' + text + '"';
+        }).join(","));
+      });
+      return lines.join("\n");
+    }
+
+    function downloadText(filename, content) {
+      var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function copyText(text) {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        return navigator.clipboard.writeText(text);
+      }
+      var temp = document.createElement("textarea");
+      temp.value = text;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand("copy");
+      temp.remove();
+      return Promise.resolve();
     }
 
     function renderRows() {
       var filtered = getFilteredUsers();
       if (!filtered.length) {
         rowsEl.innerHTML = '<tr><td colspan="6" class="small">No accounts found.</td></tr>';
+        renderOverview(filtered);
         return;
       }
+
+      var status = statusFilter.value || "all";
+      var sortValue = sortSelect.value || "recent";
+      filtered = filtered.filter(function (row) {
+        return status === "all" || getUserState(row) === status;
+      }).sort(function (a, b) {
+        if (sortValue === "email") {
+          return String(a.email || "").localeCompare(String(b.email || ""));
+        }
+        if (sortValue === "created") {
+          return parseTime(b.created_at) - parseTime(a.created_at);
+        }
+        return parseTime(b.last_sign_in_at) - parseTime(a.last_sign_in_at);
+      });
 
       rowsEl.innerHTML = filtered.map(function (row) {
         var statusBadge = row.banned
@@ -388,6 +822,7 @@
           '<td class="small">' + escapeHtml(row.ban_reason || '-') + '</td>',
           '<td>',
           '<div class="row-actions">',
+          '<button type="button" class="btn" data-action="copy">Copy</button>',
           row.banned
             ? '<button type="button" class="btn" data-action="unban">Unban</button>'
             : '<button type="button" class="btn" data-action="ban">Ban</button>',
@@ -397,6 +832,8 @@
           '</tr>'
         ].join('');
       }).join('');
+
+      renderOverview(filtered);
     }
 
     function escapeHtml(value) {
@@ -415,6 +852,7 @@
         throw result.error;
       }
       allUsers = Array.isArray(result.data) ? result.data : [];
+      lastLoadedAt = new Date().toLocaleString();
       renderRows();
       setStatus("Loaded " + allUsers.length + " account(s).", "ok");
     }
@@ -467,15 +905,22 @@
       }
 
       try {
-        if (action === "ban") {
+        if (action === "copy") {
+          await copyText(email);
+          setStatus("Copied email: " + email, "ok");
+          setSessionStatus("Copied email for audit.");
+        } else if (action === "ban") {
           await setUserBan(userId, true);
           setStatus("User banned: " + email, "ok");
+          setSessionStatus("Ban action recorded.");
         } else if (action === "unban") {
           await setUserBan(userId, false);
           setStatus("User unbanned: " + email, "ok");
+          setSessionStatus("Unban action recorded.");
         } else if (action === "delete") {
           await deleteUser(userId, email);
           setStatus("User deleted: " + email, "ok");
+          setSessionStatus("Delete action recorded.");
         }
         await fetchUsers();
       } catch (error) {
@@ -484,6 +929,14 @@
     });
 
     searchInput.addEventListener("input", renderRows);
+    statusFilter.addEventListener("change", renderRows);
+    sortSelect.addEventListener("change", renderRows);
+
+    adminTabs.forEach(function (button) {
+      button.addEventListener("click", function () {
+        setActiveAdminTab(button.getAttribute("data-admin-tab") || "overview");
+      });
+    });
 
     refreshBtn.addEventListener("click", async function () {
       try {
@@ -491,6 +944,22 @@
       } catch (error) {
         setStatus(error && error.message ? error.message : "Unable to refresh users.", "error");
       }
+    });
+
+    exportBtn.addEventListener("click", function () {
+      downloadText("admin-users.csv", toCsv(allUsers));
+      setSessionStatus("Exported all loaded accounts.");
+    });
+
+    exportVisibleBtn.addEventListener("click", function () {
+      downloadText("admin-users-visible.csv", toCsv(getFilteredUsers().filter(function (row) {
+        return (statusFilter.value || "all") === "all" || getUserState(row) === statusFilter.value;
+      })));
+      setSessionStatus("Exported filtered accounts.");
+    });
+
+    auditNote.addEventListener("input", function () {
+      setSessionStatus(getCurrentAuditNote() ? "Audit note updated." : "No action selected yet.");
     });
 
     async function init() {
@@ -501,6 +970,8 @@
       }
 
       supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+      renderAllowlist();
+      setActiveAdminTab("overview");
       try {
         var auth = await supabaseClient.auth.getUser();
         var user = auth && auth.data ? auth.data.user : null;
@@ -517,6 +988,7 @@
           return;
         }
 
+        setSessionStatus("Signed in as " + email + ".");
         await fetchUsers();
       } catch (error) {
         setStatus(error && error.message ? error.message : "Admin panel init failed.", "error");

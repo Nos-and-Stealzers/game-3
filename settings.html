@@ -102,6 +102,532 @@
             padding: 20px 0 34px;
         }
 
+        .settings-frame {
+            display: grid;
+            grid-template-columns: 240px minmax(0, 1fr);
+            gap: 12px;
+            align-items: start;
+        }
+
+        .settings-tabs {
+            position: sticky;
+            top: 16px;
+            display: grid;
+            gap: 8px;
+            padding: 12px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(12px);
+            box-shadow: var(--panel-shadow);
+        }
+
+        body[data-theme="gray"] .settings-tabs,
+        body[data-theme="black"] .settings-tabs {
+            background: rgba(28, 33, 42, 0.78);
+        }
+
+        .tab-label {
+            margin: 0 0 4px;
+            color: var(--muted);
+            font-size: 0.74rem;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .tab-button {
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--muted);
+            border-radius: 12px;
+            padding: 11px 12px;
+            font: inherit;
+            font-weight: 800;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease, transform 0.14s ease;
+        }
+
+        .tab-button:hover {
+            background: rgba(0, 115, 255, 0.08);
+            color: var(--ink);
+            transform: translateX(1px);
+        }
+
+        .tab-button.active {
+            background: var(--panel);
+            border-color: var(--line);
+            color: var(--ink);
+            box-shadow: 0 8px 16px rgba(25, 66, 127, 0.08);
+        }
+
+        .settings-content {
+            display: grid;
+            gap: 12px;
+        }
+
+        .settings-content .panel {
+            width: 100%;
+        }
+
+        .panel-tab {
+            display: grid;
+            gap: 12px;
+        }
+
+        .panel-tab[hidden] {
+            display: none !important;
+        }
+
+        .panel-stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        .section-heading {
+            display: grid;
+            gap: 4px;
+        }
+
+        .section-heading h2,
+        .section-heading h3 {
+            margin: 0;
+        }
+
+        .section-heading p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .subtle {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        .profile-preview {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 14px;
+            align-items: center;
+            padding: 14px;
+            border: 1px solid var(--line);
+            background: linear-gradient(145deg, rgba(0, 115, 255, 0.08), rgba(15, 184, 168, 0.08)), var(--panel-2);
+            border-radius: 16px;
+        }
+
+        .profile-avatar {
+            width: 68px;
+            height: 68px;
+            border-radius: 22px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(145deg, #0a6bff, #10b8a7);
+            color: #fff;
+            font-size: 1.25rem;
+            font-weight: 900;
+            box-shadow: 0 12px 24px rgba(10, 49, 112, 0.2);
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.55);
+            background-size: cover;
+            background-position: center;
+        }
+
+        .profile-copy {
+            display: grid;
+            gap: 4px;
+        }
+
+        .profile-copy h3 {
+            margin: 0;
+            font-size: 1.12rem;
+        }
+
+        .profile-copy p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        .profile-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .profile-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            color: var(--ink);
+            font-size: 0.74rem;
+            font-weight: 800;
+        }
+
+        .profile-chip.accent {
+            border-color: rgba(0, 115, 255, 0.2);
+            color: var(--primary);
+        }
+
+        .dual-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .triple-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .field-row {
+            display: grid;
+            gap: 6px;
+        }
+
+        .field-row .meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        textarea.input {
+            min-height: 104px;
+            resize: vertical;
+        }
+
+        .color-input {
+            min-height: 46px;
+            padding: 6px 8px;
+        }
+
+        .status-rail {
+            display: grid;
+            gap: 8px;
+        }
+
+        .friends-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
+            gap: 14px;
+        }
+
+        .friends-column {
+            display: grid;
+            gap: 14px;
+            align-content: start;
+        }
+
+        .friends-header {
+            display: grid;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: linear-gradient(145deg, rgba(0, 115, 255, 0.08), rgba(15, 184, 168, 0.08)), var(--panel-2);
+        }
+
+        .friends-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .friends-header-top h3 {
+            margin: 0;
+            font-size: 1.05rem;
+        }
+
+        .friends-header-top p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        .friends-header-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--ink);
+            font-weight: 800;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+
+        .friends-header-status::before {
+            content: "";
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: #13a365;
+            box-shadow: 0 0 0 4px rgba(19, 163, 101, 0.14);
+        }
+
+        .friends-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .friends-stat {
+            display: grid;
+            gap: 4px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.62);
+        }
+
+        .friends-stat .label {
+            color: var(--muted);
+            font-size: 0.72rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .friends-stat .value {
+            color: var(--ink);
+            font-size: 1.08rem;
+            font-weight: 900;
+        }
+
+        .friends-stat .hint {
+            color: var(--muted);
+            font-size: 0.78rem;
+            line-height: 1.35;
+        }
+
+        .friends-list,
+        .message-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .friend-card,
+        .message-card {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.95));
+            padding: 12px;
+            display: grid;
+            gap: 10px;
+            box-shadow: 0 10px 24px rgba(25, 66, 127, 0.06);
+        }
+
+        .friend-card-header,
+        .message-card-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: start;
+        }
+
+        .friend-card-body,
+        .message-card-body {
+            display: grid;
+            gap: 8px;
+        }
+
+        .friend-card-meta,
+        .message-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .friend-name,
+        .message-title {
+            margin: 0;
+            color: var(--ink);
+            font-weight: 900;
+        }
+
+        .friend-meta,
+        .message-meta {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+
+        .friend-status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.72rem;
+            font-weight: 900;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            color: var(--ink);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .friend-status-badge.mutual {
+            border-color: rgba(19, 163, 101, 0.32);
+            background: rgba(19, 163, 101, 0.12);
+            color: #158659;
+        }
+
+        .friend-status-badge.pending {
+            border-color: rgba(201, 129, 17, 0.35);
+            background: rgba(241, 179, 83, 0.18);
+            color: #9c5f00;
+        }
+
+        .friend-game {
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .friend-game.live::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            margin-right: 6px;
+            background: #13a365;
+            box-shadow: 0 0 0 4px rgba(19, 163, 101, 0.12);
+        }
+
+        .friend-game.pending-state {
+            color: #8f6900;
+        }
+
+        .friend-game.offline-state {
+            color: var(--muted);
+        }
+
+        .friend-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding-top: 2px;
+        }
+
+        .friend-select-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-weight: 700;
+        }
+
+        .friend-select-row input[type="checkbox"] {
+            width: 17px;
+            height: 17px;
+            margin: 0;
+        }
+
+        .friends-status {
+            color: var(--muted);
+            font-size: 0.86rem;
+            line-height: 1.4;
+        }
+
+        .friends-toolbar {
+            display: grid;
+            gap: 12px;
+        }
+
+        .friends-toolbar .panel,
+        .friends-feed .panel {
+            margin: 0;
+        }
+
+        .friends-feed {
+            display: grid;
+            gap: 14px;
+        }
+
+        .message-compose {
+            display: grid;
+            gap: 10px;
+        }
+
+        .message-compose-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .message-compose-head h2,
+        .message-compose-head p {
+            margin: 0;
+        }
+
+        .message-compose-head p {
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        .message-recipient-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--ink);
+        }
+
+        .message-recipient-chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--primary);
+        }
+
+        .friends-empty {
+            border: 1px dashed var(--line);
+            border-radius: 14px;
+            padding: 14px;
+            color: var(--muted);
+            text-align: center;
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .inline-divider {
+            height: 1px;
+            background: var(--line);
+            opacity: 0.6;
+        }
+
+        .recipient-summary {
+            color: var(--muted);
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+
         .hero {
             border-radius: 20px;
             border: 1px solid var(--hero-line);
@@ -456,6 +982,37 @@
             .save-status-toolbar {
                 grid-template-columns: 1fr;
             }
+
+            .settings-frame {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-tabs {
+                position: static;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .tab-button {
+                text-align: center;
+            }
+
+            .dual-grid,
+            .triple-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-preview {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .friends-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .friends-stats {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -470,151 +1027,311 @@
             </div>
         </section>
 
-        <section class="layout">
-            <article class="panel">
-                <h2>Appearance & Library</h2>
-                <label class="setting-block">
-                    <span class="meta">Theme</span>
-                    <select id="themeSelect" class="select">
-                        <option value="light">Light mode</option>
-                        <option value="gray">Gray mode</option>
-                        <option value="black">Black mode</option>
-                    </select>
-                </label>
-                <label class="setting-block">
-                    <span class="meta">Library View</span>
-                    <select id="libraryViewSelect" class="select">
-                        <option value="cards">Cards</option>
-                        <option value="grouped">Grouped</option>
-                        <option value="platform">Platform Groups</option>
-                        <option value="compact">Compact Cards</option>
-                    </select>
-                </label>
-                <label class="setting-block">
-                    <span class="check"><input id="openSourceOnlyToggle" type="checkbox"> Open Source Only</span>
-                </label>
-                <label class="setting-block">
-                    <span class="check"><input id="playableOnlyToggle" type="checkbox"> Playable Only</span>
-                </label>
-            </article>
+        <section class="settings-frame">
+            <nav class="settings-tabs" aria-label="Settings categories">
+                <div class="tab-label">Settings</div>
+                <button type="button" class="tab-button active" data-settings-tab="general">General</button>
+                <button type="button" class="tab-button" data-settings-tab="profile">Profile & Privacy</button>
+                <button type="button" class="tab-button" data-settings-tab="friends">Friends</button>
+                <button type="button" class="tab-button" data-settings-tab="security">Security</button>
+                <button type="button" class="tab-button" data-settings-tab="data">Data</button>
+            </nav>
 
-            <article class="panel">
-                <h2>Performance & Cloud</h2>
-                <label class="setting-block">
-                    <span class="check"><input id="fastModeToggle" type="checkbox"> Fast mode (fewer effects)</span>
-                </label>
-                <label class="setting-block">
-                    <span class="meta">Performance Profile</span>
-                    <select id="performanceProfileSelect" class="select">
-                        <option value="normal">Normal</option>
-                        <option value="quick">Quick</option>
-                        <option value="turbo">Turbo</option>
-                        <option value="ultra">Ultra Lite</option>
-                    </select>
-                    <span class="meta">Ultra Lite disables heavy effects. Large game lists also auto-use lite rendering.</span>
-                </label>
-                <label class="setting-block">
-                    <span class="check"><input id="cloudAutoSyncToggle" type="checkbox"> Cloud Auto Sync</span>
-                    <span id="authStatus" class="meta">Checking cloud account status...</span>
-                </label>
-                <section class="setting-block">
-                    <span class="meta">Quick Presets</span>
-                    <div class="preset-actions">
-                        <button id="presetChromebookBtn" type="button" class="btn alt">Optimize For Older School Chromebook</button>
-                        <button id="presetVisualsBtn" type="button" class="btn alt">Restore Best Visuals</button>
-                    </div>
-                    <span id="presetStatus" class="meta">Tip: presets instantly update all related toggles above.</span>
-                </section>
-            </article>
-
-            <article class="panel">
-                <h2>Save Data</h2>
-                <div class="save-actions">
-                    <button id="exportDataBtn" type="button" class="btn alt">Export</button>
-                    <button id="importDataBtn" type="button" class="btn alt">Import</button>
-                    <button id="resetDataBtn" type="button" class="btn warn">Reset All</button>
-                </div>
-                <input id="importDataInput" type="file" accept="application/json" hidden>
-                <div class="save-health-row">
-                    <span id="localSaveChip" class="save-health-chip warn">Local: Idle</span>
-                    <span id="saveDataStatus" class="meta">Local save: waiting for changes...</span>
-                </div>
-                <div class="save-health-row">
-                    <span id="cloudSaveChip" class="save-health-chip warn">Cloud: Not synced</span>
-                    <span id="cloudDataStatus" class="meta">Cloud sync: not yet synced in this browser.</span>
-                </div>
-            </article>
-
-            <article class="panel" style="grid-column: 1 / -1;">
-                <h2>All Game Save Status</h2>
-                <p class="meta">Separated by category so it is easier to scan.</p>
-                <div class="save-status-toolbar">
-                    <select id="saveStatusGroupFilter" class="select">
-                        <option value="all">All categories</option>
-                    </select>
-                    <span class="meta">Use dropdown to view one category, or keep "All categories".</span>
-                </div>
-                <section id="allGameSaveStatus" class="save-status-groups"></section>
-            </article>
-
-            <article id="userSettingsGuestPanel" class="panel guest-only" style="grid-column: 1 / -1;">
-                <h2>User Settings</h2>
-                <p class="meta">Sign in on the account page to unlock personal user settings.</p>
-                <a class="btn alt" href="account.html">Go to Account Sign In</a>
-            </article>
-
-            <article id="userSettingsPanel" class="panel hidden auth-only" style="grid-column: 1 / -1;" hidden>
-                <h2>User Settings</h2>
-                <p class="meta">Common profile preferences similar to modern account settings pages.</p>
-                <div class="user-settings-grid">
+            <section class="settings-content">
+                <article class="panel panel-tab" data-settings-tab-panel="general">
+                    <h2>Appearance & Library</h2>
                     <label class="setting-block">
-                        <span class="meta">Display Name</span>
-                        <input id="userDisplayName" class="input" type="text" placeholder="Your display name">
-                    </label>
-                    <label class="setting-block">
-                        <span class="meta">Username</span>
-                        <input id="userUsername" class="input" type="text" placeholder="username">
-                        <span id="userUsernameHint" class="meta">Lowercase letters, numbers, and underscores only (3-24 chars).</span>
-                        <span id="userUsernameAvailability" class="meta">Sign in to check username availability.</span>
-                        <div id="usernameSuggestions" class="username-suggestions hidden"></div>
-                    </label>
-                    <label class="setting-block">
-                        <span class="meta">Language</span>
-                        <select id="userLanguage" class="select">
-                            <option value="en">English</option>
-                            <option value="es">Spanish</option>
-                            <option value="fr">French</option>
-                            <option value="de">German</option>
-                            <option value="pt">Portuguese</option>
+                        <span class="meta">Theme</span>
+                        <select id="themeSelect" class="select">
+                            <option value="light">Light mode</option>
+                            <option value="gray">Gray mode</option>
+                            <option value="black">Black mode</option>
                         </select>
                     </label>
                     <label class="setting-block">
-                        <span class="meta">Time Zone</span>
-                        <input id="userTimeZone" class="input" type="text" placeholder="America/Chicago">
+                        <span class="meta">Library View</span>
+                        <select id="libraryViewSelect" class="select">
+                            <option value="cards">Cards</option>
+                            <option value="grouped">Grouped</option>
+                            <option value="platform">Platform Groups</option>
+                            <option value="compact">Compact Cards</option>
+                        </select>
                     </label>
-                </div>
-                <div class="user-settings-grid">
-                    <label class="setting-block"><span class="check"><input id="userEmailUpdates" type="checkbox"> Email updates</span></label>
-                    <label class="setting-block"><span class="check"><input id="userGameAlerts" type="checkbox"> Game alerts</span></label>
-                    <label class="setting-block"><span class="check"><input id="userProfilePublic" type="checkbox"> Public profile</span></label>
-                    <label class="setting-block"><span class="check"><input id="userShowOnline" type="checkbox"> Show online status</span></label>
-                </div>
-                <div class="save-actions">
-                    <button id="saveUserSettingsBtn" type="button" class="btn">Save User Settings</button>
-                    <span id="userSettingsStatus" class="meta">Changes are saved locally and synced to your account when available.</span>
-                </div>
-            </article>
+                    <label class="setting-block">
+                        <span class="check"><input id="openSourceOnlyToggle" type="checkbox"> Open Source Only</span>
+                    </label>
+                    <label class="setting-block">
+                        <span class="check"><input id="playableOnlyToggle" type="checkbox"> Playable Only</span>
+                    </label>
+                </article>
 
-            <article id="securityChecklistPanel" class="panel hidden auth-only" style="grid-column: 1 / -1;" hidden>
-                <h2>Cloud Security Checklist</h2>
-                <p class="meta">Track which Auth + Security options you enabled in your cloud dashboard.</p>
-                <label class="security-row"><div><strong>Change email address</strong><span>Require verification for changed email addresses.</span></div><input data-security-key="changeEmailVerify" type="checkbox"></label>
-                <label class="security-row"><div><strong>Reset password flow</strong><span>Allow password reset emails and test the flow.</span></div><input data-security-key="resetPassword" type="checkbox"></label>
-                <label class="security-row"><div><strong>Reauthentication</strong><span>Require re-auth before sensitive account changes.</span></div><input data-security-key="reauth" type="checkbox"></label>
-                <label class="security-row"><div><strong>Password changed notification</strong><span>Notify users when password is changed.</span></div><input data-security-key="notifyPasswordChanged" type="checkbox"></label>
-                <label class="security-row"><div><strong>Email address changed notification</strong><span>Notify users when email is changed.</span></div><input data-security-key="notifyEmailChanged" type="checkbox"></label>
-                <label class="security-row"><div><strong>MFA method added / removed</strong><span>Notify users when MFA method changes happen.</span></div><input data-security-key="notifyMfaChanged" type="checkbox"></label>
-            </article>
+                <article class="panel panel-tab" data-settings-tab-panel="general">
+                    <h2>Performance & Cloud</h2>
+                    <label class="setting-block">
+                        <span class="check"><input id="fastModeToggle" type="checkbox"> Fast mode (fewer effects)</span>
+                    </label>
+                    <label class="setting-block">
+                        <span class="meta">Performance Profile</span>
+                        <select id="performanceProfileSelect" class="select">
+                            <option value="normal">Normal</option>
+                            <option value="quick">Quick</option>
+                            <option value="turbo">Turbo</option>
+                            <option value="ultra">Ultra Lite</option>
+                        </select>
+                        <span class="meta">Ultra Lite disables heavy effects. Large game lists also auto-use lite rendering.</span>
+                    </label>
+                    <label class="setting-block">
+                        <span class="check"><input id="cloudAutoSyncToggle" type="checkbox"> Cloud Auto Sync</span>
+                        <span id="authStatus" class="meta">Checking cloud account status...</span>
+                    </label>
+                    <section class="setting-block">
+                        <span class="meta">Quick Presets</span>
+                        <div class="preset-actions">
+                            <button id="presetChromebookBtn" type="button" class="btn alt">Optimize For Older School Chromebook</button>
+                            <button id="presetVisualsBtn" type="button" class="btn alt">Restore Best Visuals</button>
+                        </div>
+                        <span id="presetStatus" class="meta">Tip: presets instantly update all related toggles above.</span>
+                    </section>
+                </article>
+
+                <article id="userSettingsGuestPanel" class="panel panel-tab guest-only" data-settings-tab-panel="profile" style="grid-column: 1 / -1;">
+                    <h2>User Settings</h2>
+                    <p class="meta">Sign in on the account page to unlock profile, privacy, and notification preferences.</p>
+                    <a class="btn alt" href="account.html">Go to Account Sign In</a>
+                </article>
+
+                <article id="userSettingsPanel" class="panel panel-tab hidden auth-only" data-settings-tab-panel="profile" style="grid-column: 1 / -1;" hidden>
+                    <div class="section-heading">
+                        <h2>Profile & Privacy</h2>
+                        <p>Profile settings are arranged like a modern app account page: a live preview on top, then identity, styling, and visibility controls below.</p>
+                    </div>
+                    <div class="profile-preview">
+                        <div id="profileAvatar" class="profile-avatar">U</div>
+                        <div class="profile-copy">
+                            <span class="meta">Live preview</span>
+                            <h3 id="profilePreviewName">Display name</h3>
+                            <p id="profilePreviewHandle">@username</p>
+                            <p id="profilePreviewBio">Bio preview will show here.</p>
+                            <div class="profile-chips">
+                                <span id="profilePreviewStatus" class="profile-chip">Status</span>
+                                <span id="profilePreviewPronouns" class="profile-chip accent">Pronouns</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dual-grid">
+                        <label class="setting-block field-row">
+                            <span class="meta">Display Name</span>
+                            <input id="userDisplayName" class="input" type="text" placeholder="Your display name">
+                        </label>
+                        <label class="setting-block field-row">
+                            <span class="meta">Username</span>
+                            <input id="userUsername" class="input" type="text" placeholder="username">
+                            <span id="userUsernameHint" class="meta">Lowercase letters, numbers, and underscores only (3-24 chars).</span>
+                            <span id="userUsernameAvailability" class="meta">Sign in to check username availability.</span>
+                            <div id="usernameSuggestions" class="username-suggestions hidden"></div>
+                        </label>
+                    </div>
+                    <div class="dual-grid">
+                        <label class="setting-block field-row">
+                            <span class="meta">Avatar URL</span>
+                            <input id="userAvatarUrl" class="input" type="url" placeholder="https://...">
+                        </label>
+                        <label class="setting-block field-row">
+                            <span class="meta">Accent Color</span>
+                            <input id="userAccentColor" class="input color-input" type="color" value="#5865f2">
+                        </label>
+                    </div>
+                    <label class="setting-block field-row">
+                        <span class="meta">Bio</span>
+                        <textarea id="userBio" class="input" placeholder="A short profile bio"></textarea>
+                    </label>
+                    <label class="setting-block field-row">
+                        <span class="meta">Custom Status</span>
+                        <input id="userCustomStatus" class="input" type="text" placeholder="Playing something or taking a break">
+                    </label>
+                    <div class="triple-grid">
+                        <label class="setting-block field-row">
+                            <span class="meta">Pronouns</span>
+                            <input id="userPronouns" class="input" type="text" placeholder="they/them">
+                        </label>
+                        <label class="setting-block field-row">
+                            <span class="meta">Language</span>
+                            <select id="userLanguage" class="select">
+                                <option value="en">English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="pt">Portuguese</option>
+                            </select>
+                        </label>
+                        <label class="setting-block field-row">
+                            <span class="meta">Time Zone</span>
+                            <input id="userTimeZone" class="input" type="text" placeholder="America/Chicago">
+                        </label>
+                    </div>
+                    <div class="user-settings-grid">
+                        <label class="setting-block"><span class="check"><input id="userEmailUpdates" type="checkbox"> Email updates</span></label>
+                        <label class="setting-block"><span class="check"><input id="userGameAlerts" type="checkbox"> Game alerts</span></label>
+                        <label class="setting-block"><span class="check"><input id="userProfilePublic" type="checkbox"> Public profile</span></label>
+                        <label class="setting-block"><span class="check"><input id="userShowOnline" type="checkbox"> Show online status</span></label>
+                    </div>
+                    <div class="save-actions">
+                        <button id="saveUserSettingsBtn" type="button" class="btn">Save Profile Settings</button>
+                        <span id="userSettingsStatus" class="meta">Changes are saved locally and synced to your account when available.</span>
+                    </div>
+                </article>
+
+                <article id="friendsGuestPanel" class="panel panel-tab guest-only" data-settings-tab-panel="friends" style="grid-column: 1 / -1;">
+                    <h2>Friends</h2>
+                    <p class="meta">Sign in to add mutual friends, see what game they are on, and send consent-based messages.</p>
+                    <a class="btn alt" href="account.html">Go to Account Sign In</a>
+                </article>
+
+                <article id="friendsPanel" class="panel panel-tab hidden auth-only" data-settings-tab-panel="friends" style="grid-column: 1 / -1;" hidden>
+                    <div class="section-heading">
+                        <h2>Friends</h2>
+                        <p>Friends are mutual and opt-in only. If someone has not added you back, their game activity stays hidden and messages stay disabled.</p>
+                    </div>
+
+                    <div class="friends-header">
+                        <div class="friends-header-top">
+                            <div>
+                                <h3>Friends Dashboard</h3>
+                                <p>Check who is active, open the inbox, or jump straight into a message without hunting through separate screens.</p>
+                            </div>
+                            <div id="friendsHeaderStatus" class="friends-header-status">Live sync enabled</div>
+                        </div>
+                        <div class="friends-stats">
+                            <div class="friends-stat">
+                                <span class="label">Connections</span>
+                                <span id="friendsCountValue" class="value">0</span>
+                                <span class="hint">Saved friends in your list</span>
+                            </div>
+                            <div class="friends-stat">
+                                <span class="label">Mutual</span>
+                                <span id="mutualCountValue" class="value">0</span>
+                                <span class="hint">Can see activity and chat</span>
+                            </div>
+                            <div class="friends-stat">
+                                <span class="label">Unread</span>
+                                <span id="unreadCountValue" class="value">0</span>
+                                <span class="hint">Messages waiting in the inbox</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="friends-layout">
+                        <div class="friends-column">
+                            <section class="panel friends-toolbar">
+                                <div class="message-compose-head">
+                                    <div>
+                                        <h2>Add Friend</h2>
+                                        <p>Use a verified email address from another signed-in account.</p>
+                                    </div>
+                                    <button id="refreshFriendsBtn" type="button" class="btn alt">Refresh</button>
+                                </div>
+                                <div class="dual-grid">
+                                    <label class="setting-block field-row">
+                                        <span class="meta">Friend Email</span>
+                                        <input id="friendEmailInput" class="input" type="email" placeholder="friend@example.com">
+                                    </label>
+                                    <label class="setting-block field-row">
+                                        <span class="meta">Nickname</span>
+                                        <input id="friendNoteInput" class="input" type="text" placeholder="Optional nickname">
+                                    </label>
+                                </div>
+                                <label class="setting-block"><span class="check"><input id="friendCanMessageToggle" type="checkbox" checked> Allow messages from this friend</span></label>
+                                <div class="save-actions">
+                                    <button id="addFriendBtn" type="button" class="btn">Add Friend</button>
+                                </div>
+                                <span id="friendsStatus" class="friends-status">Waiting for your first friend request.</span>
+                            </section>
+
+                            <section class="panel">
+                                <div class="message-compose-head">
+                                    <div>
+                                        <h2>Your Friends</h2>
+                                        <p>See who is active, what they are playing, and whether messaging is enabled.</p>
+                                    </div>
+                                </div>
+                                <div id="friendsList" class="friends-list"></div>
+                            </section>
+                        </div>
+
+                        <div class="friends-column friends-feed">
+                            <section class="panel">
+                                <div class="message-compose-head">
+                                    <div>
+                                        <h2>Inbox</h2>
+                                        <p>Unread friend messages appear here and also as popups while you are in a game.</p>
+                                    </div>
+                                </div>
+                                <div id="friendInboxList" class="message-list"></div>
+                            </section>
+
+                            <section class="panel message-compose">
+                                <div class="message-compose-head">
+                                    <div>
+                                        <h2>Send Message</h2>
+                                        <p>Pick one or more mutual friends, write a message, then send it.</p>
+                                    </div>
+                                    <div id="friendRecipientSummary" class="message-recipient-chip"><span class="dot"></span><span id="friendRecipientSummaryText">No recipients selected</span></div>
+                                </div>
+                                <div id="friendRecipientList" class="message-list"></div>
+                                <label class="setting-block field-row">
+                                    <span class="meta">Message</span>
+                                    <textarea id="friendMessageInput" class="input" placeholder="Type a message for selected friends"></textarea>
+                                </label>
+                                <div class="save-actions">
+                                    <button id="sendFriendMessageBtn" type="button" class="btn">Send Message</button>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="securityChecklistPanel" class="panel panel-tab hidden auth-only" data-settings-tab-panel="security" style="grid-column: 1 / -1;" hidden>
+                    <h2>Cloud Security Checklist</h2>
+                    <p class="meta">Track which Auth + Security options you enabled in your cloud dashboard.</p>
+                    <label class="security-row"><div><strong>Change email address</strong><span>Require verification for changed email addresses.</span></div><input data-security-key="changeEmailVerify" type="checkbox"></label>
+                    <label class="security-row"><div><strong>Reset password flow</strong><span>Allow password reset emails and test the flow.</span></div><input data-security-key="resetPassword" type="checkbox"></label>
+                    <label class="security-row"><div><strong>Reauthentication</strong><span>Require re-auth before sensitive account changes.</span></div><input data-security-key="reauth" type="checkbox"></label>
+                    <label class="security-row"><div><strong>Password changed notification</strong><span>Notify users when password is changed.</span></div><input data-security-key="notifyPasswordChanged" type="checkbox"></label>
+                    <label class="security-row"><div><strong>Email address changed notification</strong><span>Notify users when email is changed.</span></div><input data-security-key="notifyEmailChanged" type="checkbox"></label>
+                    <label class="security-row"><div><strong>MFA method added / removed</strong><span>Notify users when MFA method changes happen.</span></div><input data-security-key="notifyMfaChanged" type="checkbox"></label>
+                </article>
+
+                <article class="panel panel-tab" data-settings-tab-panel="data" style="grid-column: 1 / -1;">
+                    <h2>Save Data</h2>
+                    <p class="meta">Export, import, or reset your local arcade data and cloud sync state.</p>
+                    <div class="save-actions">
+                        <button id="exportDataBtn" type="button" class="btn alt">Export</button>
+                        <button id="importDataBtn" type="button" class="btn alt">Import</button>
+                        <button id="resetDataBtn" type="button" class="btn warn">Reset All</button>
+                    </div>
+                    <input id="importDataInput" type="file" accept="application/json" hidden>
+                    <div class="save-health-row status-rail">
+                        <span id="localSaveChip" class="save-health-chip warn">Local: Idle</span>
+                        <span id="saveDataStatus" class="meta">Local save: waiting for changes...</span>
+                    </div>
+                    <div class="save-health-row status-rail">
+                        <span id="cloudSaveChip" class="save-health-chip warn">Cloud: Not synced</span>
+                        <span id="cloudDataStatus" class="meta">Cloud sync: not yet synced in this browser.</span>
+                    </div>
+                </article>
+
+                <article class="panel panel-tab" data-settings-tab-panel="data" style="grid-column: 1 / -1;">
+                    <h2>All Game Save Status</h2>
+                    <p class="meta">Separated by category so it is easier to scan.</p>
+                    <div class="save-status-toolbar">
+                        <select id="saveStatusGroupFilter" class="select">
+                            <option value="all">All categories</option>
+                        </select>
+                        <span class="meta">Use dropdown to view one category, or keep "All categories".</span>
+                    </div>
+                    <section id="allGameSaveStatus" class="save-status-groups"></section>
+                </article>
+            </section>
         </section>
     </main>
 
@@ -630,6 +1347,7 @@
         var OPEN_SOURCE_ONLY_KEY = "gamehub_open_source_only";
         var PLAYABLE_ONLY_KEY = "gamehub_playable_only";
         var CLOUD_AUTO_SYNC_KEY = "gamehub_cloud_auto_sync";
+        var SETTINGS_TAB_KEY = "gamehub_settings_tab";
         var GAME_SAVES_KEY = "gamehub_game_saves";
         var LOCAL_SAVE_UPDATED_KEY = "gamehub_local_last_saved";
         var CLOUD_LAST_SYNC_KEY = "gamehub_cloud_last_sync";
@@ -662,14 +1380,29 @@
         var cloudSaveChip = document.getElementById("cloudSaveChip");
         var saveStatusGroupFilter = document.getElementById("saveStatusGroupFilter");
         var allGameSaveStatus = document.getElementById("allGameSaveStatus");
+        var settingsTabButtons = Array.prototype.slice.call(document.querySelectorAll("[data-settings-tab]"));
+        var settingsTabPanels = Array.prototype.slice.call(document.querySelectorAll("[data-settings-tab-panel]"));
         var userSettingsGuestPanel = document.getElementById("userSettingsGuestPanel");
         var userSettingsPanel = document.getElementById("userSettingsPanel");
+        var friendsGuestPanel = document.getElementById("friendsGuestPanel");
+        var friendsPanel = document.getElementById("friendsPanel");
         var securityChecklistPanel = document.getElementById("securityChecklistPanel");
+        var profileAvatar = document.getElementById("profileAvatar");
+        var profilePreviewName = document.getElementById("profilePreviewName");
+        var profilePreviewHandle = document.getElementById("profilePreviewHandle");
+        var profilePreviewBio = document.getElementById("profilePreviewBio");
+        var profilePreviewStatus = document.getElementById("profilePreviewStatus");
+        var profilePreviewPronouns = document.getElementById("profilePreviewPronouns");
         var userDisplayName = document.getElementById("userDisplayName");
         var userUsername = document.getElementById("userUsername");
         var userUsernameHint = document.getElementById("userUsernameHint");
         var userUsernameAvailability = document.getElementById("userUsernameAvailability");
         var usernameSuggestions = document.getElementById("usernameSuggestions");
+        var userAvatarUrl = document.getElementById("userAvatarUrl");
+        var userAccentColor = document.getElementById("userAccentColor");
+        var userBio = document.getElementById("userBio");
+        var userCustomStatus = document.getElementById("userCustomStatus");
+        var userPronouns = document.getElementById("userPronouns");
         var userLanguage = document.getElementById("userLanguage");
         var userTimeZone = document.getElementById("userTimeZone");
         var userEmailUpdates = document.getElementById("userEmailUpdates");
@@ -678,11 +1411,31 @@
         var userShowOnline = document.getElementById("userShowOnline");
         var saveUserSettingsBtn = document.getElementById("saveUserSettingsBtn");
         var userSettingsStatus = document.getElementById("userSettingsStatus");
+        var friendEmailInput = document.getElementById("friendEmailInput");
+        var friendNoteInput = document.getElementById("friendNoteInput");
+        var friendCanMessageToggle = document.getElementById("friendCanMessageToggle");
+        var addFriendBtn = document.getElementById("addFriendBtn");
+        var refreshFriendsBtn = document.getElementById("refreshFriendsBtn");
+        var friendsStatus = document.getElementById("friendsStatus");
+        var friendsHeaderStatus = document.getElementById("friendsHeaderStatus");
+        var friendsCountValue = document.getElementById("friendsCountValue");
+        var mutualCountValue = document.getElementById("mutualCountValue");
+        var unreadCountValue = document.getElementById("unreadCountValue");
+        var friendRecipientSummaryText = document.getElementById("friendRecipientSummaryText");
+        var friendsList = document.getElementById("friendsList");
+        var friendInboxList = document.getElementById("friendInboxList");
+        var friendRecipientSummary = document.getElementById("friendRecipientSummary");
+        var friendRecipientList = document.getElementById("friendRecipientList");
+        var friendMessageInput = document.getElementById("friendMessageInput");
+        var sendFriendMessageBtn = document.getElementById("sendFriendMessageBtn");
         var securityCheckboxes = Array.prototype.slice.call(document.querySelectorAll("[data-security-key]"));
 
         var storageFallback = {};
         var supabaseClient = null;
         var activeAccountUser = null;
+        var friendListCache = [];
+        var unreadFriendMessagesCache = [];
+        var selectedFriendIds = {};
         var USERNAME_REGEX = /^[a-z0-9_]{3,24}$/;
         var usernameAvailabilityTimer = null;
         var usernameAvailabilityRequestId = 0;
@@ -691,6 +1444,539 @@
             known: false,
             available: true
         };
+
+        function getDefaultAccentColor() {
+            return "#5865f2";
+        }
+
+        function resolveAccentColor(value) {
+            var color = String(value || "").trim();
+            if (/^#[0-9a-f]{6}$/i.test(color)) {
+                return color;
+            }
+            return getDefaultAccentColor();
+        }
+
+        function getProfileInitials(displayName, username) {
+            var source = String(displayName || username || "U").trim();
+            if (!source) {
+                return "U";
+            }
+            var parts = source.split(/\s+/).filter(function (part) { return !!part; });
+            if (parts.length >= 2) {
+                return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+            }
+            return source.charAt(0).toUpperCase();
+        }
+
+        function updateProfilePreview(settings) {
+            var value = settings || readUserSettings();
+            var displayName = value.displayName || "Display name";
+            var username = value.username || "username";
+            var bio = value.bio || "Bio preview will show here.";
+            var customStatus = value.customStatus || "Status";
+            var pronouns = value.pronouns || "Pronouns";
+            var accent = resolveAccentColor(value.accentColor);
+            var avatarUrl = String(value.avatarUrl || "").trim();
+
+            if (avatarUrl) {
+                profileAvatar.textContent = "";
+                profileAvatar.style.backgroundImage = 'url("' + avatarUrl.replace(/"/g, '\\"') + '")';
+            } else {
+                profileAvatar.textContent = getProfileInitials(displayName, username);
+                profileAvatar.style.backgroundImage = "";
+            }
+            profileAvatar.style.backgroundColor = accent;
+            profileAvatar.style.borderColor = accent;
+            profilePreviewName.textContent = displayName;
+            profilePreviewHandle.textContent = "@" + username;
+            profilePreviewBio.textContent = bio;
+            profilePreviewStatus.textContent = customStatus;
+            profilePreviewPronouns.textContent = pronouns;
+            profilePreviewPronouns.style.borderColor = accent;
+            profilePreviewPronouns.style.color = accent;
+        }
+
+        function setActiveSettingsTab(tabName, persist) {
+            var activeTab = ["general", "profile", "friends", "security", "data"].indexOf(tabName) !== -1 ? tabName : "general";
+            settingsTabButtons.forEach(function (button) {
+                var isActive = button.getAttribute("data-settings-tab") === activeTab;
+                button.classList.toggle("active", isActive);
+                button.setAttribute("aria-selected", isActive ? "true" : "false");
+            });
+            settingsTabPanels.forEach(function (panel) {
+                var panelTab = panel.getAttribute("data-settings-tab-panel");
+                var show = panelTab === activeTab;
+                panel.hidden = !show;
+                panel.classList.toggle("hidden", !show && panel.id !== "userSettingsGuestPanel" && panel.id !== "userSettingsPanel" && panel.id !== "securityChecklistPanel");
+            });
+            if (persist !== false) {
+                writeSetting(SETTINGS_TAB_KEY, activeTab);
+            }
+        }
+
+        function syncSettingsTabFromStorage() {
+            setActiveSettingsTab(readSetting(SETTINGS_TAB_KEY, "general"), false);
+        }
+
+        function escapeHtml(value) {
+            return String(value == null ? "" : value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function formatRelativeTime(value) {
+            if (!value) {
+                return "Unknown";
+            }
+            var time = Date.parse(value);
+            if (!time) {
+                return "Unknown";
+            }
+            return new Date(time).toLocaleString();
+        }
+
+        function setFriendsStatus(message) {
+            friendsStatus.textContent = message;
+            if (friendsHeaderStatus) {
+                friendsHeaderStatus.textContent = message;
+            }
+        }
+
+        function getSelectedFriends() {
+            return friendListCache.filter(function (friend) {
+                return !!selectedFriendIds[friend.friend_user_id] && friend.can_message;
+            });
+        }
+
+        function renderSelectedFriendSummary() {
+            var selected = getSelectedFriends();
+            var summary = selected.length ? (selected.length + " recipient" + (selected.length === 1 ? "" : "s") + " selected.") : "No recipients selected";
+            friendRecipientSummary.setAttribute("aria-label", summary);
+            if (friendRecipientSummaryText) {
+                friendRecipientSummaryText.textContent = summary;
+            } else {
+                friendRecipientSummary.textContent = summary;
+            }
+        }
+
+        function renderFriendsList() {
+            friendsList.innerHTML = "";
+            friendRecipientList.innerHTML = "";
+
+            if (!friendListCache.length) {
+                friendsList.innerHTML = '<div class="friends-empty">No friends yet. Add someone by email to start.</div>';
+                renderSelectedFriendSummary();
+                return;
+            }
+
+            friendListCache.forEach(function (friend) {
+                var card = document.createElement("article");
+                card.className = "friend-card";
+
+                var header = document.createElement("div");
+                header.className = "friend-card-header";
+                var stateWrap = document.createElement("div");
+                stateWrap.style.textAlign = "right";
+                var stateEl = document.createElement("span");
+                stateEl.className = "friend-status-badge " + (friend.mutual ? "mutual" : "pending");
+                stateEl.textContent = friend.mutual ? "Mutual" : "Pending";
+                var updatedEl = document.createElement("p");
+                updatedEl.className = "friend-meta";
+                updatedEl.textContent = formatRelativeTime(friend.updated_at);
+                stateWrap.appendChild(stateEl);
+                stateWrap.appendChild(updatedEl);
+
+                var titleWrap = document.createElement("div");
+                var nameEl = document.createElement("p");
+                nameEl.className = "friend-name";
+                nameEl.textContent = friend.display_name || friend.friend_email || "Friend";
+
+                var emailEl = document.createElement("p");
+                emailEl.className = "friend-meta";
+                emailEl.textContent = friend.friend_email || "";
+
+                var gameEl = document.createElement("p");
+                gameEl.className = "friend-meta friend-game";
+                if (friend.mutual && friend.current_game_title) {
+                    gameEl.className += " live";
+                    gameEl.textContent = friend.current_game_title;
+                } else if (friend.mutual) {
+                    gameEl.className += friend.status === "offline" ? " offline-state" : " pending-state";
+                    gameEl.textContent = friend.status === "offline" ? "Offline" : "Not in a game";
+                } else {
+                    gameEl.className += " pending-state";
+                    gameEl.textContent = "Waiting for mutual friendship";
+                }
+
+                var cardBody = document.createElement("div");
+                cardBody.className = "friend-card-body";
+                cardBody.appendChild(nameEl);
+                cardBody.appendChild(emailEl);
+                cardBody.appendChild(gameEl);
+
+                var cardMeta = document.createElement("div");
+                cardMeta.className = "friend-card-meta";
+                header.appendChild(cardBody);
+                header.appendChild(stateWrap);
+
+                var selectRow = document.createElement("label");
+                selectRow.className = "friend-select-row";
+                var checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.dataset.friendId = friend.friend_user_id;
+                checkbox.checked = !!selectedFriendIds[friend.friend_user_id];
+                checkbox.disabled = !friend.can_message;
+                var selectText = document.createElement("span");
+                selectText.textContent = friend.can_message ? "Select for messages" : "Messaging disabled until mutual";
+                selectRow.appendChild(checkbox);
+                selectRow.appendChild(selectText);
+
+                var controls = document.createElement("div");
+                controls.className = "friend-controls";
+                var removeBtn = document.createElement("button");
+                removeBtn.type = "button";
+                removeBtn.className = "btn alt";
+                removeBtn.dataset.action = "remove-friend";
+                removeBtn.dataset.friendId = friend.friend_user_id;
+                removeBtn.textContent = "Remove";
+                controls.appendChild(removeBtn);
+
+                if (friend.can_message) {
+                    var messageBtn = document.createElement("button");
+                    messageBtn.type = "button";
+                    messageBtn.className = "btn";
+                    messageBtn.dataset.action = "message-friend";
+                    messageBtn.dataset.friendId = friend.friend_user_id;
+                    messageBtn.textContent = "Message";
+                    controls.appendChild(messageBtn);
+                }
+
+                if (friend.note) {
+                    var noteEl = document.createElement("p");
+                    noteEl.className = "friend-meta";
+                    noteEl.textContent = friend.note;
+                    card.appendChild(noteEl);
+                }
+
+                card.appendChild(header);
+                card.appendChild(selectRow);
+                card.appendChild(controls);
+                friendsList.appendChild(card);
+
+                if (selectedFriendIds[friend.friend_user_id] && friend.can_message) {
+                    var chip = document.createElement("article");
+                    chip.className = "message-card";
+                    chip.dataset.friendId = friend.friend_user_id;
+                    var chipTitle = document.createElement("p");
+                    chipTitle.className = "message-title";
+                    chipTitle.textContent = friend.display_name || friend.friend_email || "Friend";
+                    var chipMeta = document.createElement("p");
+                    chipMeta.className = "message-meta";
+                    chipMeta.textContent = friend.current_game_title ? friend.current_game_title : "Ready to message";
+                    chip.appendChild(chipTitle);
+                    chip.appendChild(chipMeta);
+                    friendRecipientList.appendChild(chip);
+                }
+            });
+
+            if (!friendRecipientList.children.length) {
+                friendRecipientList.innerHTML = '<div class="friends-empty">Select one or more mutual friends to send a message.</div>';
+            }
+
+            renderSelectedFriendSummary();
+        }
+
+        function renderInboxList() {
+            friendInboxList.innerHTML = "";
+            if (!unreadFriendMessagesCache.length) {
+                friendInboxList.innerHTML = '<div class="friends-empty">No unread messages right now.</div>';
+                return;
+            }
+
+            unreadFriendMessagesCache.forEach(function (message) {
+                var card = document.createElement("article");
+                card.className = "message-card";
+                card.dataset.messageId = message.message_id;
+
+                var header = document.createElement("div");
+                header.className = "message-card-header";
+                var titleWrap = document.createElement("div");
+                var title = document.createElement("p");
+                title.className = "message-title";
+                title.textContent = message.sender_display_name || message.sender_email || "Friend";
+                var meta = document.createElement("p");
+                meta.className = "message-meta";
+                meta.textContent = (message.sender_current_game_title ? "Playing " + message.sender_current_game_title + " · " : "") + formatRelativeTime(message.created_at);
+                titleWrap.appendChild(title);
+                titleWrap.appendChild(meta);
+
+                var bodyWrap = document.createElement("div");
+                bodyWrap.className = "message-card-body";
+                bodyWrap.appendChild(titleWrap);
+
+                var markBtn = document.createElement("button");
+                markBtn.type = "button";
+                markBtn.className = "btn alt";
+                markBtn.dataset.action = "mark-read";
+                markBtn.dataset.messageId = message.message_id;
+                markBtn.textContent = "Mark Read";
+                header.appendChild(bodyWrap);
+                header.appendChild(markBtn);
+
+                var body = document.createElement("p");
+                body.className = "friend-meta";
+                body.textContent = message.body;
+
+                var replyBtn = document.createElement("button");
+                replyBtn.type = "button";
+                replyBtn.className = "btn";
+                replyBtn.dataset.action = "reply-friend";
+                replyBtn.dataset.friendId = message.sender_user_id;
+                replyBtn.textContent = "Reply";
+
+                card.appendChild(header);
+                card.appendChild(body);
+                card.appendChild(replyBtn);
+                friendInboxList.appendChild(card);
+            });
+        }
+
+        function normalizeFriendRow(row) {
+            if (!row || typeof row !== "object") {
+                return null;
+            }
+            return {
+                friend_user_id: String(row.friend_user_id || ""),
+                friend_email: String(row.friend_email || ""),
+                display_name: String(row.display_name || row.friend_email || "Friend"),
+                username: String(row.username || ""),
+                current_game_id: row.current_game_id ? String(row.current_game_id) : "",
+                current_game_title: row.current_game_title ? String(row.current_game_title) : "",
+                status: String(row.status || "offline"),
+                message_opt_in: row.message_opt_in === true,
+                can_message: row.can_message === true,
+                note: row.note ? String(row.note) : "",
+                updated_at: row.updated_at ? String(row.updated_at) : "",
+                mutual: row.mutual === true
+            };
+        }
+
+        function normalizeMessageRow(row) {
+            if (!row || typeof row !== "object") {
+                return null;
+            }
+            return {
+                message_id: String(row.message_id || ""),
+                sender_user_id: String(row.sender_user_id || ""),
+                sender_email: String(row.sender_email || ""),
+                sender_display_name: String(row.sender_display_name || row.sender_email || "Friend"),
+                sender_username: String(row.sender_username || ""),
+                sender_current_game_title: row.sender_current_game_title ? String(row.sender_current_game_title) : "",
+                body: String(row.body || ""),
+                created_at: row.created_at ? String(row.created_at) : ""
+            };
+        }
+
+        async function loadFriendsFromCloud() {
+            if (!activeAccountUser || !supabaseClient) {
+                friendListCache = [];
+                unreadFriendMessagesCache = [];
+                if (friendsCountValue) { friendsCountValue.textContent = "0"; }
+                if (mutualCountValue) { mutualCountValue.textContent = "0"; }
+                if (unreadCountValue) { unreadCountValue.textContent = "0"; }
+                renderFriendsList();
+                renderInboxList();
+                setFriendsStatus("Sign in to manage friends.");
+                return;
+            }
+
+            try {
+                var friendsResult = await supabaseClient.rpc("list_my_friends");
+                if (friendsResult && friendsResult.error) {
+                    throw friendsResult.error;
+                }
+                friendListCache = Array.isArray(friendsResult.data) ? friendsResult.data.map(normalizeFriendRow).filter(function (row) { return !!row; }) : [];
+                var allowedSelections = {};
+                friendListCache.forEach(function (friend) {
+                    if (friend.can_message) {
+                        allowedSelections[friend.friend_user_id] = true;
+                    }
+                });
+                Object.keys(selectedFriendIds).forEach(function (friendId) {
+                    if (!allowedSelections[friendId]) {
+                        delete selectedFriendIds[friendId];
+                    }
+                });
+            } catch (error) {
+                friendListCache = [];
+                setFriendsStatus(error && error.message ? error.message : "Unable to load friends right now.");
+            }
+
+            try {
+                var inboxResult = await supabaseClient.rpc("list_my_unread_friend_messages", { limit_count: 20 });
+                if (inboxResult && inboxResult.error) {
+                    throw inboxResult.error;
+                }
+                unreadFriendMessagesCache = Array.isArray(inboxResult.data) ? inboxResult.data.map(normalizeMessageRow).filter(function (row) { return !!row; }) : [];
+            } catch (error) {
+                unreadFriendMessagesCache = [];
+            }
+
+            renderFriendsList();
+            renderInboxList();
+            friendsCountValue.textContent = String(friendListCache.length);
+            mutualCountValue.textContent = String(friendListCache.filter(function (friend) { return !!friend.mutual; }).length);
+            unreadCountValue.textContent = String(unreadFriendMessagesCache.length);
+            if (friendListCache.length) {
+                setFriendsStatus("Loaded " + friendListCache.length + " friend" + (friendListCache.length === 1 ? "" : "s") + ".");
+            } else {
+                setFriendsStatus("No friends added yet.");
+            }
+        }
+
+        async function publishSettingsPresence() {
+            if (!activeAccountUser || !supabaseClient) {
+                return;
+            }
+
+            try {
+                var result = await supabaseClient.rpc("upsert_my_presence", {
+                    current_game_id: null,
+                    current_game_title: null,
+                    status: "online",
+                    message_opt_in: true
+                });
+                if (result && result.error) {
+                    throw result.error;
+                }
+            } catch (error) {
+            }
+        }
+
+        async function addFriendFromForm() {
+            var email = String(friendEmailInput.value || "").trim();
+            var note = String(friendNoteInput.value || "").trim();
+            var canMessage = friendCanMessageToggle.checked;
+
+            if (!email) {
+                setFriendsStatus("Enter a friend email first.");
+                return;
+            }
+
+            if (!supabaseClient || !activeAccountUser) {
+                setFriendsStatus("Sign in to add friends.");
+                return;
+            }
+
+            try {
+                var result = await supabaseClient.rpc("upsert_friend_link", {
+                    friend_email: email,
+                    note: note || null,
+                    can_message: canMessage
+                });
+                if (result.error) {
+                    throw result.error;
+                }
+                friendEmailInput.value = "";
+                friendNoteInput.value = "";
+                friendCanMessageToggle.checked = true;
+                setFriendsStatus("Friend saved. If they add you back, their current game will appear here.");
+                await loadFriendsFromCloud();
+            } catch (error) {
+                setFriendsStatus(error && error.message ? error.message : "Could not save friend.");
+            }
+        }
+
+        async function removeFriend(friendId) {
+            if (!supabaseClient || !activeAccountUser) {
+                return;
+            }
+
+            try {
+                var result = await supabaseClient.rpc("remove_friend_link", { target_friend_user_id: friendId });
+                if (result.error) {
+                    throw result.error;
+                }
+                delete selectedFriendIds[friendId];
+                await loadFriendsFromCloud();
+            } catch (error) {
+                setFriendsStatus(error && error.message ? error.message : "Could not remove friend.");
+            }
+        }
+
+        async function sendMessageToSelectedFriends() {
+            var selected = getSelectedFriends();
+            var body = String(friendMessageInput.value || "").trim();
+
+            if (!body) {
+                setFriendsStatus("Write a message before sending.");
+                return;
+            }
+
+            if (!selected.length) {
+                setFriendsStatus("Select at least one mutual friend.");
+                return;
+            }
+
+            if (!supabaseClient || !activeAccountUser) {
+                setFriendsStatus("Sign in to send messages.");
+                return;
+            }
+
+            try {
+                for (var i = 0; i < selected.length; i++) {
+                    var friend = selected[i];
+                    var result = await supabaseClient.rpc("send_friend_message", {
+                        recipient_user_id: friend.friend_user_id,
+                        body: body
+                    });
+                    if (result.error) {
+                        throw result.error;
+                    }
+                }
+                friendMessageInput.value = "";
+                setFriendsStatus("Message sent to " + selected.length + " friend" + (selected.length === 1 ? "" : "s") + ".");
+            } catch (error) {
+                setFriendsStatus(error && error.message ? error.message : "Could not send message.");
+            }
+        }
+
+        async function markFriendMessageRead(messageId) {
+            if (!supabaseClient || !activeAccountUser || !messageId) {
+                return;
+            }
+
+            try {
+                var result = await supabaseClient.rpc("mark_friend_message_read", { message_id: messageId });
+                if (result.error) {
+                    throw result.error;
+                }
+                unreadFriendMessagesCache = unreadFriendMessagesCache.filter(function (message) {
+                    return message.message_id !== messageId;
+                });
+                renderInboxList();
+            } catch (error) {
+                setFriendsStatus(error && error.message ? error.message : "Could not mark the message as read.");
+            }
+        }
+
+        function prefillReply(friendId) {
+            var friend = friendListCache.find(function (item) { return item.friend_user_id === friendId; });
+            if (!friend) {
+                return;
+            }
+            selectedFriendIds[friendId] = true;
+            renderFriendsList();
+            friendMessageInput.focus();
+            if (!friendMessageInput.value) {
+                friendMessageInput.value = "Hey " + (friend.display_name || friend.friend_email || "there") + ", ";
+            }
+            setActiveSettingsTab("friends");
+        }
 
         function storageGet(key) {
             try { return localStorage.getItem(key); } catch (error) { return Object.prototype.hasOwnProperty.call(storageFallback, key) ? storageFallback[key] : null; }
@@ -876,7 +2162,12 @@
                 emailUpdates: false,
                 gameAlerts: true,
                 profilePublic: false,
-                showOnline: true
+                showOnline: true,
+                avatarUrl: "",
+                bio: "",
+                customStatus: "",
+                pronouns: "",
+                accentColor: getDefaultAccentColor()
             };
             var saved = readObject(USER_SETTINGS_KEY);
             return {
@@ -887,7 +2178,12 @@
                 emailUpdates: saved.emailUpdates === true,
                 gameAlerts: saved.gameAlerts !== false,
                 profilePublic: saved.profilePublic === true,
-                showOnline: saved.showOnline !== false
+                showOnline: saved.showOnline !== false,
+                avatarUrl: typeof saved.avatarUrl === "string" ? saved.avatarUrl : defaults.avatarUrl,
+                bio: typeof saved.bio === "string" ? saved.bio : defaults.bio,
+                customStatus: typeof saved.customStatus === "string" ? saved.customStatus : defaults.customStatus,
+                pronouns: typeof saved.pronouns === "string" ? saved.pronouns : defaults.pronouns,
+                accentColor: resolveAccentColor(saved.accentColor || defaults.accentColor)
             };
         }
 
@@ -900,7 +2196,12 @@
                 emailUpdates: false,
                 gameAlerts: true,
                 profilePublic: false,
-                showOnline: true
+                showOnline: true,
+                avatarUrl: "",
+                bio: "",
+                customStatus: "",
+                pronouns: "",
+                accentColor: getDefaultAccentColor()
             };
 
             var value = raw && typeof raw === "object" ? raw : {};
@@ -912,7 +2213,12 @@
                 emailUpdates: value.emailUpdates === true || value.email_updates === true,
                 gameAlerts: value.gameAlerts !== false && value.game_alerts !== false,
                 profilePublic: value.profilePublic === true || value.profile_public === true,
-                showOnline: value.showOnline !== false && value.show_online !== false
+                showOnline: value.showOnline !== false && value.show_online !== false,
+                avatarUrl: typeof value.avatarUrl === "string" ? value.avatarUrl : (typeof value.avatar_url === "string" ? value.avatar_url : defaults.avatarUrl),
+                bio: typeof value.bio === "string" ? value.bio : defaults.bio,
+                customStatus: typeof value.customStatus === "string" ? value.customStatus : (typeof value.custom_status === "string" ? value.custom_status : defaults.customStatus),
+                pronouns: typeof value.pronouns === "string" ? value.pronouns : defaults.pronouns,
+                accentColor: resolveAccentColor(value.accentColor || value.accent_color || defaults.accentColor)
             };
         }
 
@@ -937,12 +2243,18 @@
             var settings = readUserSettings();
             userDisplayName.value = settings.displayName;
             userUsername.value = settings.username;
+            userAvatarUrl.value = settings.avatarUrl;
+            userAccentColor.value = resolveAccentColor(settings.accentColor);
+            userBio.value = settings.bio;
+            userCustomStatus.value = settings.customStatus;
+            userPronouns.value = settings.pronouns;
             userLanguage.value = settings.language;
             userTimeZone.value = settings.timeZone;
             userEmailUpdates.checked = settings.emailUpdates;
             userGameAlerts.checked = settings.gameAlerts;
             userProfilePublic.checked = settings.profilePublic;
             userShowOnline.checked = settings.showOnline;
+            updateProfilePreview(settings);
         }
 
         function collectUserSettingsForm() {
@@ -954,7 +2266,12 @@
                 emailUpdates: userEmailUpdates.checked,
                 gameAlerts: userGameAlerts.checked,
                 profilePublic: userProfilePublic.checked,
-                showOnline: userShowOnline.checked
+                showOnline: userShowOnline.checked,
+                avatarUrl: userAvatarUrl.value.trim(),
+                bio: userBio.value.trim(),
+                customStatus: userCustomStatus.value.trim(),
+                pronouns: userPronouns.value.trim(),
+                accentColor: resolveAccentColor(userAccentColor.value)
             };
         }
 
@@ -1201,12 +2518,21 @@
             userSettingsGuestPanel.classList.toggle("hidden", isSignedIn);
             userSettingsPanel.classList.toggle("hidden", !isSignedIn);
             userSettingsPanel.hidden = !isSignedIn;
+            friendsGuestPanel.classList.toggle("hidden", isSignedIn);
+            friendsPanel.classList.toggle("hidden", !isSignedIn);
+            friendsPanel.hidden = !isSignedIn;
             securityChecklistPanel.classList.toggle("hidden", !isSignedIn);
             securityChecklistPanel.hidden = !isSignedIn;
             if (!isSignedIn) {
                 userSettingsStatus.textContent = "Sign in to edit user settings.";
                 setUsernameAvailabilityUi("", "Sign in to check username availability.");
                 renderUsernameSuggestions([]);
+                friendListCache = [];
+                unreadFriendMessagesCache = [];
+                selectedFriendIds = {};
+                renderFriendsList();
+                renderInboxList();
+                setFriendsStatus("Sign in to manage friends.");
             }
         }
 
@@ -1229,25 +2555,28 @@
                 .eq("user_id", user.id)
                 .maybeSingle();
 
+            var localSettings = readUserSettings();
+            var metadata = user.user_metadata && user.user_metadata.arcadeSettings;
+
             if (!tableResult.error && tableResult.data) {
-                return normalizeUserSettings(tableResult.data);
+                return normalizeUserSettings(Object.assign({}, localSettings, metadata && typeof metadata === "object" ? metadata : {}, tableResult.data));
             }
 
             if (tableResult.error && !isMissingTableError(tableResult.error)) {
                 return null;
             }
 
-            var metadata = user.user_metadata && user.user_metadata.arcadeSettings;
             if (metadata && typeof metadata === "object") {
-                return normalizeUserSettings(metadata);
+                return normalizeUserSettings(Object.assign({}, localSettings, metadata));
             }
 
-            return null;
+            return normalizeUserSettings(localSettings);
         }
 
         async function hydrateUserSettingsFromAccount(user) {
             if (!user) {
                 applyUserSettingsForm();
+                await loadFriendsFromCloud();
                 return;
             }
 
@@ -1257,6 +2586,8 @@
             }
             applyUserSettingsForm();
             updateUsernameUiFeedback();
+            await loadFriendsFromCloud();
+            await publishSettingsPresence();
         }
 
         async function loadGamesCatalog() {
@@ -1304,9 +2635,11 @@
             openSourceOnlyToggle.checked = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
             playableOnlyToggle.checked = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
             cloudAutoSyncToggle.checked = readSetting(CLOUD_AUTO_SYNC_KEY, "1") === "1";
+            syncSettingsTabFromStorage();
             renderSaveHealthStatus();
             renderAllGameSaveStatus();
             applySecurityChecklistState();
+            updateProfilePreview(readUserSettings());
         }
 
         function snapshotSavedData() {
@@ -1323,7 +2656,9 @@
                     openSourceOnly: readSetting(OPEN_SOURCE_ONLY_KEY, "0"),
                     playableOnly: readSetting(PLAYABLE_ONLY_KEY, "0"),
                     cloudAutoSync: readSetting(CLOUD_AUTO_SYNC_KEY, "1"),
-                    gameSaves: readObject(GAME_SAVES_KEY)
+                    gameSaves: readObject(GAME_SAVES_KEY),
+                    userSettings: readUserSettings(),
+                    securityChecklist: readSecurityChecklist()
                 }
             };
         }
@@ -1346,6 +2681,16 @@
 
             var rawGameSaves = (data.gameSaves && typeof data.gameSaves === "object" && !Array.isArray(data.gameSaves)) ? data.gameSaves : {};
             writeObject(GAME_SAVES_KEY, rawGameSaves);
+
+            var rawUserSettings = data.userSettings && typeof data.userSettings === "object" && !Array.isArray(data.userSettings) ? data.userSettings : null;
+            if (rawUserSettings) {
+                writeUserSettings(normalizeUserSettings(rawUserSettings));
+            }
+
+            var rawSecurityChecklist = data.securityChecklist && typeof data.securityChecklist === "object" && !Array.isArray(data.securityChecklist) ? data.securityChecklist : null;
+            if (rawSecurityChecklist) {
+                writeSecurityChecklist(rawSecurityChecklist);
+            }
         }
 
         function exportSavedData() {
@@ -1364,7 +2709,10 @@
 
         function resetSavedData() {
             SAVE_KEYS.forEach(function (key) { storageRemove(key); });
+            storageRemove(USER_SETTINGS_KEY);
+            storageRemove(SECURITY_CHECKLIST_KEY);
             applyFormState();
+            applyUserSettingsForm();
         }
 
         function readSecurityChecklist() {
@@ -1426,6 +2774,63 @@
         saveStatusGroupFilter.addEventListener("change", renderAllGameSaveStatus);
         userUsername.addEventListener("input", updateUsernameUiFeedback);
         userUsername.addEventListener("blur", updateUsernameUiFeedback);
+        userDisplayName.addEventListener("input", function () { updateProfilePreview(collectUserSettingsForm()); });
+        userAvatarUrl.addEventListener("input", function () { updateProfilePreview(collectUserSettingsForm()); });
+        userAccentColor.addEventListener("input", function () { updateProfilePreview(collectUserSettingsForm()); });
+        userBio.addEventListener("input", function () { updateProfilePreview(collectUserSettingsForm()); });
+        userCustomStatus.addEventListener("input", function () { updateProfilePreview(collectUserSettingsForm()); });
+        userPronouns.addEventListener("input", function () { updateProfilePreview(collectUserSettingsForm()); });
+        settingsTabButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                setActiveSettingsTab(button.getAttribute("data-settings-tab") || "general");
+            });
+        });
+        addFriendBtn.addEventListener("click", function () { addFriendFromForm(); });
+        refreshFriendsBtn.addEventListener("click", function () { loadFriendsFromCloud(); });
+        sendFriendMessageBtn.addEventListener("click", function () { sendMessageToSelectedFriends(); });
+        friendsList.addEventListener("change", function (event) {
+            var checkbox = event.target && event.target.closest ? event.target.closest("input[data-friend-id]") : null;
+            if (!(checkbox instanceof HTMLInputElement)) {
+                return;
+            }
+            var friendId = checkbox.getAttribute("data-friend-id") || "";
+            if (!friendId) {
+                return;
+            }
+            if (checkbox.checked) {
+                selectedFriendIds[friendId] = true;
+            } else {
+                delete selectedFriendIds[friendId];
+            }
+            renderFriendsList();
+        });
+        friendsList.addEventListener("click", function (event) {
+            var actionButton = event.target && event.target.closest ? event.target.closest("button[data-action]") : null;
+            if (!(actionButton instanceof HTMLButtonElement)) {
+                return;
+            }
+            var friendId = actionButton.getAttribute("data-friend-id") || "";
+            var action = actionButton.getAttribute("data-action") || "";
+            if (action === "remove-friend") {
+                removeFriend(friendId);
+            } else if (action === "message-friend") {
+                prefillReply(friendId);
+            }
+        });
+        friendInboxList.addEventListener("click", function (event) {
+            var actionButton = event.target && event.target.closest ? event.target.closest("button[data-action]") : null;
+            if (!(actionButton instanceof HTMLButtonElement)) {
+                return;
+            }
+            var messageId = actionButton.getAttribute("data-message-id") || "";
+            var friendId = actionButton.getAttribute("data-friend-id") || "";
+            var action = actionButton.getAttribute("data-action") || "";
+            if (action === "mark-read") {
+                markFriendMessageRead(messageId);
+            } else if (action === "reply-friend") {
+                prefillReply(friendId);
+            }
+        });
 
         function applyPreset(type) {
             if (type === "chromebook") {
@@ -1471,6 +2876,8 @@
             }
             var settings = normalizeUserSettings(collectUserSettingsForm());
             writeUserSettings(settings);
+            updateProfilePreview(settings);
+            applyUserSettingsForm();
             userSettingsStatus.textContent = "User settings saved locally.";
 
             if (!activeAccountUser || !supabaseClient) {
@@ -1519,6 +2926,7 @@
                     var payload = JSON.parse(String(reader.result || "{}"));
                     applySavedData(payload);
                     applyFormState();
+                    updateProfilePreview(readUserSettings());
                     alert("Save data imported.");
                 } catch (error) {
                     alert("Could not import save data. Use a valid export file.");
@@ -1546,6 +2954,7 @@
         applyFormState();
         applyUserSettingsForm();
         updateUsernameUiFeedback();
+        syncSettingsTabFromStorage();
         loadGamesCatalog();
         initSupabase();
     </script>

@@ -450,6 +450,10 @@
                 buildFallbackGame();
 
             titleEl.textContent = "Now Playing: " + game.title;
+            window.__GAMEHUB_CURRENT_GAME__ = {
+                id: game.id,
+                title: game.title
+            };
             direct.href = game.direct;
             updateRecentGames(game.id);
             applyEmbedPolicy(game);
