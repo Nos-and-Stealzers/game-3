@@ -92,8 +92,15 @@
         <span class="chip">Coins: <b id="coins">120</b></span>
         <span class="chip">Lives: <b id="lives">20</b></span>
         <span class="chip">Wave: <b id="wave">1</b></span>
+        <span class="chip">Mode: <b id="modeLabel">Normal</b></span>
       </div>
       <div class="tools">
+        <select id="difficulty" class="btn" aria-label="Difficulty">
+          <option value="rookie">Rookie</option>
+          <option value="normal" selected>Normal</option>
+          <option value="hard">Hard</option>
+        </select>
+        <button id="speedBtn" class="btn" type="button">Speed 1x</button>
         <button id="dartBtn" class="btn active" type="button">Dart (40)</button>
         <button id="blastBtn" class="btn" type="button">Blast (70)</button>
         <button id="restartBtn" class="btn" type="button">Restart</button>
@@ -112,6 +119,9 @@
       var coinsEl = document.getElementById("coins");
       var livesEl = document.getElementById("lives");
       var waveEl = document.getElementById("wave");
+      var modeLabelEl = document.getElementById("modeLabel");
+      var difficultySelect = document.getElementById("difficulty");
+      var speedBtn = document.getElementById("speedBtn");
       var dartBtn = document.getElementById("dartBtn");
       var blastBtn = document.getElementById("blastBtn");
       var restartBtn = document.getElementById("restartBtn");
@@ -163,6 +173,47 @@
 
       var state;
       var selectedType = "dart";
+      var difficulty = "normal";
+      var tickMultiplier = 1;
+
+      var DIFFICULTY = {
+        rookie: {
+          label: "Rookie",
+          coins: 170,
+          lives: 26,
+          runnerHp: 10,
+          tankHp: 32,
+          swiftHp: 8,
+          hpScale: 1.9,
+          speedScale: 0.94,
+          spawnBase: 24,
+          waveDelay: 92
+        },
+        normal: {
+          label: "Normal",
+          coins: 120,
+          lives: 20,
+          runnerHp: 12,
+          tankHp: 38,
+          swiftHp: 9,
+          hpScale: 2.0,
+          speedScale: 1,
+          spawnBase: 18,
+          waveDelay: 75
+        },
+        hard: {
+          label: "Hard",
+          coins: 95,
+          lives: 16,
+          runnerHp: 14,
+          tankHp: 44,
+          swiftHp: 10,
+          hpScale: 2.3,
+          speedScale: 1.08,
+          spawnBase: 14,
+          waveDelay: 62
+        }
+      };
 
       function tileCenter(col, row) {
         return { x: GRID_X + col * TILE + TILE / 2, y: GRID_Y + row * TILE + TILE / 2 };
@@ -183,17 +234,19 @@
         coinsEl.textContent = String(state.coins);
         livesEl.textContent = String(state.lives);
         waveEl.textContent = String(state.wave);
+        modeLabelEl.textContent = DIFFICULTY[difficulty].label;
       }
 
       function reset() {
+        var cfg = DIFFICULTY[difficulty];
         state = {
           t: 0,
-          coins: 120,
-          lives: 20,
+          coins: cfg.coins,
+          lives: cfg.lives,
           wave: 1,
           spawnQueue: [],
           spawnDelay: 0,
-          betweenWaves: 70,
+          betweenWaves: cfg.waveDelay,
           towers: [],
           enemies: [],
           projectiles: [],
@@ -207,16 +260,17 @@
       }
 
       function buildWave(wave) {
+        var cfg = DIFFICULTY[difficulty];
         var queue = [];
         var i;
         for (i = 0; i < 6 + wave; i++) {
-          queue.push({ type: "runner", hp: 12 + wave * 2, speed: 1.3 + wave * 0.04, value: 9 });
+          queue.push({ type: "runner", hp: cfg.runnerHp + wave * cfg.hpScale, speed: (1.3 + wave * 0.04) * cfg.speedScale, value: 9 });
         }
         for (i = 0; i < Math.floor(wave / 2); i++) {
-          queue.push({ type: "tank", hp: 38 + wave * 5, speed: 0.7 + wave * 0.03, value: 18 });
+          queue.push({ type: "tank", hp: cfg.tankHp + wave * (cfg.hpScale * 2.5), speed: (0.7 + wave * 0.03) * cfg.speedScale, value: 18 });
         }
         for (i = 0; i < Math.floor((wave + 1) / 3); i++) {
-          queue.push({ type: "swift", hp: 9 + wave * 2, speed: 1.85 + wave * 0.05, value: 11 });
+          queue.push({ type: "swift", hp: cfg.swiftHp + wave * cfg.hpScale, speed: (1.85 + wave * 0.05) * cfg.speedScale, value: 11 });
         }
 
         for (i = queue.length - 1; i > 0; i--) {
@@ -245,12 +299,13 @@
 
       function advanceWaves() {
         if (state.gameOver) return;
+        var cfg = DIFFICULTY[difficulty];
 
         if (state.spawnQueue.length > 0) {
           state.spawnDelay -= 1;
           if (state.spawnDelay <= 0) {
             spawnEnemy(state.spawnQueue.shift());
-            state.spawnDelay = 18 + Math.floor(Math.random() * 14);
+            state.spawnDelay = cfg.spawnBase + Math.floor(Math.random() * 14);
           }
           return;
         }
@@ -259,7 +314,7 @@
           state.betweenWaves -= 1;
           if (state.betweenWaves <= 0) {
             state.wave += 1;
-            state.betweenWaves = 75;
+            state.betweenWaves = cfg.waveDelay;
             buildWave(state.wave);
             syncHud();
           }
@@ -363,11 +418,16 @@
       }
 
       function update() {
-        state.t += 1;
-        advanceWaves();
-        updateEnemies();
-        updateTowers();
-        updateProjectiles();
+        for (var tick = 0; tick < tickMultiplier; tick++) {
+          state.t += 1;
+          advanceWaves();
+          updateEnemies();
+          updateTowers();
+          updateProjectiles();
+          if (state.gameOver) {
+            break;
+          }
+        }
       }
 
       function drawGrid() {
@@ -520,10 +580,26 @@
         dartBtn.classList.remove("active");
       });
 
+      difficultySelect.addEventListener("change", function () {
+        var value = difficultySelect.value;
+        difficulty = Object.prototype.hasOwnProperty.call(DIFFICULTY, value) ? value : "normal";
+        reset();
+      });
+
+      speedBtn.addEventListener("click", function () {
+        tickMultiplier = tickMultiplier === 1 ? 2 : 1;
+        speedBtn.textContent = tickMultiplier === 1 ? "Speed 1x" : "Speed 2x";
+      });
+
       restartBtn.addEventListener("click", reset);
 
       applyTheme();
       window.addEventListener("focus", applyTheme);
+      window.addEventListener("storage", function (event) {
+        if (event.key === THEME_KEY) {
+          applyTheme();
+        }
+      });
       reset();
       frame();
     })();

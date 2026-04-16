@@ -102,13 +102,21 @@
       <div class="chips">
         <span class="chip">Level: <b id="level">1</b></span>
         <span class="chip">Deaths: <b id="deaths">0</b></span>
-        <span class="chip">Best Run: <b id="best">0</b></span>
+        <span class="chip">Best Deaths: <b id="best">-</b></span>
+        <span class="chip">Time: <b id="timer">0.00s</b></span>
       </div>
-      <button id="restart" class="btn" type="button">Restart Level</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select id="difficulty" class="btn" aria-label="Difficulty">
+          <option value="rookie">Rookie</option>
+          <option value="normal" selected>Normal</option>
+          <option value="insane">Insane</option>
+        </select>
+        <button id="restart" class="btn" type="button">Restart Level</button>
+      </div>
     </div>
 
     <canvas id="game" width="960" height="500"></canvas>
-    <p class="note"><b>Controls:</b> Arrow Keys / WASD to move, Space to jump. Wall-jump is enabled. Reach the green goal.</p>
+    <p class="note"><b>Controls:</b> Arrow Keys / WASD to move, Space to jump. Wall-jump + coyote jump are enabled. Reach the green goal.</p>
   </section>
 
   <script>
@@ -119,14 +127,24 @@
       var levelEl = document.getElementById("level");
       var deathsEl = document.getElementById("deaths");
       var bestEl = document.getElementById("best");
+      var timerEl = document.getElementById("timer");
+      var difficultySelect = document.getElementById("difficulty");
       var restartBtn = document.getElementById("restart");
 
       var W = canvas.width;
       var H = canvas.height;
       var keys = {};
       var deaths = 0;
-      var best = Number(localStorage.getItem("parkcore_trials_best") || 0);
+      var best = Number(localStorage.getItem("parkcore_trials_best_deaths") || "-1");
       var currentLevel = 0;
+      var runFrames = 0;
+      var difficulty = "normal";
+
+      var DIFFICULTY = {
+        rookie: { accel: 0.78, maxSpeed: 5.8, friction: 0.82, gravity: 0.55, jump: 12.2, wallJump: 11.2, coyote: 10, buffer: 10 },
+        normal: { accel: 0.85, maxSpeed: 6.2, friction: 0.78, gravity: 0.62, jump: 11.6, wallJump: 10.8, coyote: 8, buffer: 8 },
+        insane: { accel: 0.92, maxSpeed: 6.9, friction: 0.76, gravity: 0.7, jump: 11.2, wallJump: 10.4, coyote: 6, buffer: 6 }
+      };
 
       var palettes = {
         light: {
@@ -162,6 +180,10 @@
         document.documentElement.style.setProperty("--bg-b", p.bgB);
         document.documentElement.style.setProperty("--ink", p.ink);
         document.documentElement.style.setProperty("--line", p.line);
+      }
+
+      function syncBestLabel() {
+        bestEl.textContent = best >= 0 ? String(best) : "-";
       }
 
       var levels = [
@@ -240,7 +262,7 @@
         };
         levelEl.textContent = String(currentLevel + 1);
         deathsEl.textContent = String(deaths);
-        bestEl.textContent = String(best);
+        syncBestLabel();
       }
 
       function die() {
@@ -276,7 +298,7 @@
               state.y = s.y - state.h;
               state.vy = 0;
               state.grounded = true;
-              state.coyote = 8;
+              state.coyote = DIFFICULTY[difficulty].coyote;
             } else if (state.vy < 0) {
               state.y = s.y + s.h;
               state.vy = 0;
@@ -286,6 +308,9 @@
       }
 
       function update() {
+        runFrames += 1;
+        timerEl.textContent = (runFrames / 60).toFixed(2) + "s";
+
         if (state.won) {
           state.winTimer -= 1;
           if (state.winTimer <= 0) {
@@ -301,16 +326,17 @@
         keys["jumpPressed"] = false;
 
         if (jumpPressed) {
-          state.jumpBuffer = 8;
+          state.jumpBuffer = DIFFICULTY[difficulty].buffer;
         } else if (state.jumpBuffer > 0) {
           state.jumpBuffer -= 1;
         }
 
         state.grounded = false;
 
-        var accel = 0.85;
-        var maxSpeed = 6.2;
-        var friction = 0.78;
+        var cfg = DIFFICULTY[difficulty];
+        var accel = cfg.accel;
+        var maxSpeed = cfg.maxSpeed;
+        var friction = cfg.friction;
 
         if (left && !right) {
           state.vx = Math.max(-maxSpeed, state.vx - accel);
@@ -325,17 +351,17 @@
 
         if (state.jumpBuffer > 0) {
           if (state.coyote > 0) {
-            state.vy = -11.6;
+            state.vy = -cfg.jump;
             state.coyote = 0;
             state.jumpBuffer = 0;
           } else if (state.wallDir !== 0 && state.vy > -4) {
-            state.vy = -10.8;
+            state.vy = -cfg.wallJump;
             state.vx = state.wallDir === 1 ? -6.6 : 6.6;
             state.jumpBuffer = 0;
           }
         }
 
-        state.vy += 0.62;
+        state.vy += cfg.gravity;
         if (state.vy > 14) state.vy = 14;
 
         state.x += state.vx;
@@ -360,9 +386,10 @@
         if (rectsOverlap(state, L.goal)) {
           state.won = true;
           state.winTimer = 36;
-          if (deaths > best) {
+          if (best < 0 || deaths < best) {
             best = deaths;
-            localStorage.setItem("parkcore_trials_best", String(best));
+            localStorage.setItem("parkcore_trials_best_deaths", String(best));
+            syncBestLabel();
           }
         }
       }
@@ -445,9 +472,24 @@
       });
 
       restartBtn.addEventListener("click", resetLevel);
+      difficultySelect.addEventListener("change", function () {
+        var value = difficultySelect.value;
+        difficulty = Object.prototype.hasOwnProperty.call(DIFFICULTY, value) ? value : "normal";
+        deaths = 0;
+        runFrames = 0;
+        deathsEl.textContent = "0";
+        timerEl.textContent = "0.00s";
+        resetLevel();
+      });
 
       applyTheme();
       window.addEventListener("focus", applyTheme);
+      window.addEventListener("storage", function (event) {
+        if (event.key === THEME_KEY) {
+          applyTheme();
+        }
+      });
+      syncBestLabel();
       resetLevel();
       frame();
     })();
