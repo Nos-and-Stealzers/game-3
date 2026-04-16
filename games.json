@@ -193,5 +193,77 @@
     "platform": "external",
     "embed": "blocked",
     "schoolRisk": "high"
+  },
+  {
+    "id": "maze-runner",
+    "title": "Maze Runner",
+    "category": "puzzle",
+    "description": "Local maze challenge with key collection and patrol guards.",
+    "gradient": "linear-gradient(135deg, #3bb273, #1f6f5f)",
+    "source": "games/websie/maze-runner.html",
+    "direct": "games/websie/maze-runner.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
+  },
+  {
+    "id": "arena-drift",
+    "title": "Arena Drift",
+    "category": "action",
+    "description": "Local survival arena game focused on movement and drone dodging.",
+    "gradient": "linear-gradient(135deg, #f59e0b, #ea580c)",
+    "source": "games/websie/arena-drift.html",
+    "direct": "games/websie/arena-drift.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
+  },
+  {
+    "id": "cave-hopper",
+    "title": "Cave Hopper",
+    "category": "platformer",
+    "description": "Local cave run platformer with timing-based hazards.",
+    "gradient": "linear-gradient(135deg, #5aa9e6, #334eac)",
+    "source": "games/websie/cave-hopper.html",
+    "direct": "games/websie/cave-hopper.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
+  },
+  {
+    "id": "garden-defense",
+    "title": "Garden Defense",
+    "category": "strategy",
+    "description": "Local defense game with waves and positioning decisions.",
+    "gradient": "linear-gradient(135deg, #65a30d, #166534)",
+    "source": "games/websie/garden-defense.html",
+    "direct": "games/websie/garden-defense.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
+  },
+  {
+    "id": "factory-freight",
+    "title": "Factory Freight",
+    "category": "simulation",
+    "description": "Local factory logistics challenge with escalating throughput goals.",
+    "gradient": "linear-gradient(135deg, #0ea5e9, #0284c7)",
+    "source": "games/websie/factory-freight.html",
+    "direct": "games/websie/factory-freight.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
+  },
+  {
+    "id": "shipyard-scramble",
+    "title": "Shipyard Scramble",
+    "category": "arcade",
+    "description": "Local shipyard arcade run with quick route planning.",
+    "gradient": "linear-gradient(135deg, #06b6d4, #0f766e)",
+    "source": "games/websie/shipyard-scramble.html",
+    "direct": "games/websie/shipyard-scramble.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
   }
 ]
