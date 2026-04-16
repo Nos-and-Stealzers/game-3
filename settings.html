@@ -659,6 +659,19 @@
             color: var(--muted);
             font-size: 0.86rem;
             line-height: 1.4;
+            font-weight: 800;
+        }
+
+        .friends-status.ok {
+            color: var(--ok-ink);
+        }
+
+        .friends-status.warn {
+            color: var(--warn-ink);
+        }
+
+        .friends-status.error {
+            color: #b33939;
         }
 
         .friends-toolbar {
@@ -1157,6 +1170,75 @@
             display: none !important;
         }
 
+        .verify-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 99990;
+            display: grid;
+            place-items: center;
+            padding: 14px;
+            background: rgba(6, 11, 22, 0.5);
+            backdrop-filter: blur(3px);
+        }
+
+        .verify-modal-card {
+            width: min(520px, 100%);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: var(--panel);
+            box-shadow: 0 22px 40px rgba(0, 0, 0, 0.32);
+            padding: 14px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .verify-modal-head h3 {
+            margin: 0;
+            font-size: 1.02rem;
+        }
+
+        .verify-modal-head p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 0.86rem;
+            line-height: 1.4;
+        }
+
+        .verify-code-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 8px;
+            align-items: end;
+        }
+
+        .verify-code-row .btn.alt {
+            min-width: 92px;
+            white-space: nowrap;
+        }
+
+        .verify-modal-status {
+            margin: 0;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 9px 10px;
+            background: var(--mild-bg);
+            color: var(--mild-ink);
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+
+        .verify-modal-status.error {
+            background: var(--warn-bg);
+            color: var(--warn-ink);
+            border-color: #e2aa9e;
+        }
+
+        .verify-modal-status.ok {
+            background: var(--ok-bg);
+            color: var(--ok-ink);
+            border-color: #8dc8a6;
+        }
+
         .auth-only {
             display: none !important;
         }
@@ -1496,6 +1578,7 @@
                 <article id="securityChecklistPanel" class="panel panel-tab hidden auth-only" data-settings-tab-panel="security" style="grid-column: 1 / -1;" hidden>
                     <h2>Cloud Security Checklist</h2>
                     <p class="meta">Track which Auth + Security options you enabled in your cloud dashboard.</p>
+                    <p id="securityChecklistStatus" class="meta">0 / 6 safety options checked.</p>
                     <label class="security-row"><div><strong>Change email address</strong><span>Require verification for changed email addresses.</span></div><input data-security-key="changeEmailVerify" type="checkbox"></label>
                     <label class="security-row"><div><strong>Reset password flow</strong><span>Allow password reset emails and test the flow.</span></div><input data-security-key="resetPassword" type="checkbox"></label>
                     <label class="security-row"><div><strong>Reauthentication</strong><span>Require re-auth before sensitive account changes.</span></div><input data-security-key="reauth" type="checkbox"></label>
@@ -1537,6 +1620,28 @@
             </section>
         </section>
     </main>
+
+    <section id="sensitiveVerifyModal" class="verify-modal hidden" aria-hidden="true">
+        <article class="verify-modal-card" role="dialog" aria-modal="true" aria-labelledby="sensitiveVerifyTitle">
+            <div class="verify-modal-head">
+                <h3 id="sensitiveVerifyTitle">Verification Required</h3>
+                <p id="sensitiveVerifyPrompt">Enter the verification code sent to your email.</p>
+            </div>
+            <label class="setting-block field-row" style="margin: 0;">
+                <span class="meta">Verification Code</span>
+                <div class="verify-code-row">
+                    <input id="sensitiveVerifyCodeInput" class="input" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter code">
+                    <button id="sensitiveVerifyToggleBtn" type="button" class="btn alt">Show Code</button>
+                </div>
+            </label>
+            <p id="sensitiveVerifyStatus" class="verify-modal-status">We sent a code to your account email. This unlock lasts 30 minutes.</p>
+            <div class="save-actions">
+                <button id="sensitiveVerifyConfirmBtn" type="button" class="btn">Verify</button>
+                <button id="sensitiveVerifyResendBtn" type="button" class="btn alt">Resend Code</button>
+                <button id="sensitiveVerifyCancelBtn" type="button" class="btn warn">Cancel</button>
+            </div>
+        </article>
+    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.config.js"></script>
@@ -1638,6 +1743,15 @@
         var friendMessageMeta = document.getElementById("friendMessageMeta");
         var sendFriendMessageBtn = document.getElementById("sendFriendMessageBtn");
         var securityCheckboxes = Array.prototype.slice.call(document.querySelectorAll("[data-security-key]"));
+        var securityChecklistStatus = document.getElementById("securityChecklistStatus");
+        var sensitiveVerifyModal = document.getElementById("sensitiveVerifyModal");
+        var sensitiveVerifyPrompt = document.getElementById("sensitiveVerifyPrompt");
+        var sensitiveVerifyCodeInput = document.getElementById("sensitiveVerifyCodeInput");
+        var sensitiveVerifyStatus = document.getElementById("sensitiveVerifyStatus");
+        var sensitiveVerifyConfirmBtn = document.getElementById("sensitiveVerifyConfirmBtn");
+        var sensitiveVerifyResendBtn = document.getElementById("sensitiveVerifyResendBtn");
+        var sensitiveVerifyCancelBtn = document.getElementById("sensitiveVerifyCancelBtn");
+        var sensitiveVerifyToggleBtn = document.getElementById("sensitiveVerifyToggleBtn");
 
         var storageFallback = {};
         var supabaseClient = null;
@@ -1660,6 +1774,8 @@
             available: true
         };
         var sensitiveVerifyInFlight = false;
+        var sensitiveVerifyPendingResolver = null;
+        var sensitiveVerifyActionLabel = "update this setting";
 
         function getDefaultAccentColor() {
             return "#5865f2";
@@ -1832,12 +1948,22 @@
             return new Date(time).toLocaleString();
         }
 
-        function setFriendsStatus(message) {
+        function setFriendsStatus(message, tone) {
+            var state = tone || "";
+            var stamp = new Date().toLocaleTimeString();
+            var finalMessage = String(message || "");
+            if (finalMessage) {
+                finalMessage += " (" + stamp + ")";
+            }
             if (friendsStatus) {
-                friendsStatus.textContent = message;
+                friendsStatus.textContent = finalMessage;
+                friendsStatus.classList.remove("ok", "warn", "error");
+                if (state) {
+                    friendsStatus.classList.add(state);
+                }
             }
             if (friendsHeaderStatus) {
-                friendsHeaderStatus.textContent = message;
+                friendsHeaderStatus.textContent = finalMessage || "Live sync enabled";
             }
         }
 
@@ -2106,7 +2232,7 @@
                 renderFriendsList();
                 renderInboxList();
                 if (!silent) {
-                    setFriendsStatus("Sign in to manage friends.");
+                    setFriendsStatus("Sign in to manage friends.", "warn");
                 }
                 return;
             }
@@ -2131,7 +2257,7 @@
             } catch (error) {
                 friendListCache = [];
                 if (!silent) {
-                    setFriendsStatus(error && error.message ? error.message : "Unable to load friends right now.");
+                    setFriendsStatus(error && error.message ? error.message : "Unable to load friends right now.", "error");
                 }
             }
 
@@ -2158,9 +2284,9 @@
             }
             if (!silent) {
                 if (friendListCache.length) {
-                    setFriendsStatus("Loaded " + friendListCache.length + " friend" + (friendListCache.length === 1 ? "" : "s") + ".");
+                    setFriendsStatus("Loaded " + friendListCache.length + " friend" + (friendListCache.length === 1 ? "" : "s") + ".", "ok");
                 } else {
-                    setFriendsStatus("No friends added yet.");
+                    setFriendsStatus("No friends added yet.", "warn");
                 }
             }
         }
@@ -2216,12 +2342,12 @@
             var canMessage = friendCanMessageToggle.checked;
 
             if (!USERNAME_REGEX.test(username)) {
-                setFriendsStatus("Enter a valid friend username (3-24 lowercase letters, numbers, underscore).");
+                setFriendsStatus("Enter a valid friend username (3-24 lowercase letters, numbers, underscore).", "warn");
                 return;
             }
 
             if (!supabaseClient || !activeAccountUser) {
-                setFriendsStatus("Sign in to add friends.");
+                setFriendsStatus("Sign in to add friends.", "warn");
                 return;
             }
 
@@ -2237,15 +2363,19 @@
                 friendUsernameInput.value = "";
                 friendNoteInput.value = "";
                 friendCanMessageToggle.checked = true;
-                setFriendsStatus("Friend request sent to @" + username + ". If they add you back, chat unlocks.");
+                setFriendsStatus("Friend request sent to @" + username + ". If they add you back, chat unlocks.", "ok");
                 await loadFriendsFromCloud();
             } catch (error) {
-                setFriendsStatus(error && error.message ? error.message : "Could not save friend.");
+                setFriendsStatus(error && error.message ? error.message : "Could not save friend.", "error");
             }
         }
 
         async function removeFriend(friendId) {
             if (!supabaseClient || !activeAccountUser) {
+                return;
+            }
+
+            if (!await ensureSensitiveActionVerified("remove a friend")) {
                 return;
             }
 
@@ -2257,7 +2387,7 @@
                 delete selectedFriendIds[friendId];
                 await loadFriendsFromCloud();
             } catch (error) {
-                setFriendsStatus(error && error.message ? error.message : "Could not remove friend.");
+                setFriendsStatus(error && error.message ? error.message : "Could not remove friend.", "error");
             }
         }
 
@@ -2266,17 +2396,17 @@
             var body = String(friendMessageInput.value || "").trim();
 
             if (!body) {
-                setFriendsStatus("Write a message before sending.");
+                setFriendsStatus("Write a message before sending.", "warn");
                 return;
             }
 
             if (!selected.length) {
-                setFriendsStatus("Select at least one mutual friend.");
+                setFriendsStatus("Select at least one mutual friend.", "warn");
                 return;
             }
 
             if (!supabaseClient || !activeAccountUser) {
-                setFriendsStatus("Sign in to send messages.");
+                setFriendsStatus("Sign in to send messages.", "warn");
                 return;
             }
 
@@ -2293,10 +2423,10 @@
                 }
                 friendMessageInput.value = "";
                 updateFriendMessageMeta();
-                setFriendsStatus("Message sent to " + selected.length + " friend" + (selected.length === 1 ? "" : "s") + ".");
+                setFriendsStatus("Message sent to " + selected.length + " friend" + (selected.length === 1 ? "" : "s") + ".", "ok");
                 await loadFriendsFromCloud({ silent: true });
             } catch (error) {
-                setFriendsStatus(error && error.message ? error.message : "Could not send message.");
+                setFriendsStatus(error && error.message ? error.message : "Could not send message.", "error");
             }
         }
 
@@ -2318,7 +2448,7 @@
                     unreadCountValue.textContent = String(unreadFriendMessagesCache.length);
                 }
             } catch (error) {
-                setFriendsStatus(error && error.message ? error.message : "Could not mark the message as read.");
+                setFriendsStatus(error && error.message ? error.message : "Could not mark the message as read.", "error");
             }
         }
 
@@ -2381,6 +2511,52 @@
             writeSessionNumber(SESSION_SENSITIVE_VERIFIED_AT_KEY, Date.now());
         }
 
+        function setSensitiveVerifyStatus(message, tone) {
+            if (!sensitiveVerifyStatus) {
+                return;
+            }
+            sensitiveVerifyStatus.textContent = message;
+            sensitiveVerifyStatus.classList.remove("ok", "error");
+            if (tone) {
+                sensitiveVerifyStatus.classList.add(tone);
+            }
+        }
+
+        function closeSensitiveVerifyModal() {
+            if (!sensitiveVerifyModal) {
+                return;
+            }
+            sensitiveVerifyModal.classList.add("hidden");
+            sensitiveVerifyModal.setAttribute("aria-hidden", "true");
+            sensitiveVerifyCodeInput.value = "";
+            sensitiveVerifyCodeInput.type = "password";
+            sensitiveVerifyToggleBtn.textContent = "Show Code";
+            setSensitiveVerifyStatus("We sent a code to your account email. This unlock lasts 30 minutes.", "");
+        }
+
+        function openSensitiveVerifyModal(actionLabel) {
+            return new Promise(function (resolve) {
+                sensitiveVerifyPendingResolver = resolve;
+                sensitiveVerifyActionLabel = actionLabel || "update this setting";
+                sensitiveVerifyPrompt.textContent = "Enter the verification code sent to your email to " + sensitiveVerifyActionLabel + ".";
+                sensitiveVerifyModal.classList.remove("hidden");
+                sensitiveVerifyModal.setAttribute("aria-hidden", "false");
+                setSensitiveVerifyStatus("Code sent. Check your inbox and paste the code here.", "");
+                setTimeout(function () {
+                    sensitiveVerifyCodeInput.focus();
+                }, 0);
+            });
+        }
+
+        function resolveSensitiveVerifyModal(result) {
+            var resolver = sensitiveVerifyPendingResolver;
+            sensitiveVerifyPendingResolver = null;
+            closeSensitiveVerifyModal();
+            if (typeof resolver === "function") {
+                resolver(!!result);
+            }
+        }
+
         async function sendSensitiveVerificationCode() {
             if (!supabaseClient || !activeAccountUser || !activeAccountUser.email) {
                 throw new Error("Sign in before verifying sensitive changes.");
@@ -2390,6 +2566,7 @@
                 email: activeAccountUser.email,
                 options: {
                     shouldCreateUser: false,
+                    emailRedirectTo: window.location.href.split("#")[0],
                     data: {
                         auth_flow: "sensitive_settings_verify"
                     }
@@ -2433,18 +2610,10 @@
             sensitiveVerifyInFlight = true;
             try {
                 await sendSensitiveVerificationCode();
-                var promptLabel = actionLabel || "change this setting";
-                var code = window.prompt("Enter the verification code emailed to " + activeAccountUser.email + " to " + promptLabel + ". This verification lasts 30 minutes in this session.");
-                if (code === null) {
+                var approved = await openSensitiveVerifyModal(actionLabel || "change this setting");
+                if (!approved) {
                     throw new Error("Verification canceled.");
                 }
-
-                var normalizedCode = String(code).replace(/\s+/g, "").trim();
-                if (!normalizedCode) {
-                    throw new Error("Verification code is required.");
-                }
-
-                await verifySensitiveCode(normalizedCode);
                 markSensitiveVerificationNow();
                 authStatus.textContent = "Sensitive changes verified for 30 minutes.";
                 return true;
@@ -2453,6 +2622,7 @@
                 return false;
             } finally {
                 sensitiveVerifyInFlight = false;
+                closeSensitiveVerifyModal();
             }
         }
 
@@ -3230,6 +3400,22 @@
                 var key = checkbox.getAttribute("data-security-key");
                 checkbox.checked = state[key] === true;
             });
+            updateSecurityChecklistSummary();
+        }
+
+        function updateSecurityChecklistSummary() {
+            if (!securityChecklistStatus) {
+                return;
+            }
+            var enabled = securityCheckboxes.filter(function (checkbox) {
+                return checkbox.checked;
+            }).length;
+            var total = securityCheckboxes.length;
+            if (!total) {
+                securityChecklistStatus.textContent = "No security options found.";
+                return;
+            }
+            securityChecklistStatus.textContent = enabled + " / " + total + " safety options checked.";
         }
 
         async function initSupabase() {
@@ -3447,7 +3633,12 @@
 
         resetDataBtn.addEventListener("click", function () {
             if (!window.confirm("Reset favorites, recents, theme, library view, and performance settings?")) return;
-            resetSavedData();
+            ensureSensitiveActionVerified("reset local and cloud-linked settings in this browser").then(function (ok) {
+                if (!ok) {
+                    return;
+                }
+                resetSavedData();
+            });
         });
 
         securityCheckboxes.forEach(function (checkbox) {
@@ -3461,7 +3652,56 @@
                 var key = checkbox.getAttribute("data-security-key");
                 state[key] = checkbox.checked;
                 writeSecurityChecklist(state);
+                updateSecurityChecklistSummary();
             });
+        });
+
+        sensitiveVerifyToggleBtn.addEventListener("click", function () {
+            var show = sensitiveVerifyCodeInput.type === "password";
+            sensitiveVerifyCodeInput.type = show ? "text" : "password";
+            sensitiveVerifyToggleBtn.textContent = show ? "Hide Code" : "Show Code";
+            sensitiveVerifyCodeInput.focus();
+        });
+
+        sensitiveVerifyCancelBtn.addEventListener("click", function () {
+            resolveSensitiveVerifyModal(false);
+        });
+
+        sensitiveVerifyResendBtn.addEventListener("click", async function () {
+            try {
+                sensitiveVerifyResendBtn.disabled = true;
+                await sendSensitiveVerificationCode();
+                setSensitiveVerifyStatus("New code sent. Check your inbox.", "ok");
+            } catch (error) {
+                setSensitiveVerifyStatus(error && error.message ? error.message : "Could not resend code.", "error");
+            } finally {
+                sensitiveVerifyResendBtn.disabled = false;
+            }
+        });
+
+        sensitiveVerifyConfirmBtn.addEventListener("click", async function () {
+            var code = String(sensitiveVerifyCodeInput.value || "").replace(/\s+/g, "").trim();
+            if (!code) {
+                setSensitiveVerifyStatus("Verification code is required.", "error");
+                return;
+            }
+            try {
+                sensitiveVerifyConfirmBtn.disabled = true;
+                await verifySensitiveCode(code);
+                setSensitiveVerifyStatus("Code verified.", "ok");
+                resolveSensitiveVerifyModal(true);
+            } catch (error) {
+                setSensitiveVerifyStatus(error && error.message ? error.message : "Verification failed. Try again.", "error");
+            } finally {
+                sensitiveVerifyConfirmBtn.disabled = false;
+            }
+        });
+
+        sensitiveVerifyCodeInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sensitiveVerifyConfirmBtn.click();
+            }
         });
 
         document.addEventListener("visibilitychange", function () {

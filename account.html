@@ -301,7 +301,11 @@
               <input id="verifyCodeInput" class="input" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">
             </label>
           </div>
-          <p id="verifyHint" class="muted">Enter the code sent to your email.</p>
+          <label class="field" style="margin-top:-2px;">
+            <span class="label">Code Visibility</span>
+            <button id="verifyToggleBtn" type="button" class="btn">Show Code</button>
+          </label>
+          <p id="verifyHint" class="muted">Enter the code sent to your email. If your email shows only a link, switch your Supabase email template to include <strong>{{ .Token }}</strong>.</p>
           <div class="row">
             <button id="verifyCodeBtn" type="button" class="btn primary">Verify Code</button>
             <button id="resendVerifyBtn" type="button" class="btn">Resend Code</button>
@@ -347,6 +351,7 @@
     var verifyCodeBtn = document.getElementById("verifyCodeBtn");
     var cancelVerifyBtn = document.getElementById("cancelVerifyBtn");
     var verifyHint = document.getElementById("verifyHint");
+    var verifyToggleBtn = document.getElementById("verifyToggleBtn");
     var authStatus = document.getElementById("authStatus");
     var cloudAutoSyncStatus = document.getElementById("cloudAutoSyncStatus");
     var adminPortalBtn = document.getElementById("adminPortalBtn");
@@ -476,6 +481,8 @@
       pendingAuthMode = "";
       pendingAuthEmail = "";
       verifyCodeInput.value = "";
+      verifyCodeInput.type = "text";
+      verifyToggleBtn.textContent = "Show Code";
       verifyHint.textContent = "Enter the code sent to your email.";
       showVerifyPanel(false);
     }
@@ -499,6 +506,7 @@
         email: email,
         options: {
           shouldCreateUser: shouldCreateUser,
+          emailRedirectTo: window.location.href.split("#")[0],
           data: {
             auth_flow: "email_code"
           }
@@ -850,6 +858,24 @@
     cancelVerifyBtn.addEventListener("click", function () {
       clearPendingVerification();
       setStatus("Verification canceled.", "warn");
+    });
+
+    verifyToggleBtn.addEventListener("click", function () {
+      var show = verifyCodeInput.type === "password";
+      verifyCodeInput.type = show ? "text" : "password";
+      verifyToggleBtn.textContent = show ? "Hide Code" : "Show Code";
+      verifyCodeInput.focus();
+    });
+
+    verifyCodeInput.addEventListener("input", function () {
+      verifyCodeInput.value = normalizeCode(verifyCodeInput.value);
+    });
+
+    verifyCodeInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        verifyCodeBtn.click();
+      }
     });
 
     authSignOutBtn.addEventListener("click", async function () {
