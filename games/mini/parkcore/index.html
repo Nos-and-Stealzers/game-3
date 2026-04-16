@@ -221,6 +221,12 @@
         insane: { accel: 0.95, maxSpeed: 7.0, friction: 0.76, gravity: 0.71, jump: 11.2, wallJump: 10.3, coyote: 6, buffer: 6, hazardMult: 1.2, movingPlatforms: 3 }
       };
 
+      var GENERATION = {
+        rookie: { maxGap: 118, maxRise: 54, maxDrop: 56, hazardChance: 0.36, minWidth: 126, maxWidth: 190 },
+        normal: { maxGap: 132, maxRise: 62, maxDrop: 66, hazardChance: 0.47, minWidth: 112, maxWidth: 176 },
+        insane: { maxGap: 142, maxRise: 68, maxDrop: 72, hazardChance: 0.58, minWidth: 98, maxWidth: 164 }
+      };
+
       var palettes = {
         light: { bgA: "#f2f7ff", bgB: "#dcecff", ink: "#10294e", line: "rgba(28,64,124,0.2)", solid: "#264a7e", hazard: "#c0364b", player: "#0f6fff", goal: "#1d9357", cloud: "rgba(255,255,255,0.45)" },
         gray: { bgA: "#232b37", bgB: "#3b4757", ink: "#e6edf8", line: "rgba(178,194,216,0.24)", solid: "#8fa8cf", hazard: "#ff7f97", player: "#8eb6ff", goal: "#63d39d", cloud: "rgba(255,255,255,0.18)" },
@@ -333,43 +339,110 @@
         storeLeaderboard();
       }
 
+      function mapIsReachable(platforms, goal, gen) {
+        var solids = platforms
+          .filter(function (p) { return p.type === "solid" && p.y < FLOOR_Y - 8; })
+          .sort(function (a, b) { return a.x - b.x; });
+        if (solids.length < 5) return false;
+
+        var prev = { x: 60, y: FLOOR_Y - 24, w: 24 };
+        for (var i = 0; i < solids.length; i++) {
+          var s = solids[i];
+          var gap = s.x - (prev.x + prev.w);
+          var rise = prev.y - s.y;
+          if (gap > gen.maxGap + 18) return false;
+          if (rise > gen.maxRise + 20) return false;
+          if (s.x + s.w > prev.x + prev.w + 36) prev = s;
+        }
+
+        var nearGoal = solids.some(function (s) {
+          return Math.abs((s.x + s.w * 0.5) - (goal.x + goal.w * 0.5)) < 90 && Math.abs(s.y - goal.y) < 90;
+        });
+        return nearGoal;
+      }
+
       function makeMap(seed) {
-        var rand = rng(seed);
         var cfg = DIFFICULTY[difficulty];
-        var platforms = [
-          { x: 0, y: FLOOR_Y, w: W, h: 36, type: "solid" }
-        ];
-        var hazards = [];
+        var gen = GENERATION[difficulty];
+        var attempt = 0;
 
-        var x = 120;
-        var y = FLOOR_Y - 64;
-        var i;
-        for (i = 0; i < 14; i++) {
-          var w = 110 + Math.floor(rand() * 90);
-          var dy = Math.floor((rand() - 0.5) * 120);
-          y = Math.max(90, Math.min(FLOOR_Y - 70, y + dy));
-          platforms.push({ x: x, y: y, w: w, h: 16, type: "solid" });
+        while (attempt < 10) {
+          var rand = rng(seed + (attempt * 7919));
+          var platforms = [
+            { x: 0, y: FLOOR_Y, w: W, h: 36, type: "solid" }
+          ];
+          var hazards = [];
 
-          if (rand() < 0.55 * cfg.hazardMult) {
-            var spikeCount = 2 + Math.floor(rand() * 4);
-            hazards.push({ x: x + 8, y: y - 10, w: spikeCount * 12, h: 10 });
+          var x = 88;
+          var y = FLOOR_Y - 76;
+          var checkpointY = y;
+          var i;
+          for (i = 0; i < 22 && x < W - 170; i++) {
+            var w = gen.minWidth + Math.floor(rand() * (gen.maxWidth - gen.minWidth));
+            var rawDY = Math.floor((rand() - 0.5) * 120);
+            var dy = Math.max(-gen.maxRise, Math.min(gen.maxDrop, rawDY));
+
+            if (i % 5 === 0) {
+              checkpointY = Math.max(84, Math.min(FLOOR_Y - 84, checkpointY + Math.floor((rand() - 0.5) * 70)));
+            }
+
+            y = Math.max(84, Math.min(FLOOR_Y - 76, y + dy));
+            y = Math.round((y * 0.72) + (checkpointY * 0.28));
+
+            platforms.push({ x: x, y: y, w: w, h: 16, type: "solid" });
+
+            if (rand() < gen.hazardChance * cfg.hazardMult && i > 1) {
+              var spikeCount = 2 + Math.floor(rand() * 4);
+              var hw = Math.min(w - 20, spikeCount * 12);
+              hazards.push({ x: x + 10 + Math.floor(rand() * Math.max(1, w - hw - 18)), y: y - 10, w: hw, h: 10 });
+            }
+
+            if (Math.abs(dy) > 48 && rand() < 0.55) {
+              var midX = x + Math.floor(w * 0.52);
+              var midY = Math.round((checkpointY + y) / 2);
+              platforms.push({ x: midX, y: midY, w: 72, h: 12, type: "solid" });
+            }
+
+            x += Math.max(70, Math.min(gen.maxGap, 74 + Math.floor(rand() * 86)));
           }
 
-          x += 95 + Math.floor(rand() * 75);
+          for (i = 0; i < cfg.movingPlatforms; i++) {
+            var px = 190 + Math.floor(rand() * 580);
+            var py = 120 + Math.floor(rand() * 230);
+            var span = 42 + Math.floor(rand() * 64);
+            var speed = 0.9 + rand() * 1.1;
+            platforms.push({ x: px, y: py, w: 84, h: 14, type: "moving", baseX: px, span: span, speed: speed, phase: rand() * Math.PI * 2, dx: 0 });
+          }
+
+          var endPlat = platforms[platforms.length - 1];
+          if (endPlat.type === "moving" && platforms.length > 1) {
+            endPlat = platforms[platforms.length - 2];
+          }
+          var goal = { x: Math.min(W - 72, endPlat.x + endPlat.w - 46), y: Math.max(64, endPlat.y - 44), w: 42, h: 42 };
+          var spawn = { x: 60, y: FLOOR_Y - 24 };
+
+          if (mapIsReachable(platforms, goal, gen)) {
+            return { spawn: spawn, goal: goal, platforms: platforms, hazards: hazards };
+          }
+
+          attempt += 1;
         }
 
-        for (i = 0; i < cfg.movingPlatforms; i++) {
-          var px = 240 + Math.floor(rand() * 520);
-          var py = 130 + Math.floor(rand() * 250);
-          var span = 60 + Math.floor(rand() * 90);
-          var speed = 1 + rand() * 1.4;
-          platforms.push({ x: px, y: py, w: 90, h: 14, type: "moving", baseX: px, span: span, speed: speed, phase: rand() * Math.PI * 2 });
-        }
-
-        var goal = { x: Math.min(W - 80, x + 15), y: Math.max(74, y - 40), w: 42, h: 42 };
-        var spawn = { x: 60, y: FLOOR_Y - 24 };
-
-        return { spawn: spawn, goal: goal, platforms: platforms, hazards: hazards };
+        return {
+          spawn: { x: 60, y: FLOOR_Y - 24 },
+          goal: { x: W - 86, y: FLOOR_Y - 170, w: 42, h: 42 },
+          platforms: [
+            { x: 0, y: FLOOR_Y, w: W, h: 36, type: "solid" },
+            { x: 120, y: FLOOR_Y - 84, w: 150, h: 16, type: "solid" },
+            { x: 330, y: FLOOR_Y - 136, w: 146, h: 16, type: "solid" },
+            { x: 550, y: FLOOR_Y - 172, w: 160, h: 16, type: "solid" },
+            { x: 760, y: FLOOR_Y - 128, w: 158, h: 16, type: "solid" }
+          ],
+          hazards: [
+            { x: 290, y: FLOOR_Y - 46, w: 56, h: 10 },
+            { x: 510, y: FLOOR_Y - 46, w: 56, h: 10 }
+          ]
+        };
       }
 
       var map = makeMap(activeSeed);
@@ -422,7 +495,9 @@
       function updateMovingPlatforms(t) {
         map.platforms.forEach(function (p) {
           if (p.type !== "moving") return;
+          var oldX = p.x;
           p.x = p.baseX + Math.sin((t * 0.02 * p.speed) + p.phase) * p.span;
+          p.dx = p.x - oldX;
         });
       }
 
@@ -448,7 +523,7 @@
               state.grounded = true;
               state.coyote = state.cfg.coyote;
               if (p.type === "moving") {
-                state.x += (p.x - state.prevPlatX || 0);
+                state.x += p.dx || 0;
               }
             } else if (state.vy < 0) {
               state.y = p.y + p.h;
