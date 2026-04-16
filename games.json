@@ -26,6 +26,32 @@
     "schoolRisk": "low"
   },
   {
+    "id": "parkcore-sprint",
+    "title": "Parkcore Sprint",
+    "category": "platformer",
+    "description": "Local skill runner with smooth jumps and increasing speed.",
+    "gradient": "linear-gradient(135deg, #1e749f, #134b7a)",
+    "pfp": "images/parkcore-icon.svg",
+    "source": "games/mini/parkcore/index.html",
+    "direct": "games/mini/parkcore/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
+  },
+  {
+    "id": "tower-defense-grid",
+    "title": "Tower Defense Grid",
+    "category": "strategy",
+    "description": "Local tower defense mini-game with waves, coins, and upgrade decisions.",
+    "gradient": "linear-gradient(135deg, #3f51d9, #2646ad)",
+    "pfp": "images/tower-defense-icon.svg",
+    "source": "games/mini/tower-defense/index.html",
+    "direct": "games/mini/tower-defense/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
+  },
+  {
     "id": "fnaf-1",
     "title": "Five Nights at Freddy's 1",
     "category": "horror",

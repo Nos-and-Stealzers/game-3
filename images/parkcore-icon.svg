@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="Parkcore icon">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0ea5e9"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="180" rx="20" fill="url(#g)"/>
+  <rect x="26" y="118" width="268" height="22" rx="8" fill="#083344" opacity="0.6"/>
+  <rect x="62" y="90" width="50" height="28" rx="6" fill="#e2e8f0"/>
+  <rect x="170" y="72" width="50" height="46" rx="6" fill="#e2e8f0"/>
+  <circle cx="150" cy="66" r="16" fill="#f8fafc"/>
+  <path d="M148 82l20 18" stroke="#f8fafc" stroke-width="10" stroke-linecap="round"/>
+  <path d="M146 84l-20 20" stroke="#f8fafc" stroke-width="10" stroke-linecap="round"/>
+  <path d="M162 106l26 20" stroke="#f8fafc" stroke-width="10" stroke-linecap="round"/>
+  <text x="24" y="42" fill="#f8fafc" font-family="Verdana, sans-serif" font-size="24" font-weight="700">PARKCORE</text>
+</svg>
