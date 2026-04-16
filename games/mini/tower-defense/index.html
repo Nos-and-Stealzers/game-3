@@ -145,9 +145,9 @@
           <option value="close">Target: Close</option>
         </select>
         <button id="speedBtn" class="btn" type="button">Speed 1x</button>
-        <button id="dartBtn" class="btn active" type="button">Dart 40</button>
-        <button id="blastBtn" class="btn" type="button">Blast 70</button>
-        <button id="sniperBtn" class="btn" type="button">Sniper 95</button>
+        <button id="dartBtn" class="btn active" type="button">Dart 45</button>
+        <button id="blastBtn" class="btn" type="button">Blast 82</button>
+        <button id="sniperBtn" class="btn" type="button">Sniper 118</button>
         <button id="newMapBtn" class="btn" type="button">New Map</button>
         <button id="restartBtn" class="btn" type="button">Restart</button>
       </div>
@@ -218,9 +218,9 @@
       var ROWS = 9;
 
       var DIFFICULTY = {
-        rookie: { label: "Rookie", coins: 180, lives: 28, hpScale: 1.8, speedScale: 0.92, spawnBase: 22, waveDelay: 92 },
-        normal: { label: "Normal", coins: 130, lives: 20, hpScale: 2.0, speedScale: 1.0, spawnBase: 18, waveDelay: 76 },
-        hard: { label: "Hard", coins: 95, lives: 15, hpScale: 2.3, speedScale: 1.1, spawnBase: 14, waveDelay: 62 }
+        rookie: { label: "Rookie", coins: 210, lives: 32, hpScale: 1.7, speedScale: 0.9, spawnBase: 24, waveDelay: 96 },
+        normal: { label: "Normal", coins: 150, lives: 22, hpScale: 2.0, speedScale: 1.0, spawnBase: 19, waveDelay: 80 },
+        hard: { label: "Hard", coins: 110, lives: 16, hpScale: 2.35, speedScale: 1.12, spawnBase: 15, waveDelay: 64 }
       };
 
       var palettes = {
@@ -269,12 +269,19 @@
         }
       };
 
+      var TOWER_DEFS = {
+        dart: { name: "Dart", cost: 45, range: 178, damage: 8, fireRate: 22, pierce: 2, projectileSpeed: 7.4 },
+        blast: { name: "Blast", cost: 82, range: 130, damage: 18, fireRate: 44, pierce: 1, projectileSpeed: 5.5 },
+        sniper: { name: "Sniper", cost: 118, range: 420, damage: 23, fireRate: 56, pierce: 3, projectileSpeed: 10.8 }
+      };
+
       var BLOON_TYPES = {
-        red: { hp: 14, speed: 1.15, value: 6, radius: 10, color: "#ef4444", children: [] },
-        blue: { hp: 24, speed: 1.28, value: 10, radius: 10, color: "#3b82f6", children: ["red"] },
-        green: { hp: 38, speed: 1.42, value: 14, radius: 11, color: "#22c55e", children: ["blue"] },
-        yellow: { hp: 54, speed: 1.7, value: 18, radius: 11, color: "#f59e0b", children: ["green"] },
-        black: { hp: 74, speed: 1.08, value: 26, radius: 12, color: "#7c3aed", children: ["yellow", "yellow"] }
+        red: { hp: 14, speed: 1.12, value: 6, radius: 10, leak: 1, color: "#ef4444", children: [] },
+        blue: { hp: 24, speed: 1.25, value: 10, radius: 10, leak: 1, color: "#3b82f6", children: [{ type: "red", count: 2 }] },
+        green: { hp: 38, speed: 1.38, value: 14, radius: 11, leak: 1, color: "#22c55e", children: [{ type: "blue", count: 2 }] },
+        yellow: { hp: 54, speed: 1.66, value: 18, radius: 11, leak: 1, color: "#f59e0b", children: [{ type: "green", count: 2 }] },
+        black: { hp: 78, speed: 1.05, value: 27, radius: 12, leak: 2, color: "#7c3aed", children: [{ type: "yellow", count: 3 }] },
+        boss: { hp: 520, speed: 0.82, value: 150, radius: 18, leak: 10, color: "#64748b", children: [{ type: "black", count: 5 }] }
       };
 
       function rng(seed) {
@@ -348,12 +355,23 @@
         bestWaveEl.textContent = String(bestWave);
       }
 
+      function syncTowerCostLabels() {
+        dartBtn.textContent = TOWER_DEFS.dart.name + " " + TOWER_DEFS.dart.cost;
+        blastBtn.textContent = TOWER_DEFS.blast.name + " " + TOWER_DEFS.blast.cost;
+        sniperBtn.textContent = TOWER_DEFS.sniper.name + " " + TOWER_DEFS.sniper.cost;
+      }
+
       function buildRoundRecipe(wave) {
         var red = Math.max(0, 10 - Math.floor(wave / 2));
-        var blue = 3 + Math.floor(wave * 1.25);
-        var green = wave >= 4 ? Math.floor((wave - 2) * 0.95) : 0;
-        var yellow = wave >= 9 ? Math.floor((wave - 7) * 0.8) : 0;
-        var black = wave >= 15 ? Math.floor((wave - 13) * 0.65) : 0;
+        var blue = 3 + Math.floor(wave * 1.18);
+        var green = wave >= 4 ? Math.floor((wave - 2) * 0.9) : 0;
+        var yellow = wave >= 9 ? Math.floor((wave - 7) * 0.74) : 0;
+        var black = wave >= 15 ? Math.floor((wave - 13) * 0.6) : 0;
+        var boss = 0;
+
+        if (wave === 20) boss = 1;
+        if (wave === 30) boss = 2;
+        if (wave === 40) boss = 3;
 
         if (wave % 5 === 0) {
           yellow += 2;
@@ -369,7 +387,8 @@
           { type: "blue", count: blue },
           { type: "green", count: green },
           { type: "yellow", count: yellow },
-          { type: "black", count: black }
+          { type: "black", count: black },
+          { type: "boss", count: boss }
         ].filter(function (r) { return r.count > 0; });
       }
 
@@ -382,11 +401,16 @@
       function makeSpawnSpec(typeName, wave) {
         var base = BLOON_TYPES[typeName];
         var cfg = DIFFICULTY[difficulty];
+        var isBoss = typeName === "boss";
+        var hpScale = isBoss ? 4.8 : 1.8;
+        var speedScale = isBoss ? 0.5 : 1;
+        var payoutScale = isBoss ? 1.6 : 1;
         return {
           type: typeName,
-          hp: Math.round(base.hp + wave * cfg.hpScale * 1.8),
-          speed: base.speed * cfg.speedScale * (1 + wave * 0.008),
-          value: base.value + Math.floor(wave * 0.35)
+          hp: Math.round(base.hp + wave * cfg.hpScale * hpScale),
+          speed: base.speed * cfg.speedScale * (1 + wave * 0.008) * speedScale,
+          value: Math.round((base.value + Math.floor(wave * 0.35)) * payoutScale),
+          leak: base.leak || 1
         };
       }
 
@@ -501,6 +525,7 @@
           maxHp: spec.hp,
           speed: spec.speed,
           value: spec.value,
+          leak: spec.leak,
           kind: spec.type,
           seg: 0,
           progress: 0,
@@ -514,22 +539,27 @@
         if (!base || !base.children || !base.children.length) return;
 
         for (var i = 0; i < base.children.length; i++) {
-          var cType = base.children[i];
+          var entry = base.children[i];
+          var cType = typeof entry === "string" ? entry : entry.type;
+          var cCount = typeof entry === "string" ? 1 : entry.count;
           var cBase = BLOON_TYPES[cType];
-          state.enemies.push({
-            id: enemyIdCounter++,
-            x: enemy.x + (i === 0 ? -4 : 4),
-            y: enemy.y,
-            hp: Math.max(1, Math.round(cBase.hp * 0.85 + state.wave * 0.7)),
-            maxHp: Math.max(1, Math.round(cBase.hp * 0.85 + state.wave * 0.7)),
-            speed: cBase.speed * DIFFICULTY[difficulty].speedScale * 1.06,
-            value: Math.max(1, Math.round(cBase.value * 0.75)),
-            kind: cType,
-            seg: enemy.seg,
-            progress: enemy.progress,
-            radius: cBase.radius,
-            color: cBase.color
-          });
+          for (var j = 0; j < cCount; j++) {
+            state.enemies.push({
+              id: enemyIdCounter++,
+              x: enemy.x + (j - ((cCount - 1) / 2)) * 4,
+              y: enemy.y,
+              hp: Math.max(1, Math.round(cBase.hp * 0.8 + state.wave * 0.65)),
+              maxHp: Math.max(1, Math.round(cBase.hp * 0.8 + state.wave * 0.65)),
+              speed: cBase.speed * DIFFICULTY[difficulty].speedScale * 1.04,
+              value: Math.max(1, Math.round(cBase.value * 0.7)),
+              leak: cBase.leak || 1,
+              kind: cType,
+              seg: enemy.seg,
+              progress: enemy.progress,
+              radius: cBase.radius,
+              color: cBase.color
+            });
+          }
         }
       }
 
@@ -603,7 +633,7 @@
 
           if (e.seg >= pathTiles.length - 1 && Math.abs(e.x - target.x) < 3 && Math.abs(e.y - target.y) < 3) {
             state.enemies.splice(i, 1);
-            state.lives -= 1;
+            state.lives -= (e.leak || 1);
             syncHud();
             if (state.lives <= 0) {
               state.gameOver = true;
@@ -785,6 +815,13 @@
           ctx.beginPath();
           ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
           ctx.fill();
+
+          if (e.kind === "boss") {
+            ctx.strokeStyle = "rgba(255,255,255,0.85)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+
           var ratio = Math.max(0, e.hp / e.maxHp);
           var barW = e.radius * 2 + 4;
           ctx.fillStyle = "rgba(15,23,42,0.45)";
@@ -832,11 +869,7 @@
       function placeTower(col, row) {
         if (state.gameOver || isPath(col, row) || towerAt(col, row)) return;
 
-        var def = {
-          dart: { cost: 40, range: 172, damage: 8, fireRate: 24, pierce: 2, projectileSpeed: 7.2 },
-          blast: { cost: 70, range: 124, damage: 16, fireRate: 46, pierce: 1, projectileSpeed: 5.4 },
-          sniper: { cost: 95, range: 400, damage: 20, fireRate: 58, pierce: 3, projectileSpeed: 10.5 }
-        }[selectedTower];
+        var def = TOWER_DEFS[selectedTower];
 
         if (!def || state.coins < def.cost) return;
 
@@ -857,25 +890,27 @@
       }
 
       function upgradeTower(t) {
-        var cost = 22 + (t.level - 1) * 14;
+        var baseCost = t.kind === "sniper" ? 44 : (t.kind === "blast" ? 36 : 26);
+        var step = t.kind === "sniper" ? 20 : (t.kind === "blast" ? 16 : 12);
+        var cost = baseCost + (t.level - 1) * step;
         if (state.coins < cost || t.level >= 5) return;
         state.coins -= cost;
         t.level += 1;
         if (t.kind === "blast") {
-          t.damage += 7;
-          t.range += 8;
-          t.pierce = Math.min(3, t.pierce + 1);
-          t.fireRate = Math.max(24, t.fireRate - 2);
-        } else if (t.kind === "sniper") {
-          t.damage += 10;
-          t.range += 14;
-          t.pierce = Math.min(7, t.pierce + 1);
-          t.fireRate = Math.max(30, t.fireRate - 3);
-        } else {
-          t.damage += 3;
+          t.damage += 8;
           t.range += 10;
+          t.pierce = Math.min(4, t.pierce + 1);
+          t.fireRate = Math.max(22, t.fireRate - 2);
+        } else if (t.kind === "sniper") {
+          t.damage += 12;
+          t.range += 16;
+          t.pierce = Math.min(7, t.pierce + 1);
+          t.fireRate = Math.max(28, t.fireRate - 3);
+        } else {
+          t.damage += 4;
+          t.range += 11;
           t.pierce = Math.min(6, t.pierce + 1);
-          t.fireRate = Math.max(12, t.fireRate - 2);
+          t.fireRate = Math.max(11, t.fireRate - 2);
         }
         syncHud();
       }
@@ -924,6 +959,7 @@
       restartBtn.addEventListener("click", function () { resetGame(false); });
 
       applyTheme();
+      syncTowerCostLabels();
       window.addEventListener("focus", applyTheme);
       window.addEventListener("storage", function (event) {
         if (event.key === THEME_KEY) applyTheme();
