@@ -693,6 +693,662 @@
             background: linear-gradient(180deg, rgba(248, 250, 255, 0.92), rgba(255, 255, 255, 0.98));
         }
 
+        .friends-chat-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            z-index: 99999;
+            width: 88vw;
+            max-width: 920px;
+            height: 88vh;
+            max-height: 88vh;
+            border-radius: 24px;
+            border: 2px solid rgba(88, 101, 242, 0.3);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(88, 101, 242, 0.5);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .friends-chat-panel > .message-compose-head {
+            display: none;
+        }
+
+        .friends-chat-panel .open > .message-compose-head {
+            display: none;
+        }
+
+        .friends-chat-panel.open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .friends-chat-panel::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .friends-chat-panel.open::before {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .friend-action-menu {
+            position: fixed;
+            z-index: 99998;
+            display: grid;
+            gap: 6px;
+            min-width: 220px;
+            padding: 8px;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 22px 40px rgba(11, 22, 46, 0.2);
+            backdrop-filter: blur(12px);
+        }
+
+        .friend-action-menu-item {
+            width: 100%;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            background: transparent;
+            color: var(--ink);
+            text-align: left;
+            padding: 10px 12px;
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+            display: grid;
+            gap: 2px;
+        }
+
+        .friend-action-menu-item small {
+            color: var(--muted);
+            font-size: 0.74rem;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .friend-action-menu-item:hover,
+        .friend-action-menu-item:focus-visible {
+            border-color: rgba(88, 101, 242, 0.24);
+            background: rgba(88, 101, 242, 0.08);
+            outline: none;
+        }
+
+        .friend-action-menu-item.danger {
+            color: #b33939;
+        }
+
+        .friend-action-menu-item.danger small {
+            color: #d26b6b;
+        }
+
+        body[data-theme="gray"] .friend-action-menu,
+        body[data-theme="black"] .friend-action-menu {
+            background: rgba(14, 18, 24, 0.97);
+            border-color: rgba(122, 162, 255, 0.26);
+        }
+
+        body[data-theme="gray"] .friend-action-menu-item,
+        body[data-theme="black"] .friend-action-menu-item {
+            color: #f2f6ff;
+        }
+
+        body[data-theme="gray"] .friend-action-menu-item small,
+        body[data-theme="black"] .friend-action-menu-item small {
+            color: #c3cee6;
+        }
+
+        body[data-theme="gray"] .friend-action-menu-item:hover,
+        body[data-theme="black"] .friend-action-menu-item:hover,
+        body[data-theme="gray"] .friend-action-menu-item:focus-visible,
+        body[data-theme="black"] .friend-action-menu-item:focus-visible {
+            background: rgba(122, 162, 255, 0.16);
+            border-color: rgba(122, 162, 255, 0.34);
+        }
+
+        .friends-chat-shell {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0;
+            align-items: stretch;
+            height: 100%;
+            flex: 1;
+        }
+
+        .friends-chat-menu {
+            display: none;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.62);
+            max-height: 430px;
+            overflow: auto;
+        }
+
+        .friends-chat-menu-item {
+            display: grid;
+            gap: 4px;
+            width: 100%;
+            border: 1px solid transparent;
+            border-radius: 14px;
+            background: transparent;
+            padding: 10px 11px;
+            text-align: left;
+            cursor: pointer;
+            color: inherit;
+        }
+
+        .friends-chat-menu-item:hover {
+            border-color: rgba(88, 101, 242, 0.24);
+            background: rgba(88, 101, 242, 0.08);
+        }
+
+        .friends-chat-menu-item.active {
+            border-color: rgba(88, 101, 242, 0.38);
+            background: rgba(88, 101, 242, 0.14);
+        }
+
+        .friends-chat-name {
+            margin: 0;
+            color: var(--ink);
+            font-size: 0.92rem;
+            font-weight: 900;
+        }
+
+        .friends-chat-meta,
+        .friends-chat-preview,
+        .friends-chat-time {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.76rem;
+            line-height: 1.35;
+        }
+
+        .friends-chat-thread {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            gap: 10px;
+            padding: 20px;
+            border-radius: 0;
+            border: none;
+            background: transparent;
+            min-height: auto;
+            height: 100%;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .friends-chat-thread-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(88, 101, 242, 0.15);
+        }
+
+        .friends-chat-thread-head h3 {
+            margin: 0;
+            color: var(--ink);
+            font-size: 1.1rem;
+            font-weight: 900;
+        }
+
+        .friends-chat-thread-head p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        .friends-chat-thread-close {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+
+        .friends-chat-thread-close:hover {
+            color: var(--ink);
+        }
+
+        .friends-chat-thread-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .friends-chat-log {
+            display: grid;
+            gap: 8px;
+            min-height: 0;
+            max-height: none;
+            overflow: auto;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(88, 101, 242, 0.1);
+            background: rgba(255, 255, 255, 0.7);
+            align-content: start;
+        }
+
+        .friends-chat-compose {
+            display: grid;
+            gap: 12px;
+            padding: 14px 18px;
+            border-top: 1px solid rgba(88, 101, 242, 0.15);
+            background: rgba(255, 255, 255, 0.4);
+            align-content: start;
+        }
+
+        .friends-chat-compose .field-row {
+            margin: 0;
+        }
+
+        .friends-chat-compose textarea {
+            min-height: 52px;
+            max-height: 90px;
+            resize: vertical;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .friends-chat-attachments {
+            display: grid;
+            gap: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .friends-chat-attachment-preview {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            border-radius: 10px;
+            background: rgba(88, 101, 242, 0.08);
+            border: 1px solid rgba(88, 101, 242, 0.2);
+        }
+
+        .friends-chat-attachment-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background: rgba(88, 101, 242, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .friends-chat-attachment-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .friends-chat-attachment-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .friends-chat-attachment-name {
+            margin: 0;
+            color: var(--ink);
+            font-size: 0.85rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .friends-chat-attachment-size {
+            margin: 2px 0 0;
+            color: var(--muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .friends-chat-attachment-remove {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 4px 6px;
+            font-size: 18px;
+            flex-shrink: 0;
+            transition: color 0.2s ease;
+        }
+
+        .friends-chat-attachment-remove:hover {
+            color: var(--ink);
+        }
+
+        .friends-chat-compose-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .friends-chat-compose-file-btn {
+            background: transparent;
+            border: 2px dashed rgba(88, 101, 242, 0.4);
+            border-radius: 10px;
+            color: rgba(88, 101, 242, 0.8);
+            cursor: pointer;
+            padding: 10px 14px;
+            font: inherit;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .friends-chat-compose-file-btn:hover {
+            border-color: rgba(88, 101, 242, 1);
+            color: rgba(88, 101, 242, 1);
+            background: rgba(88, 101, 242, 0.06);
+        }
+
+        #friendChatFileInput {
+            display: none;
+        }
+
+        .friends-chat-upload-progress {
+            display: grid;
+            gap: 6px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(88, 101, 242, 0.22);
+            background: rgba(88, 101, 242, 0.08);
+        }
+
+        .friends-chat-upload-progress-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            color: var(--ink);
+            font-size: 0.76rem;
+            font-weight: 800;
+        }
+
+        .friends-chat-upload-progress-track {
+            height: 8px;
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid rgba(88, 101, 242, 0.26);
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .friends-chat-upload-progress-bar {
+            width: 0;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(88, 101, 242, 0.85), rgba(90, 170, 255, 0.9));
+            transition: width 0.2s ease;
+        }
+
+        .chat-message {
+            display: grid;
+            gap: 4px;
+            max-width: min(86%, 540px);
+        }
+
+        .chat-message.self {
+            justify-self: end;
+        }
+
+        .chat-message.other {
+            justify-self: start;
+        }
+
+        .chat-message-bubble {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 10px 12px;
+            box-shadow: 0 8px 18px rgba(25, 66, 127, 0.06);
+        }
+
+        .chat-message.self .chat-message-bubble {
+            background: linear-gradient(180deg, rgba(88, 101, 242, 0.18), rgba(88, 101, 242, 0.12));
+            border-color: rgba(88, 101, 242, 0.24);
+        }
+
+        .chat-message.other .chat-message-bubble {
+            background: rgba(255, 255, 255, 0.94);
+        }
+
+        .chat-message-author {
+            margin: 0;
+            color: var(--ink);
+            font-size: 0.78rem;
+            font-weight: 900;
+        }
+
+        .chat-message-text {
+            margin: 0;
+            color: var(--ink);
+            font-size: 0.88rem;
+            line-height: 1.46;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .chat-message-attachments {
+            display: grid;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .chat-message-attachment-item {
+            display: grid;
+            gap: 6px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .chat-message-attachment-link {
+            color: var(--primary-strong);
+            text-decoration: none;
+            font-weight: 700;
+            word-break: break-all;
+        }
+
+        .chat-message-attachment-link:hover,
+        .chat-message-attachment-link:focus-visible {
+            text-decoration: underline;
+        }
+
+        .chat-message-attachment-image {
+            max-width: min(320px, 100%);
+            border-radius: 8px;
+            border: 1px solid var(--line);
+        }
+
+        .chat-message.self .chat-message-author {
+            color: var(--primary-strong);
+        }
+
+        .friends-chat-empty {
+            display: grid;
+            place-items: center;
+            min-height: 260px;
+            padding: 18px;
+            border-radius: 14px;
+            border: 1px dashed var(--line);
+            color: var(--muted);
+            text-align: center;
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        body[data-theme="gray"] .friends-chat-menu,
+        body[data-theme="black"] .friends-chat-menu,
+        body[data-theme="gray"] .friends-chat-thread,
+        body[data-theme="black"] .friends-chat-thread,
+        body[data-theme="gray"] .friends-chat-log,
+        body[data-theme="black"] .friends-chat-log,
+        body[data-theme="gray"] .friends-chat-empty,
+        body[data-theme="black"] .friends-chat-empty {
+            background: rgba(18, 22, 29, 0.92);
+            border-color: rgba(122, 162, 255, 0.26);
+        }
+
+        body[data-theme="gray"] .friends-chat-panel,
+        body[data-theme="black"] .friends-chat-panel {
+            background: linear-gradient(135deg, rgba(18, 22, 29, 0.98), rgba(24, 30, 42, 0.96));
+            border-color: rgba(122, 162, 255, 0.3);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 1px rgba(122, 162, 255, 0.4);
+        }
+
+        body[data-theme="gray"] .friends-chat-thread-head,
+        body[data-theme="black"] .friends-chat-thread-head {
+            border-bottom-color: rgba(122, 162, 255, 0.15);
+        }
+
+        body[data-theme="gray"] .friends-chat-compose,
+        body[data-theme="black"] .friends-chat-compose {
+            border-top-color: rgba(122, 162, 255, 0.15);
+        }
+
+        body[data-theme="light"] .friends-chat-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 255, 0.96));
+        }
+
+        body[data-theme="gray"] .friends-chat-menu-item:hover,
+        body[data-theme="black"] .friends-chat-menu-item:hover,
+        body[data-theme="gray"] .friends-chat-menu-item.active,
+        body[data-theme="black"] .friends-chat-menu-item.active {
+            background: rgba(122, 162, 255, 0.16);
+            border-color: rgba(122, 162, 255, 0.36);
+        }
+
+        body[data-theme="gray"] .friends-chat-name,
+        body[data-theme="black"] .friends-chat-name,
+        body[data-theme="gray"] .friends-chat-thread-head h3,
+        body[data-theme="black"] .friends-chat-thread-head h3,
+        body[data-theme="gray"] .chat-message-author,
+        body[data-theme="black"] .chat-message-author,
+        body[data-theme="gray"] .chat-message-text,
+        body[data-theme="black"] .chat-message-text {
+            color: #f2f6ff;
+        }
+
+        body[data-theme="gray"] .friends-chat-meta,
+        body[data-theme="black"] .friends-chat-meta,
+        body[data-theme="gray"] .friends-chat-preview,
+        body[data-theme="black"] .friends-chat-preview,
+        body[data-theme="gray"] .friends-chat-time,
+        body[data-theme="black"] .friends-chat-time,
+        body[data-theme="gray"] .friends-chat-thread-head p,
+        body[data-theme="black"] .friends-chat-thread-head p,
+        body[data-theme="gray"] .friends-chat-empty,
+        body[data-theme="black"] .friends-chat-empty {
+            color: #c3cee6;
+        }
+
+        body[data-theme="gray"] .chat-message.self .chat-message-bubble,
+        body[data-theme="black"] .chat-message.self .chat-message-bubble {
+            background: rgba(88, 101, 242, 0.18);
+            border-color: rgba(88, 101, 242, 0.34);
+        }
+
+        body[data-theme="gray"] .chat-message.other .chat-message-bubble,
+        body[data-theme="black"] .chat-message.other .chat-message-bubble {
+            background: rgba(12, 16, 23, 0.76);
+            border-color: rgba(122, 162, 255, 0.24);
+        }
+
+        body[data-theme="gray"] .chat-message-attachment-item,
+        body[data-theme="black"] .chat-message-attachment-item {
+            background: rgba(12, 16, 23, 0.62);
+            border-color: rgba(122, 162, 255, 0.24);
+        }
+
+        body[data-theme="gray"] .chat-message-attachment-link,
+        body[data-theme="black"] .chat-message-attachment-link {
+            color: #9bc2ff;
+        }
+
+        body[data-theme="gray"] .friends-chat-attachment-preview,
+        body[data-theme="black"] .friends-chat-attachment-preview {
+            background: rgba(88, 101, 242, 0.12);
+            border-color: rgba(122, 162, 255, 0.3);
+        }
+
+        body[data-theme="gray"] .friends-chat-attachment-name,
+        body[data-theme="black"] .friends-chat-attachment-name {
+            color: #f2f6ff;
+        }
+
+        body[data-theme="gray"] .friends-chat-attachment-size,
+        body[data-theme="black"] .friends-chat-attachment-size {
+            color: #c3cee6;
+        }
+
+        body[data-theme="gray"] .friends-chat-attachment-thumb,
+        body[data-theme="black"] .friends-chat-attachment-thumb {
+            background: rgba(122, 162, 255, 0.2);
+        }
+
+        body[data-theme="gray"] .friends-chat-compose-file-btn,
+        body[data-theme="black"] .friends-chat-compose-file-btn {
+            border-color: rgba(122, 162, 255, 0.5);
+            color: rgba(122, 162, 255, 0.9);
+        }
+
+        body[data-theme="gray"] .friends-chat-compose-file-btn:hover,
+        body[data-theme="black"] .friends-chat-compose-file-btn:hover {
+            border-color: rgba(122, 162, 255, 1);
+            color: rgba(147, 197, 255, 1);
+            background: rgba(122, 162, 255, 0.12);
+        }
+
+        body[data-theme="gray"] .friends-chat-upload-progress,
+        body[data-theme="black"] .friends-chat-upload-progress {
+            border-color: rgba(122, 162, 255, 0.32);
+            background: rgba(122, 162, 255, 0.12);
+        }
+
+        body[data-theme="gray"] .friends-chat-upload-progress-head,
+        body[data-theme="black"] .friends-chat-upload-progress-head {
+            color: #e5eeff;
+        }
+
+        body[data-theme="gray"] .friends-chat-upload-progress-track,
+        body[data-theme="black"] .friends-chat-upload-progress-track {
+            border-color: rgba(122, 162, 255, 0.3);
+            background: rgba(10, 14, 22, 0.62);
+        }
+
         body[data-theme="gray"] .friends-feed .panel,
         body[data-theme="black"] .friends-feed .panel {
             background: linear-gradient(180deg, rgba(22, 27, 36, 0.9), rgba(14, 18, 24, 0.94));
@@ -1292,6 +1948,32 @@
             .friends-stats {
                 grid-template-columns: 1fr;
             }
+
+            .friends-chat-panel {
+                width: 95vw;
+                height: 93vh;
+                max-width: none;
+                max-height: 93vh;
+                border-radius: 16px;
+            }
+
+
+            .friends-chat-panel.open {
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            .friends-chat-thread-head {
+                flex-wrap: wrap;
+            }
+
+            .friends-chat-log {
+                min-height: 0;
+                max-height: none;
+            }
+
+            .friends-chat-thread {
+                grid-template-rows: auto minmax(0, 1fr) auto;
+            }
         }
     </style>
 </head>
@@ -1543,6 +2225,61 @@
                         </div>
 
                         <div class="friends-column friends-feed">
+                            <section class="panel friends-chat-panel">
+                                <div class="message-compose-head">
+                                    <div>
+                                        <h2>Direct Chat</h2>
+                                        <p>Select a friend to open a Discord-style DM thread with chat history.</p>
+                                    </div>
+                                    <div id="friendChatStatus" class="message-compose-meta">Choose a friend to start chatting.</div>
+                                </div>
+                                <div class="friends-chat-shell">
+                                    <aside id="friendChatMenu" class="friends-chat-menu"></aside>
+                                    <section class="friends-chat-thread">
+                                        <div class="friends-chat-thread-head">
+                                            <div>
+                                                <h3 id="friendChatThreadTitle">No conversation open</h3>
+                                                <p id="friendChatThreadMeta">Pick a mutual friend from the menu to load the chat log.</p>
+                                            </div>
+                                            <div style="display: flex; gap: 6px; align-items: center;">
+                                                <div class="friends-chat-thread-actions">
+                                                    <button id="refreshFriendChatBtn" type="button" class="btn alt">Refresh Thread</button>
+                                                </div>
+                                                <button class="friends-chat-thread-close" id="closeFriendChatBtn" title="Close chat">×</button>
+                                            </div>
+                                        </div>
+                                        <div id="friendChatLog" class="friends-chat-log" tabindex="-1">
+                                            <div class="friends-chat-empty">Pick a friend on the left to load the conversation log here.</div>
+                                        </div>
+                                        <div class="friends-chat-compose">
+                                            <label class="setting-block field-row">
+                                                <span class="meta">Message</span>
+                                                <textarea id="friendChatMessageInput" class="input" placeholder="Type a direct message" disabled></textarea>
+                                            </label>
+                                            <div id="friendChatAttachments" class="friends-chat-attachments"></div>
+                                            <input type="file" id="friendChatFileInput" multiple accept="image/*,.pdf,.doc,.docx,.txt,.zip">
+                                            <div class="friends-chat-compose-actions">
+                                                <button type="button" class="friends-chat-compose-file-btn" id="friendChatFileBtn" title="Add files or images">📎 Add Files</button>
+                                                <div style="flex: 1;"></div>
+                                                <div id="friendChatMessageMeta" class="message-compose-meta">0 / 1000</div>
+                                            </div>
+                                            <div id="friendChatUploadProgress" class="friends-chat-upload-progress hidden" aria-live="polite">
+                                                <div class="friends-chat-upload-progress-head">
+                                                    <span id="friendChatUploadProgressLabel">Preparing upload...</span>
+                                                    <span id="friendChatUploadProgressCount">0 / 0</span>
+                                                </div>
+                                                <div class="friends-chat-upload-progress-track">
+                                                    <div id="friendChatUploadProgressBar" class="friends-chat-upload-progress-bar"></div>
+                                                </div>
+                                            </div>
+                                            <div class="save-actions">
+                                                <button id="sendFriendChatMessageBtn" type="button" class="btn" disabled>Send Direct Message</button>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </section>
+
                             <section class="panel friends-inbox-panel">
                                 <div class="message-compose-head">
                                     <div>
@@ -1620,6 +2357,8 @@
             </section>
         </section>
     </main>
+
+    <div id="friendActionMenu" class="friend-action-menu hidden" role="menu" aria-hidden="true"></div>
 
     <section id="sensitiveVerifyModal" class="verify-modal hidden" aria-hidden="true">
         <article class="verify-modal-card" role="dialog" aria-modal="true" aria-labelledby="sensitiveVerifyTitle">
@@ -1742,6 +2481,20 @@
         var friendMessageInput = document.getElementById("friendMessageInput");
         var friendMessageMeta = document.getElementById("friendMessageMeta");
         var sendFriendMessageBtn = document.getElementById("sendFriendMessageBtn");
+        var friendChatStatus = document.getElementById("friendChatStatus");
+        var friendChatMenu = document.getElementById("friendChatMenu");
+        var friendChatThreadTitle = document.getElementById("friendChatThreadTitle");
+        var friendChatThreadMeta = document.getElementById("friendChatThreadMeta");
+        var friendChatLog = document.getElementById("friendChatLog");
+        var friendChatMessageInput = document.getElementById("friendChatMessageInput");
+        var friendChatMessageMeta = document.getElementById("friendChatMessageMeta");
+        var friendChatUploadProgress = document.getElementById("friendChatUploadProgress");
+        var friendChatUploadProgressLabel = document.getElementById("friendChatUploadProgressLabel");
+        var friendChatUploadProgressCount = document.getElementById("friendChatUploadProgressCount");
+        var friendChatUploadProgressBar = document.getElementById("friendChatUploadProgressBar");
+        var sendFriendChatMessageBtn = document.getElementById("sendFriendChatMessageBtn");
+        var refreshFriendChatBtn = document.getElementById("refreshFriendChatBtn");
+        var friendActionMenu = document.getElementById("friendActionMenu");
         var securityCheckboxes = Array.prototype.slice.call(document.querySelectorAll("[data-security-key]"));
         var securityChecklistStatus = document.getElementById("securityChecklistStatus");
         var sensitiveVerifyModal = document.getElementById("sensitiveVerifyModal");
@@ -1759,6 +2512,15 @@
         var friendListCache = [];
         var unreadFriendMessagesCache = [];
         var selectedFriendIds = {};
+        var directChatFriendId = "";
+        var directChatMessagesCache = [];
+        var directChatAttachments = [];
+        var directChatLoadId = 0;
+        var FRIEND_CHAT_UPLOAD_BUCKET = (window.__GAMEHUB_SUPABASE__ && window.__GAMEHUB_SUPABASE__.friendChatUploadsBucket)
+            ? String(window.__GAMEHUB_SUPABASE__.friendChatUploadsBucket)
+            : "friend-chat-attachments";
+        var friendActionMenuFriendId = "";
+        var friendActionMenuAnchor = null;
         var usernameGateRequired = false;
         var friendAutoRefreshTimer = null;
         var friendAutoRefreshInFlight = false;
@@ -2185,6 +2947,861 @@
             });
         }
 
+        function getMyChatDisplayName() {
+            var settings = readUserSettings();
+            if (settings.displayName) {
+                return settings.displayName;
+            }
+            if (settings.username) {
+                return "@" + settings.username;
+            }
+            if (activeAccountUser && activeAccountUser.email) {
+                return activeAccountUser.email.split("@")[0];
+            }
+            return "You";
+        }
+
+        function getFriendById(friendId) {
+            var targetId = String(friendId || "");
+            return friendListCache.find(function (friend) {
+                return friend.friend_user_id === targetId;
+            }) || null;
+        }
+
+        function getUnreadCountForFriend(friendId) {
+            var targetId = String(friendId || "");
+            return unreadFriendMessagesCache.filter(function (message) {
+                return message.sender_user_id === targetId;
+            }).length;
+        }
+
+        function formatChatPreview(friend) {
+            if (!friend) {
+                return "";
+            }
+            if (friend.current_game_title) {
+                return friend.current_game_title;
+            }
+            if (friend.note) {
+                return friend.note;
+            }
+            if (friend.status === "offline") {
+                return "Offline";
+            }
+            return "Ready to chat";
+        }
+
+        function closeFriendActionMenu() {
+            friendActionMenuFriendId = "";
+            friendActionMenuAnchor = null;
+            if (friendActionMenu) {
+                friendActionMenu.classList.add("hidden");
+                friendActionMenu.setAttribute("aria-hidden", "true");
+                friendActionMenu.innerHTML = "";
+            }
+        }
+
+        function positionFriendActionMenu(anchorEl) {
+            if (!friendActionMenu || !anchorEl || typeof anchorEl.getBoundingClientRect !== "function") {
+                return;
+            }
+
+            var rect = anchorEl.getBoundingClientRect();
+            var menuWidth = 220;
+            var menuHeight = 248;
+            var left = rect.left;
+            var top = rect.bottom + 8;
+
+            if (left + menuWidth > window.innerWidth - 12) {
+                left = Math.max(12, window.innerWidth - menuWidth - 12);
+            }
+            if (top + menuHeight > window.innerHeight - 12) {
+                top = Math.max(12, rect.top - menuHeight - 8);
+            }
+
+            friendActionMenu.style.left = left + "px";
+            friendActionMenu.style.top = top + "px";
+            friendActionMenu.style.minWidth = Math.max(220, Math.min(280, Math.floor(rect.width + 96))) + "px";
+        }
+
+        function openFriendActionMenu(friendId, anchorEl) {
+            var friend = getFriendById(friendId);
+            if (!friend) {
+                return;
+            }
+
+            if (friendActionMenuFriendId === friend.friend_user_id && friendActionMenu && !friendActionMenu.classList.contains("hidden")) {
+                closeFriendActionMenu();
+                return;
+            }
+
+            friendActionMenuFriendId = friend.friend_user_id;
+            friendActionMenuAnchor = anchorEl || null;
+
+            if (!friendActionMenu) {
+                return;
+            }
+
+            friendActionMenu.innerHTML = "";
+            var items = [
+                {
+                    action: "chat",
+                    title: "Chat",
+                    meta: "Open the DM composer and conversation view"
+                },
+                {
+                    action: "chat-logs",
+                    title: "Chat Logs",
+                    meta: "Jump straight to the thread history"
+                },
+                {
+                    action: "copy-username",
+                    title: "Copy Username",
+                    meta: friend.username ? "@" + friend.username : (friend.friend_email || "Copy friend identifier")
+                },
+                {
+                    action: "remove-friend",
+                    title: "Remove Friend",
+                    meta: "Delete this connection from your list",
+                    danger: true
+                }
+            ];
+
+            items.forEach(function (item) {
+                var button = document.createElement("button");
+                button.type = "button";
+                button.className = "friend-action-menu-item" + (item.danger ? " danger" : "");
+                button.dataset.action = item.action;
+                button.dataset.friendId = friend.friend_user_id;
+
+                var title = document.createElement("span");
+                title.textContent = item.title;
+                button.appendChild(title);
+
+                var meta = document.createElement("small");
+                meta.textContent = item.meta;
+                button.appendChild(meta);
+
+                friendActionMenu.appendChild(button);
+            });
+
+            friendActionMenu.classList.remove("hidden");
+            friendActionMenu.setAttribute("aria-hidden", "false");
+            positionFriendActionMenu(anchorEl || document.querySelector('button[data-action="message-friend"][data-friend-id="' + friend.friend_user_id + '"]'));
+        }
+
+        async function handleFriendActionMenuChoice(action, friendId) {
+            var friend = getFriendById(friendId);
+            closeFriendActionMenu();
+            if (!friend) {
+                return;
+            }
+
+            if (action === "chat") {
+                openDirectChat(friend.friend_user_id, { scroll: true });
+                if (friendChatMessageInput && !friendChatMessageInput.value) {
+                    friendChatMessageInput.value = "Hey " + (friend.display_name || (friend.username ? ("@" + friend.username) : "there")) + ", ";
+                }
+                updateDirectChatMessageMeta();
+                if (friendChatMessageInput) {
+                    friendChatMessageInput.focus();
+                }
+                return;
+            }
+
+            if (action === "chat-logs") {
+                openDirectChat(friend.friend_user_id, { scroll: true, focusLog: true });
+                return;
+            }
+
+            if (action === "copy-username") {
+                var copyValue = friend.username ? ("@" + friend.username) : (friend.friend_email || friend.display_name || friend.friend_user_id);
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(copyValue);
+                        setFriendsStatus("Copied " + copyValue + " to clipboard.", "ok");
+                    } else {
+                        setFriendsStatus("Clipboard is not available in this browser.", "warn");
+                    }
+                } catch (error) {
+                    setFriendsStatus(error && error.message ? error.message : "Could not copy username.", "error");
+                }
+                return;
+            }
+
+            if (action === "remove-friend") {
+                await removeFriend(friend.friend_user_id);
+            }
+        }
+
+        function syncFriendActionMenuPosition() {
+            if (!friendActionMenu || friendActionMenu.classList.contains("hidden") || !friendActionMenuAnchor) {
+                return;
+            }
+            positionFriendActionMenu(friendActionMenuAnchor);
+        }
+
+        document.addEventListener("click", function (event) {
+            if (!friendActionMenu || friendActionMenu.classList.contains("hidden")) {
+                return;
+            }
+
+            var target = event.target;
+            if (friendActionMenu.contains(target)) {
+                return;
+            }
+
+            var messageButton = target && target.closest ? target.closest('button[data-action="message-friend"]') : null;
+            if (messageButton && friendActionMenuAnchor && messageButton === friendActionMenuAnchor) {
+                return;
+            }
+
+            closeFriendActionMenu();
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                closeFriendActionMenu();
+            }
+        });
+
+        window.addEventListener("resize", syncFriendActionMenuPosition);
+        window.addEventListener("scroll", syncFriendActionMenuPosition, true);
+
+        function renderDirectChatMenu() {
+            if (!friendChatMenu) {
+                return;
+            }
+
+            friendChatMenu.innerHTML = "";
+
+            var mutualFriends = friendListCache.filter(function (friend) {
+                return !!friend.mutual && !!friend.can_message;
+            });
+
+            if (!mutualFriends.length) {
+                friendChatMenu.innerHTML = '<div class="friends-empty">No mutual friends yet. Add someone first, then open a chat here.</div>';
+                return;
+            }
+
+            mutualFriends.forEach(function (friend) {
+                var item = document.createElement("button");
+                item.type = "button";
+                item.className = "friends-chat-menu-item" + (friend.friend_user_id === directChatFriendId ? " active" : "");
+                item.dataset.friendId = friend.friend_user_id;
+
+                var name = document.createElement("p");
+                name.className = "friends-chat-name";
+                name.textContent = friend.display_name || (friend.username ? ("@" + friend.username) : "Friend");
+
+                var meta = document.createElement("p");
+                meta.className = "friends-chat-meta";
+                meta.textContent = formatChatPreview(friend);
+
+                var preview = document.createElement("p");
+                preview.className = "friends-chat-preview";
+                var unreadCount = getUnreadCountForFriend(friend.friend_user_id);
+                preview.textContent = unreadCount ? (unreadCount + " unread message" + (unreadCount === 1 ? "" : "s")) : (friend.mutual ? "Open conversation" : "Pending");
+
+                item.appendChild(name);
+                item.appendChild(meta);
+                item.appendChild(preview);
+                friendChatMenu.appendChild(item);
+            });
+        }
+
+        function updateDirectChatMessageMeta() {
+            if (!friendChatMessageMeta || !friendChatMessageInput) {
+                return;
+            }
+
+            var len = String(friendChatMessageInput.value || "").trim().length;
+            friendChatMessageMeta.textContent = len + " / 1000";
+            friendChatMessageMeta.classList.toggle("error", len > 1000);
+            if (sendFriendChatMessageBtn) {
+                sendFriendChatMessageBtn.disabled = !directChatFriendId;
+            }
+        }
+
+        function updateDirectChatUploadProgress(currentIndex, totalCount, fileName) {
+            if (!friendChatUploadProgress || !friendChatUploadProgressBar || !friendChatUploadProgressLabel || !friendChatUploadProgressCount) {
+                return;
+            }
+            var total = Math.max(1, Number(totalCount || 1));
+            var current = Math.max(0, Math.min(Number(currentIndex || 0), total));
+            var percent = Math.round((current / total) * 100);
+
+            friendChatUploadProgress.classList.remove("hidden");
+            friendChatUploadProgressBar.style.width = percent + "%";
+            friendChatUploadProgressCount.textContent = current + " / " + total;
+            friendChatUploadProgressLabel.textContent = fileName
+                ? ("Uploading " + String(fileName) + "...")
+                : "Uploading attachments...";
+        }
+
+        function resetDirectChatUploadProgress() {
+            if (!friendChatUploadProgress || !friendChatUploadProgressBar || !friendChatUploadProgressLabel || !friendChatUploadProgressCount) {
+                return;
+            }
+            friendChatUploadProgress.classList.add("hidden");
+            friendChatUploadProgressBar.style.width = "0%";
+            friendChatUploadProgressCount.textContent = "0 / 0";
+            friendChatUploadProgressLabel.textContent = "Preparing upload...";
+        }
+
+        function renderDirectChatThread() {
+            if (!friendChatLog || !friendChatThreadTitle || !friendChatThreadMeta || !friendChatMessageInput) {
+                return;
+            }
+
+            var friend = getFriendById(directChatFriendId);
+            var canChat = !!(friend && friend.mutual && friend.can_message);
+
+            friendChatMessageInput.disabled = !canChat;
+            if (sendFriendChatMessageBtn) {
+                sendFriendChatMessageBtn.disabled = !canChat;
+            }
+
+            if (!canChat) {
+                friendChatThreadTitle.textContent = "No conversation open";
+                friendChatThreadMeta.textContent = friend ? "That friend cannot receive direct messages right now." : "Pick a mutual friend from the menu to load the chat log.";
+                friendChatLog.innerHTML = '<div class="friends-chat-empty">Pick a friend on the left to load the conversation log here.</div>';
+                if (friendChatStatus) {
+                    friendChatStatus.textContent = friend ? "Chat disabled for this friend." : "Choose a friend to start chatting.";
+                }
+                renderDirectChatMenu();
+                return;
+            }
+
+            friendChatThreadTitle.textContent = friend.display_name || (friend.username ? ("@" + friend.username) : "Friend");
+            friendChatThreadMeta.textContent = friend.current_game_title ? ("Playing " + friend.current_game_title) : (friend.status === "offline" ? "Offline now" : "Available for direct messages");
+            if (friendChatStatus) {
+                friendChatStatus.textContent = "Chatting with " + (friend.display_name || (friend.username ? ("@" + friend.username) : "Friend"));
+            }
+
+            var messages = directChatMessagesCache.slice().sort(function (left, right) {
+                return new Date(left.created_at || 0).getTime() - new Date(right.created_at || 0).getTime();
+            });
+
+            friendChatLog.innerHTML = "";
+            if (!messages.length) {
+                friendChatLog.innerHTML = '<div class="friends-chat-empty">This conversation is empty. Send the first message to start the log.</div>';
+                renderDirectChatMenu();
+                return;
+            }
+
+            messages.forEach(function (message) {
+                var isSelf = message.sender_user_id === (activeAccountUser && activeAccountUser.id ? activeAccountUser.id : "");
+                var messageCard = document.createElement("article");
+                messageCard.className = "chat-message " + (isSelf ? "self" : "other");
+
+                var bubble = document.createElement("div");
+                bubble.className = "chat-message-bubble";
+
+                var author = document.createElement("p");
+                author.className = "chat-message-author";
+                author.textContent = isSelf ? getMyChatDisplayName() : (friend.display_name || (friend.username ? ("@" + friend.username) : "Friend"));
+
+                var parsedMessage = parseMessageBodyWithAttachments(message.body);
+                var hasText = !!parsedMessage.text;
+                var hasAttachments = parsedMessage.attachments.length > 0;
+
+                var body = document.createElement("p");
+                body.className = "chat-message-text";
+                body.textContent = parsedMessage.text || (hasAttachments ? "Sent attachment" : String(message.body || ""));
+
+                var attachmentList = document.createElement("div");
+                attachmentList.className = "chat-message-attachments";
+                parsedMessage.attachments.forEach(function (attachment) {
+                    var item = document.createElement("div");
+                    item.className = "chat-message-attachment-item";
+
+                    var link = document.createElement("a");
+                    link.className = "chat-message-attachment-link";
+                    link.href = attachment.url;
+                    link.target = "_blank";
+                    link.rel = "noopener noreferrer";
+                    link.textContent = attachment.name;
+                    item.appendChild(link);
+
+                    if (isImageAttachmentUrl(attachment.url)) {
+                        var image = document.createElement("img");
+                        image.className = "chat-message-attachment-image";
+                        image.loading = "lazy";
+                        image.src = attachment.url;
+                        image.alt = attachment.name;
+                        item.appendChild(image);
+                    }
+
+                    attachmentList.appendChild(item);
+                });
+
+                var time = document.createElement("p");
+                time.className = "friends-chat-time";
+                time.textContent = formatRelativeTime(message.created_at);
+
+                bubble.appendChild(author);
+                if (hasText || !hasAttachments) {
+                    bubble.appendChild(body);
+                }
+                if (hasAttachments) {
+                    bubble.appendChild(attachmentList);
+                }
+                messageCard.appendChild(bubble);
+                messageCard.appendChild(time);
+                friendChatLog.appendChild(messageCard);
+            });
+
+            friendChatLog.scrollTop = friendChatLog.scrollHeight;
+            renderDirectChatMenu();
+        }
+
+        async function markDirectChatMessagesRead(friendId) {
+            var targetId = String(friendId || "");
+            if (!targetId || !activeAccountUser) {
+                return;
+            }
+
+            var unreadIds = directChatMessagesCache.filter(function (message) {
+                return message.sender_user_id === targetId && message.recipient_user_id === activeAccountUser.id && !message.read_at;
+            }).map(function (message) {
+                return message.message_id;
+            }).filter(Boolean);
+
+            if (!unreadIds.length) {
+                return;
+            }
+
+            await Promise.all(unreadIds.map(function (messageId) {
+                return markFriendMessageRead(messageId);
+            }));
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes <= 0) {
+                return "0 Bytes";
+            }
+            var k = 1024;
+            var sizes = ["Bytes", "KB", "MB"];
+            var i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
+            return (Math.round(bytes / Math.pow(k, i) * 100) / 100) + " " + sizes[i];
+        }
+
+        function isImageFile(file) {
+            return !!(file && file.type && file.type.indexOf("image/") === 0);
+        }
+
+        function addAttachmentPreview(file) {
+            var attachmentsContainer = document.getElementById("friendChatAttachments");
+            if (!attachmentsContainer || !file) {
+                return;
+            }
+
+            var preview = document.createElement("div");
+            preview.className = "friends-chat-attachment-preview";
+            preview.setAttribute("data-file-name", String(file.name || ""));
+
+            var thumb = document.createElement("div");
+            thumb.className = "friends-chat-attachment-thumb";
+            if (isImageFile(file)) {
+                var img = document.createElement("img");
+                img.src = URL.createObjectURL(file);
+                img.alt = String(file.name || "image attachment");
+                thumb.appendChild(img);
+            } else {
+                thumb.textContent = "FILE";
+            }
+
+            var info = document.createElement("div");
+            info.className = "friends-chat-attachment-info";
+
+            var name = document.createElement("p");
+            name.className = "friends-chat-attachment-name";
+            name.textContent = String(file.name || "attachment");
+
+            var size = document.createElement("p");
+            size.className = "friends-chat-attachment-size";
+            size.textContent = formatFileSize(Number(file.size || 0));
+
+            info.appendChild(name);
+            info.appendChild(size);
+
+            var removeBtn = document.createElement("button");
+            removeBtn.className = "friends-chat-attachment-remove";
+            removeBtn.type = "button";
+            removeBtn.textContent = "x";
+            removeBtn.title = "Remove attachment";
+            removeBtn.addEventListener("click", function (event) {
+                event.preventDefault();
+                removeAttachment(String(file.name || ""));
+            });
+
+            preview.appendChild(thumb);
+            preview.appendChild(info);
+            preview.appendChild(removeBtn);
+            attachmentsContainer.appendChild(preview);
+        }
+
+        function renderAttachmentPreviews() {
+            var attachmentsContainer = document.getElementById("friendChatAttachments");
+            if (!attachmentsContainer) {
+                return;
+            }
+            attachmentsContainer.innerHTML = "";
+            directChatAttachments.forEach(function (file) {
+                addAttachmentPreview(file);
+            });
+        }
+
+        function removeAttachment(fileName) {
+            directChatAttachments = directChatAttachments.filter(function (file) {
+                return String(file && file.name || "") !== String(fileName || "");
+            });
+            renderAttachmentPreviews();
+        }
+
+        function handleFileInput(files) {
+            if (!Array.isArray(files) || !files.length) {
+                return;
+            }
+
+            files.forEach(function (file) {
+                if (!file) {
+                    return;
+                }
+                if (Number(file.size || 0) > 5 * 1024 * 1024) {
+                    setFriendsStatus("File " + String(file.name || "") + " is too large (max 5MB).", "warn");
+                    return;
+                }
+                directChatAttachments.push(file);
+            });
+            renderAttachmentPreviews();
+        }
+
+        function sanitizeAttachmentName(fileName) {
+            return String(fileName || "file")
+                .replace(/[^a-zA-Z0-9._-]+/g, "-")
+                .replace(/-+/g, "-")
+                .replace(/^-|-$/g, "")
+                .slice(0, 80) || "file";
+        }
+
+        function buildAttachmentPath(friendUserId, fileName) {
+            var ownerId = activeAccountUser && activeAccountUser.id ? String(activeAccountUser.id) : "anon";
+            var peerId = String(friendUserId || "unknown");
+            var nonce = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+            return ownerId + "/" + peerId + "/" + nonce + "-" + sanitizeAttachmentName(fileName);
+        }
+
+        function makeAttachmentMessageBody(textBody, uploadedAttachments) {
+            var parts = [];
+            var cleanBody = String(textBody || "").trim();
+            if (cleanBody) {
+                parts.push(cleanBody);
+            }
+            if (Array.isArray(uploadedAttachments) && uploadedAttachments.length) {
+                if (parts.length) {
+                    parts.push("");
+                }
+                parts.push("Attachments:");
+                uploadedAttachments.forEach(function (attachment) {
+                    parts.push("- " + String(attachment.name || "file") + ": " + String(attachment.url || ""));
+                });
+            }
+            return parts.join("\n");
+        }
+
+        function parseMessageBodyWithAttachments(rawBody) {
+            var bodyText = String(rawBody || "");
+            var lines = bodyText.split(/\r?\n/);
+            var textLines = [];
+            var attachments = [];
+            var inAttachmentSection = false;
+
+            lines.forEach(function (line) {
+                var trimmed = line.trim();
+                if (!inAttachmentSection && /^attachments:\s*$/i.test(trimmed)) {
+                    inAttachmentSection = true;
+                    return;
+                }
+
+                if (inAttachmentSection) {
+                    var match = trimmed.match(/^-\s+(.+?):\s+(https?:\/\/\S+)$/i);
+                    if (match) {
+                        attachments.push({
+                            name: match[1],
+                            url: match[2]
+                        });
+                        return;
+                    }
+                    if (!trimmed) {
+                        return;
+                    }
+                }
+
+                textLines.push(line);
+            });
+
+            return {
+                text: textLines.join("\n").trim(),
+                attachments: attachments
+            };
+        }
+
+        function isImageAttachmentUrl(url) {
+            return /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(String(url || ""));
+        }
+
+        async function uploadDirectChatAttachment(file, friendUserId) {
+            if (!supabaseClient || !supabaseClient.storage) {
+                throw new Error("Storage is not available in the current Supabase client.");
+            }
+
+            var objectPath = buildAttachmentPath(friendUserId, file && file.name);
+            var uploadResult = await supabaseClient.storage
+                .from(FRIEND_CHAT_UPLOAD_BUCKET)
+                .upload(objectPath, file, {
+                    upsert: false,
+                    contentType: file && file.type ? file.type : "application/octet-stream",
+                    cacheControl: "3600"
+                });
+
+            if (uploadResult && uploadResult.error) {
+                throw uploadResult.error;
+            }
+
+            var publicResult = supabaseClient.storage
+                .from(FRIEND_CHAT_UPLOAD_BUCKET)
+                .getPublicUrl(objectPath);
+
+            var publicUrl = publicResult && publicResult.data ? publicResult.data.publicUrl : "";
+            if (!publicUrl) {
+                throw new Error("Could not generate public URL for attachment.");
+            }
+
+            return {
+                name: String(file && file.name || "file"),
+                url: publicUrl
+            };
+        }
+
+        async function loadDirectChatThread(friendId, options) {
+            var targetId = String(friendId || "");
+            var silent = !!(options && options.silent === true);
+            var focusLog = !!(options && options.focusLog === true);
+            directChatFriendId = targetId;
+            renderDirectChatMenu();
+
+            if (!friendChatLog || !friendChatThreadTitle || !friendChatThreadMeta) {
+                return;
+            }
+
+            var friend = getFriendById(targetId);
+            if (!friend || !friend.mutual || !friend.can_message) {
+                directChatMessagesCache = [];
+                renderDirectChatThread();
+                return;
+            }
+
+            if (!activeAccountUser || !supabaseClient) {
+                directChatMessagesCache = [];
+                renderDirectChatThread();
+                return;
+            }
+
+            var loadId = ++directChatLoadId;
+            friendChatLog.innerHTML = '<div class="friends-chat-empty">Loading conversation...</div>';
+            friendChatThreadTitle.textContent = friend.display_name || (friend.username ? ("@" + friend.username) : "Friend");
+            friendChatThreadMeta.textContent = friend.current_game_title ? ("Playing " + friend.current_game_title) : "Loading chat log...";
+
+            try {
+                var currentUserId = activeAccountUser.id;
+                var result = await supabaseClient
+                    .from("friend_messages")
+                    .select("id,sender_user_id,recipient_user_id,body,created_at,read_at")
+                    .or("and(sender_user_id.eq." + currentUserId + ",recipient_user_id.eq." + targetId + "),and(sender_user_id.eq." + targetId + ",recipient_user_id.eq." + currentUserId + ")")
+                    .order("created_at", { ascending: true })
+                    .limit(120);
+
+                if (loadId !== directChatLoadId) {
+                    return;
+                }
+
+                if (result.error) {
+                    throw result.error;
+                }
+
+                directChatMessagesCache = Array.isArray(result.data)
+                    ? result.data.map(normalizeMessageRow).filter(function (row) { return !!row; })
+                    : [];
+
+                renderDirectChatThread();
+                if (focusLog && friendChatLog) {
+                    friendChatLog.focus();
+                }
+
+                if (!silent) {
+                    await markDirectChatMessagesRead(targetId);
+                    await loadFriendsFromCloud({ silent: true });
+                }
+            } catch (error) {
+                if (loadId !== directChatLoadId) {
+                    return;
+                }
+                directChatMessagesCache = [];
+                friendChatLog.innerHTML = '<div class="friends-chat-empty">Could not load this conversation right now.</div>';
+                if (friendChatStatus) {
+                    friendChatStatus.textContent = error && error.message ? error.message : "Chat load failed.";
+                }
+            }
+        }
+
+        function openDirectChat(friendId, options) {
+            var friend = getFriendById(friendId);
+            if (!friend || !friend.mutual || !friend.can_message) {
+                setFriendsStatus("That friend is not available for direct chat.", "warn");
+                return;
+            }
+
+            var focusLog = !!(options && options.focusLog === true);
+            selectedFriendIds[friend.friend_user_id] = true;
+            renderFriendsList();
+            setActiveSettingsTab("friends");
+            loadDirectChatThread(friend.friend_user_id, { silent: !!(options && options.silent === true), focusLog: focusLog });
+
+            if (friendChatMessageInput && !focusLog) {
+                if (!friendChatMessageInput.value) {
+                    friendChatMessageInput.value = "Hey " + (friend.display_name || (friend.username ? ("@" + friend.username) : "there")) + ", ";
+                }
+                updateDirectChatMessageMeta();
+                friendChatMessageInput.focus();
+            } else if (focusLog && friendChatLog) {
+                friendChatLog.focus();
+            }
+
+            var panel = document.querySelector(".friends-chat-panel");
+            if (panel) {
+                panel.classList.add("open");
+                if (typeof panel.scrollIntoView === "function" && (!options || options.scroll !== false)) {
+                    // Don't scroll since it's fixed positioning
+                }
+            }
+        }
+
+        async function sendDirectChatMessage() {
+            var friend = getFriendById(directChatFriendId);
+            var body = String(friendChatMessageInput.value || "").trim();
+
+            if (!friend || !friend.mutual || !friend.can_message) {
+                setFriendsStatus("Pick a mutual friend before sending a direct message.", "warn");
+                return;
+            }
+
+            if (!body) {
+                if (directChatAttachments.length === 0) {
+                    setFriendsStatus("Write a message or add a file before sending.", "warn");
+                    return;
+                }
+            }
+
+            if (!supabaseClient || !activeAccountUser) {
+                setFriendsStatus("Sign in to send messages.", "warn");
+                return;
+            }
+
+            try {
+                var uploadedAttachments = [];
+                var uploadFallbackToTextOnly = false;
+                if (directChatAttachments.length) {
+                    setFriendsStatus("Uploading " + directChatAttachments.length + " attachment(s)...", "warn");
+                    if (friendChatFileBtn) {
+                        friendChatFileBtn.disabled = true;
+                    }
+                    if (sendFriendChatMessageBtn) {
+                        sendFriendChatMessageBtn.disabled = true;
+                    }
+                    try {
+                        for (var index = 0; index < directChatAttachments.length; index += 1) {
+                            var currentFile = directChatAttachments[index];
+                            var currentName = currentFile && currentFile.name ? currentFile.name : "attachment";
+                            var currentSize = currentFile ? formatFileSize(Number(currentFile.size || 0)) : "0 Bytes";
+                            var progressLabel = index + 1 + "/" + directChatAttachments.length + " - " + currentName + " (" + currentSize + ")";
+                            updateDirectChatUploadProgress(index + 1, directChatAttachments.length, progressLabel);
+                            var uploaded = await uploadDirectChatAttachment(currentFile, friend.friend_user_id);
+                            uploadedAttachments.push(uploaded);
+                        }
+                        updateDirectChatUploadProgress(directChatAttachments.length, directChatAttachments.length, "Upload complete");
+                    } catch (uploadError) {
+                        resetDirectChatUploadProgress();
+                        if (friendChatFileBtn) {
+                            friendChatFileBtn.disabled = false;
+                        }
+                        if (sendFriendChatMessageBtn) {
+                            sendFriendChatMessageBtn.disabled = false;
+                        }
+
+                        if (!body) {
+                            throw uploadError;
+                        }
+
+                        uploadFallbackToTextOnly = true;
+                        uploadedAttachments = [];
+                        setFriendsStatus("Attachment upload failed, sending text only.", "warn");
+                    }
+                }
+
+                var finalBody = makeAttachmentMessageBody(body, uploadedAttachments);
+                if (finalBody.length > 1000) {
+                    resetDirectChatUploadProgress();
+                    if (friendChatFileBtn) {
+                        friendChatFileBtn.disabled = false;
+                    }
+                    if (sendFriendChatMessageBtn) {
+                        sendFriendChatMessageBtn.disabled = false;
+                    }
+                    setFriendsStatus("Message is too long after adding attachment links. Try fewer files.", "warn");
+                    return;
+                }
+
+                var result = await supabaseClient.rpc("send_friend_message", {
+                    recipient_user_id: friend.friend_user_id,
+                    body: finalBody
+                });
+                if (result.error) {
+                    throw result.error;
+                }
+                friendChatMessageInput.value = "";
+                directChatAttachments = [];
+                renderAttachmentPreviews();
+                resetDirectChatUploadProgress();
+                if (friendChatFileBtn) {
+                    friendChatFileBtn.disabled = false;
+                }
+                updateDirectChatMessageMeta();
+                var sentLabel = friend.display_name || (friend.username ? ("@" + friend.username) : "your friend");
+                if (uploadFallbackToTextOnly) {
+                    setFriendsStatus("Message sent to " + sentLabel + " (text only; attachments skipped).", "ok");
+                } else {
+                    setFriendsStatus("Message sent to " + sentLabel + ".", "ok");
+                }
+                await loadDirectChatThread(friend.friend_user_id, { silent: true });
+                await loadFriendsFromCloud({ silent: true });
+            } catch (error) {
+                resetDirectChatUploadProgress();
+                if (friendChatFileBtn) {
+                    friendChatFileBtn.disabled = false;
+                }
+                if (sendFriendChatMessageBtn) {
+                    sendFriendChatMessageBtn.disabled = false;
+                }
+                var message = error && error.message ? error.message : "Could not send message.";
+                if (/bucket|storage|object/i.test(message)) {
+                    message += " Configure Supabase Storage bucket '" + FRIEND_CHAT_UPLOAD_BUCKET + "' and policies.";
+                }
+                setFriendsStatus(message, "error");
+            }
+        }
+
         function normalizeFriendRow(row) {
             if (!row || typeof row !== "object") {
                 return null;
@@ -2216,8 +3833,10 @@
                 sender_display_name: String(row.sender_display_name || row.sender_email || "Friend"),
                 sender_username: String(row.sender_username || ""),
                 sender_current_game_title: row.sender_current_game_title ? String(row.sender_current_game_title) : "",
+                recipient_user_id: String(row.recipient_user_id || ""),
                 body: String(row.body || ""),
-                created_at: row.created_at ? String(row.created_at) : ""
+                created_at: row.created_at ? String(row.created_at) : "",
+                read_at: row.read_at ? String(row.read_at) : ""
             };
         }
 
@@ -2226,6 +3845,7 @@
             if (!activeAccountUser || !supabaseClient) {
                 friendListCache = [];
                 unreadFriendMessagesCache = [];
+                closeFriendActionMenu();
                 if (friendsCountValue) { friendsCountValue.textContent = "0"; }
                 if (mutualCountValue) { mutualCountValue.textContent = "0"; }
                 if (unreadCountValue) { unreadCountValue.textContent = "0"; }
@@ -2273,6 +3893,14 @@
 
             renderFriendsList();
             renderInboxList();
+            renderDirectChatMenu();
+            if (directChatFriendId && !getFriendById(directChatFriendId)) {
+                directChatFriendId = "";
+                directChatMessagesCache = [];
+                renderDirectChatThread();
+            } else if (directChatFriendId) {
+                renderDirectChatThread();
+            }
             if (friendsCountValue) {
                 friendsCountValue.textContent = String(friendListCache.length);
             }
@@ -2288,6 +3916,10 @@
                 } else {
                     setFriendsStatus("No friends added yet.", "warn");
                 }
+            }
+
+            if (!directChatFriendId) {
+                consumePendingDirectChatSelection();
             }
         }
 
@@ -2453,18 +4085,33 @@
         }
 
         function prefillReply(friendId) {
-            var friend = friendListCache.find(function (item) { return item.friend_user_id === friendId; });
+            var friend = getFriendById(friendId);
             if (!friend) {
                 return;
             }
             selectedFriendIds[friendId] = true;
             renderFriendsList();
-            friendMessageInput.focus();
-            if (!friendMessageInput.value) {
-                friendMessageInput.value = "Hey " + (friend.display_name || (friend.username ? ("@" + friend.username) : "there")) + ", ";
+            openFriendActionMenu(friend.friend_user_id, document.querySelector('button[data-action="reply-friend"][data-friend-id="' + friend.friend_user_id + '"]'));
+        }
+
+        function consumePendingDirectChatSelection() {
+            var pendingKey = "gamehub_pending_friend_chat_user_id";
+            var pendingFriendId = "";
+            try {
+                pendingFriendId = String(sessionStorage.getItem(pendingKey) || "").trim();
+                sessionStorage.removeItem(pendingKey);
+            } catch (error) {
+                pendingFriendId = "";
             }
-            updateFriendMessageMeta();
-            setActiveSettingsTab("friends");
+
+            if (!pendingFriendId) {
+                return;
+            }
+
+            var friend = getFriendById(pendingFriendId);
+            if (friend) {
+                openDirectChat(friend.friend_user_id, { scroll: true });
+            }
         }
 
         function storageGet(key) {
@@ -2566,7 +4213,6 @@
                 email: activeAccountUser.email,
                 options: {
                     shouldCreateUser: false,
-                    emailRedirectTo: window.location.href.split("#")[0],
                     data: {
                         auth_flow: "sensitive_settings_verify"
                     }
@@ -3184,8 +4830,14 @@
                 friendListCache = [];
                 unreadFriendMessagesCache = [];
                 selectedFriendIds = {};
+                directChatFriendId = "";
+                directChatMessagesCache = [];
+                closeFriendActionMenu();
+                closeDirectChat();
                 renderFriendsList();
                 renderInboxList();
+                renderDirectChatMenu();
+                renderDirectChatThread();
                 if (friendsCountValue) {
                     friendsCountValue.textContent = "0";
                 }
@@ -3471,6 +5123,19 @@
         userCustomStatus.addEventListener("input", function () { updateProfilePreview(collectUserSettingsForm()); });
         userPronouns.addEventListener("input", function () { updateProfilePreview(collectUserSettingsForm()); });
         friendMessageInput.addEventListener("input", updateFriendMessageMeta);
+        if (friendChatMessageInput) {
+            friendChatMessageInput.addEventListener("input", updateDirectChatMessageMeta);
+            friendChatMessageInput.addEventListener("keydown", function (event) {
+                if (event.key !== "Enter" || event.shiftKey) {
+                    return;
+                }
+                event.preventDefault();
+                if (!sendFriendChatMessageBtn || sendFriendChatMessageBtn.disabled) {
+                    return;
+                }
+                sendDirectChatMessage();
+            });
+        }
         settingsTabButtons.forEach(function (button) {
             button.addEventListener("click", function () {
                 setActiveSettingsTab(button.getAttribute("data-settings-tab") || "general");
@@ -3479,6 +5144,71 @@
         addFriendBtn.addEventListener("click", function () { addFriendFromForm(); });
         refreshFriendsBtn.addEventListener("click", function () { loadFriendsFromCloud(); });
         sendFriendMessageBtn.addEventListener("click", function () { sendMessageToSelectedFriends(); });
+        function closeDirectChat() {
+            var panel = document.querySelector(".friends-chat-panel");
+            if (panel) {
+                panel.classList.remove("open");
+                closeFriendActionMenu();
+            }
+            directChatAttachments = [];
+            renderAttachmentPreviews();
+            resetDirectChatUploadProgress();
+        }
+
+        if (sendFriendChatMessageBtn) {
+            sendFriendChatMessageBtn.addEventListener("click", function () { sendDirectChatMessage(); });
+        }
+        if (refreshFriendChatBtn) {
+            refreshFriendChatBtn.addEventListener("click", function () {
+                if (directChatFriendId) {
+                    loadDirectChatThread(directChatFriendId, { silent: true });
+                } else {
+                    renderDirectChatThread();
+                }
+            });
+        }
+        var closeFriendChatBtn = document.getElementById("closeFriendChatBtn");
+        if (closeFriendChatBtn) {
+            closeFriendChatBtn.addEventListener("click", function () {
+                closeDirectChat();
+            });
+        }
+        var chatPanel = document.querySelector(".friends-chat-panel");
+        if (chatPanel) {
+            chatPanel.addEventListener("click", function (event) {
+                if (event.target === chatPanel && event.target === event.currentTarget) {
+                    closeDirectChat();
+                }
+            });
+        }
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && chatPanel && chatPanel.classList.contains("open")) {
+                closeDirectChat();
+            }
+        });
+        if (friendChatMenu) {
+            friendChatMenu.addEventListener("click", function (event) {
+                var button = event.target && event.target.closest ? event.target.closest("button[data-friend-id]") : null;
+                if (!(button instanceof HTMLButtonElement)) {
+                    return;
+                }
+                var friendId = button.getAttribute("data-friend-id") || "";
+                if (friendId) {
+                    openDirectChat(friendId, { scroll: false });
+                }
+            });
+        }
+        if (friendActionMenu) {
+            friendActionMenu.addEventListener("click", function (event) {
+                var button = event.target && event.target.closest ? event.target.closest("button[data-action]") : null;
+                if (!(button instanceof HTMLButtonElement)) {
+                    return;
+                }
+                var action = button.getAttribute("data-action") || "";
+                var friendId = button.getAttribute("data-friend-id") || "";
+                handleFriendActionMenuChoice(action, friendId);
+            });
+        }
         friendsList.addEventListener("change", function (event) {
             var checkbox = event.target && event.target.closest ? event.target.closest("input[data-friend-id]") : null;
             if (!(checkbox instanceof HTMLInputElement)) {
@@ -3505,7 +5235,7 @@
             if (action === "remove-friend") {
                 removeFriend(friendId);
             } else if (action === "message-friend") {
-                prefillReply(friendId);
+                openFriendActionMenu(friendId, actionButton);
             }
         });
         friendInboxList.addEventListener("click", function (event) {
@@ -3522,6 +5252,53 @@
                 prefillReply(friendId);
             }
         });
+
+        var friendChatFileBtn = document.getElementById("friendChatFileBtn");
+        var friendChatFileInput = document.getElementById("friendChatFileInput");
+
+        if (friendChatFileBtn) {
+            friendChatFileBtn.addEventListener("click", function () {
+                if (friendChatFileInput) {
+                    friendChatFileInput.click();
+                }
+            });
+        }
+
+        if (friendChatFileInput) {
+            friendChatFileInput.addEventListener("change", function () {
+                if (this.files) {
+                    handleFileInput(Array.from(this.files));
+                    this.value = "";
+                }
+            });
+        }
+
+        var friendChatCompose = document.querySelector(".friends-chat-compose");
+        if (friendChatCompose) {
+            friendChatCompose.addEventListener("dragover", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                friendChatCompose.style.opacity = "0.7";
+                friendChatCompose.style.background = "rgba(88, 101, 242, 0.15)";
+            });
+
+            friendChatCompose.addEventListener("dragleave", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                friendChatCompose.style.opacity = "1";
+                friendChatCompose.style.background = "";
+            });
+
+            friendChatCompose.addEventListener("drop", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                friendChatCompose.style.opacity = "1";
+                friendChatCompose.style.background = "";
+                if (e.dataTransfer && e.dataTransfer.files) {
+                    handleFileInput(Array.from(e.dataTransfer.files));
+                }
+            });
+        }
 
         function applyPreset(type) {
             if (type === "chromebook") {

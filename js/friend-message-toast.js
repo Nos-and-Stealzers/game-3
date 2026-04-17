@@ -98,7 +98,13 @@
     toast.className = "gh-toast";
     toast.innerHTML = "<h4>New message from " + escapeHtml(senderName) + "</h4>" +
       "<p>" + escapeHtml(senderHandle ? (senderHandle + " · ") : "") + escapeHtml(body) + "</p>";
-    toast.addEventListener("click", openFriendsCenter);
+    toast.addEventListener("click", function () {
+      try {
+        sessionStorage.setItem("gamehub_pending_friend_chat_user_id", String(message.sender_user_id || ""));
+      } catch (_error) {
+      }
+      openFriendsCenter();
+    });
 
     parent.appendChild(toast);
     window.setTimeout(function () {

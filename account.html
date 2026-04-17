@@ -283,10 +283,18 @@
             <span class="label">Email</span>
             <input id="authEmail" class="input" type="email" placeholder="you@example.com" autocomplete="email">
           </label>
+          <label class="field">
+            <span class="label">Password</span>
+            <input id="authPassword" class="input" type="password" placeholder="At least 8 characters" autocomplete="current-password">
+          </label>
+          <label class="field">
+            <span class="label">Confirm Password (Sign Up)</span>
+            <input id="authPasswordConfirm" class="input" type="password" placeholder="Re-enter password for new account" autocomplete="new-password">
+          </label>
         </div>
-        <p class="muted">Both account creation and login require an email verification code.</p>
+        <p class="muted">Account creation requires password + email code verification. Existing-account login requires email + password.</p>
         <div class="row">
-          <button id="authSignUpBtn" type="button" class="btn primary">Sign In (Make Account)</button>
+          <button id="authSignUpBtn" type="button" class="btn primary">Create Account</button>
           <button id="authSignInBtn" type="button" class="btn">Log In (Existing Account)</button>
           <button id="authSignOutBtn" type="button" class="btn warn">Log Out</button>
           <a href="index.html" class="btn">Back to Hub</a>
@@ -298,7 +306,7 @@
           <div class="grid">
             <label class="field">
               <span class="label">Code</span>
-              <input id="verifyCodeInput" class="input" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">
+              <input id="verifyCodeInput" class="input" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">
             </label>
           </div>
           <label class="field" style="margin-top:-2px;">
@@ -342,6 +350,8 @@
     };
 
     var authEmail = document.getElementById("authEmail");
+    var authPassword = document.getElementById("authPassword");
+    var authPasswordConfirm = document.getElementById("authPasswordConfirm");
     var authSignInBtn = document.getElementById("authSignInBtn");
     var authSignUpBtn = document.getElementById("authSignUpBtn");
     var resendVerifyBtn = document.getElementById("resendVerifyBtn");
@@ -481,7 +491,7 @@
       pendingAuthMode = "";
       pendingAuthEmail = "";
       verifyCodeInput.value = "";
-      verifyCodeInput.type = "text";
+      verifyCodeInput.type = "password";
       verifyToggleBtn.textContent = "Show Code";
       verifyHint.textContent = "Enter the code sent to your email.";
       showVerifyPanel(false);
@@ -489,6 +499,14 @@
 
     function normalizeCode(value) {
       return String(value || "").replace(/\s+/g, "").trim();
+    }
+
+    function validatePasswordInput(password) {
+      var value = String(password || "");
+      if (value.length < 8) {
+        throw new Error("Password must be at least 8 characters.");
+      }
+      return value;
     }
 
     async function startEmailCodeChallenge(mode) {
@@ -501,27 +519,52 @@
         throw new Error("Enter your email first.");
       }
 
-      var shouldCreateUser = mode === "signup";
-      var otpResult = await supabaseClient.auth.signInWithOtp({
+      var password = validatePasswordInput(authPassword.value);
+
+      if (mode === "login") {
+        clearPendingVerification();
+        var loginResult = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+        if (loginResult.error) {
+          throw loginResult.error;
+        }
+        var loginUser = loginResult.data && loginResult.data.user ? loginResult.data.user : null;
+        await autoLoadCloudForUser(loginUser);
+        setStatus("Signed in.", "ok");
+        return;
+      }
+
+      if (mode !== "signup") {
+        throw new Error("Unknown auth mode.");
+      }
+
+      var confirmPassword = String(authPasswordConfirm.value || "");
+      if (!confirmPassword) {
+        throw new Error("Confirm your password to create an account.");
+      }
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match.");
+      }
+
+      var signUpResult = await supabaseClient.auth.signUp({
         email: email,
+        password: password,
         options: {
-          shouldCreateUser: shouldCreateUser,
-          emailRedirectTo: window.location.href.split("#")[0],
           data: {
-            auth_flow: "email_code"
+            auth_flow: "email_code_signup"
           }
         }
       });
 
-      if (otpResult.error) {
-        throw otpResult.error;
+      if (signUpResult.error) {
+        throw signUpResult.error;
       }
 
       pendingAuthMode = mode;
       pendingAuthEmail = email;
-      verifyHint.textContent = shouldCreateUser
-        ? "A verification code was sent. Enter it here to finish creating your account."
-        : "A verification code was sent. Enter it here to log in.";
+      verifyHint.textContent = "A verification code was sent. Enter it here to finish creating your account.";
       showVerifyPanel(true);
       setStatus("Verification code sent to " + email + ".", "ok");
     }
@@ -531,7 +574,10 @@
         throw new Error("Supabase is not configured.");
       }
       if (!pendingAuthEmail) {
-        throw new Error("Start Sign In or Log In first to request a code.");
+        throw new Error("Start account creation first to request a code.");
+      }
+      if (pendingAuthMode !== "signup") {
+        throw new Error("Only account creation uses verification codes here.");
       }
 
       var code = normalizeCode(verifyCodeInput.value);
@@ -542,7 +588,7 @@
       var verify = await supabaseClient.auth.verifyOtp({
         email: pendingAuthEmail,
         token: code,
-        type: "email"
+        type: "signup"
       });
 
       if (verify.error) {
@@ -832,16 +878,28 @@
       try {
         await startEmailCodeChallenge("signup");
       } catch (error) {
-        setStatus(error && error.message ? error.message : "Sign in (make account) failed.", "error");
+        setStatus(error && error.message ? error.message : "Create account failed.", "error");
       }
     });
 
     resendVerifyBtn.addEventListener("click", async function () {
       try {
-        if (pendingAuthMode !== "signup" && pendingAuthMode !== "login") {
-          throw new Error("Start Sign In or Log In first.");
+        if (pendingAuthMode !== "signup" || !pendingAuthEmail) {
+          throw new Error("Start account creation first.");
         }
-        await startEmailCodeChallenge(pendingAuthMode);
+        var resendResult = await supabaseClient.auth.resend({
+          type: "signup",
+          email: pendingAuthEmail,
+          options: {
+            data: {
+              auth_flow: "email_code_signup_resend"
+            }
+          }
+        });
+        if (resendResult.error) {
+          throw resendResult.error;
+        }
+        setStatus("New verification code sent to " + pendingAuthEmail + ".", "ok");
       } catch (error) {
         setStatus(error && error.message ? error.message : "Resend failed.", "error");
       }
@@ -865,6 +923,20 @@
       verifyCodeInput.type = show ? "text" : "password";
       verifyToggleBtn.textContent = show ? "Hide Code" : "Show Code";
       verifyCodeInput.focus();
+    });
+
+    authPassword.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        authSignInBtn.click();
+      }
+    });
+
+    authPasswordConfirm.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        authSignUpBtn.click();
+      }
     });
 
     verifyCodeInput.addEventListener("input", function () {

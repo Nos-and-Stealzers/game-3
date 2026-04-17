@@ -997,6 +997,54 @@ grant execute on function public.send_friend_message(uuid, text) to authenticate
 grant execute on function public.list_my_unread_friend_messages(integer) to authenticated;
 grant execute on function public.mark_friend_message_read(uuid) to authenticated;
 
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('friend-chat-attachments', 'friend-chat-attachments', true, 5242880)
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit;
+
+drop policy if exists "Public can read friend chat attachments" on storage.objects;
+drop policy if exists "Users can upload own friend chat attachments" on storage.objects;
+drop policy if exists "Users can update own friend chat attachments" on storage.objects;
+drop policy if exists "Users can delete own friend chat attachments" on storage.objects;
+
+create policy "Public can read friend chat attachments"
+  on storage.objects
+  for select
+  using (bucket_id = 'friend-chat-attachments');
+
+create policy "Users can upload own friend chat attachments"
+  on storage.objects
+  for insert
+  with check (
+    bucket_id = 'friend-chat-attachments'
+    and auth.role() = 'authenticated'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+create policy "Users can update own friend chat attachments"
+  on storage.objects
+  for update
+  using (
+    bucket_id = 'friend-chat-attachments'
+    and auth.role() = 'authenticated'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  )
+  with check (
+    bucket_id = 'friend-chat-attachments'
+    and auth.role() = 'authenticated'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+create policy "Users can delete own friend chat attachments"
+  on storage.objects
+  for delete
+  using (
+    bucket_id = 'friend-chat-attachments'
+    and auth.role() = 'authenticated'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
 -- Quick smoke tests (safe to run in SQL Editor after this script)
 -- These checks confirm objects exist and core admin RPCs are registered.
 select 'user_saves table exists' as check_name, to_regclass('public.user_saves') is not null as ok;
