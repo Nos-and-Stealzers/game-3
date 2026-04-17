@@ -6,30 +6,31 @@
   <title>Account Center</title>
   <meta name="description" content="Sign in and keep game saves synced automatically.">
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Nunito:wght@600;700;800&display=swap");
+    @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap");
 
     :root {
-      --bg: #f3f7ff;
-      --bg-layer-1: radial-gradient(circle at 10% -10%, #d5e8ff 0, transparent 35%);
-      --bg-layer-2: radial-gradient(circle at 95% 0%, #e0fff1 0, transparent 32%);
-      --bg-layer-3: linear-gradient(180deg, #f8fbff 0%, #eef4ff 42%, #f4f8ff 100%);
-      --panel: #ffffff;
-      --line: #c8daf7;
-      --text: #0f2a52;
-      --muted: #4d6693;
-      --primary: #0073ff;
-      --primary-strong: #0054bf;
-      --soft: #f8fbff;
-      --ok-bg: #e8fff2;
-      --ok-line: #9ee0ba;
-      --ok-text: #1f6b41;
-      --warn-bg: #fff6df;
-      --warn-line: #f0d195;
+      --bg-1: #f9f6f0;
+      --bg-2: #efe8da;
+      --ink: #1e1f25;
+      --muted: #5d5f69;
+      --panel: rgba(255, 255, 255, 0.9);
+      --line: #d9d1c1;
+      --line-strong: #b39d73;
+      --gold: #c99a2e;
+      --gold-strong: #9f7518;
+      --blue: #2d78f0;
+      --blue-strong: #1857b8;
+      --ok-bg: #eaf8ef;
+      --ok-line: #b8dfc3;
+      --ok-text: #266345;
+      --warn-bg: #fff4dd;
+      --warn-line: #f1d6a3;
       --warn-text: #7a5800;
-      --danger-bg: #ffefee;
-      --danger-line: #f4c0bb;
-      --danger-text: #8a2b2b;
-      --shadow: 0 18px 34px rgba(10, 49, 112, 0.18);
+      --error-bg: #ffeceb;
+      --error-line: #f2b9b7;
+      --error-text: #8b2d2d;
+      --shadow-lg: 0 24px 48px rgba(30, 31, 37, 0.2);
+      --shadow-md: 0 12px 24px rgba(30, 31, 37, 0.12);
     }
 
     * {
@@ -39,76 +40,101 @@
     body {
       margin: 0;
       min-height: 100vh;
-      padding: 26px 14px;
+      color: var(--ink);
+      font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 12% 14%, rgba(255, 205, 112, 0.26), transparent 32%),
+        radial-gradient(circle at 88% 8%, rgba(45, 120, 240, 0.2), transparent 30%),
+        linear-gradient(140deg, var(--bg-1) 0%, var(--bg-2) 100%);
+      padding: 24px 14px;
       display: grid;
       place-items: center;
-      font-family: "Nunito", "Trebuchet MS", sans-serif;
-      color: var(--text);
-      background: var(--bg-layer-1), var(--bg-layer-2), var(--bg-layer-3);
     }
 
     .shell {
-      width: min(760px, 98vw);
-      background: var(--panel);
+      width: min(980px, 100%);
+      border-radius: 24px;
       border: 1px solid var(--line);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-lg);
       overflow: hidden;
-      animation: reveal .4s ease both;
+      animation: rise 0.5s ease both;
     }
 
-    @keyframes reveal {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .hero {
-      padding: 24px 24px 14px;
-      background: linear-gradient(130deg, #0a6bff 0%, #0d8fe1 44%, #0fb8a8 100%);
+      padding: 24px;
       border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(130deg, rgba(201, 154, 46, 0.95) 0%, rgba(160, 116, 28, 0.95) 48%, rgba(45, 120, 240, 0.95) 100%);
+      color: #fff;
+      display: grid;
+      gap: 10px;
     }
 
     .eyebrow {
-      margin: 0 0 8px;
-      font-size: .75rem;
+      margin: 0;
+      font-size: 0.76rem;
+      letter-spacing: 1px;
       text-transform: uppercase;
-      letter-spacing: .9px;
-      color: rgba(255, 255, 255, 0.92);
-      font-weight: 800;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.95);
     }
 
     h1 {
       margin: 0;
-      font-family: "Archivo Black", Impact, sans-serif;
-      font-size: clamp(1.5rem, 2.7vw, 2rem);
-      line-height: 1.12;
-      letter-spacing: -.3px;
-      color: #fff;
+      font-family: "Bebas Neue", Impact, sans-serif;
+      letter-spacing: 0.7px;
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      line-height: 0.95;
+      font-weight: 400;
     }
 
     .sub {
-      margin: 9px 0 0;
-      color: rgba(255, 255, 255, 0.92);
-      font-size: .95rem;
-      max-width: 66ch;
+      margin: 0;
+      max-width: 70ch;
+      color: rgba(255, 255, 255, 0.95);
       line-height: 1.5;
+      font-size: 0.95rem;
     }
 
-    .content {
-      padding: 18px 24px 24px;
+    .layout {
+      padding: 20px;
       display: grid;
-      gap: 14px;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: var(--shadow-md);
+      padding: 14px;
+      display: grid;
+      gap: 12px;
     }
 
     .status {
       margin: 0;
       padding: 11px 12px;
-      border-radius: 12px;
-      border: 1px solid #cad9f6;
-      background: #eef5ff;
-      color: #285188;
+      border: 1px solid #d3d8e6;
+      border-radius: 11px;
+      background: #f4f7ff;
+      color: #2e4170;
+      font-size: 0.93rem;
       font-weight: 700;
-      font-size: .92rem;
     }
 
     .status.ok {
@@ -124,32 +150,48 @@
     }
 
     .status.error {
-      background: var(--danger-bg);
-      border-color: var(--danger-line);
-      color: var(--danger-text);
+      background: var(--error-bg);
+      border-color: var(--error-line);
+      color: var(--error-text);
     }
 
-    .muted {
+    .meta {
       margin: 0;
-      color: #61739c;
-      font-weight: 700;
-      font-size: .86rem;
+      font-size: 0.86rem;
+      color: var(--muted);
+      font-weight: 600;
+      line-height: 1.4;
     }
 
-    .panel {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-      background: var(--soft);
-      display: grid;
-      gap: 10px;
-    }
-
-    .panel h2 {
+    .section-title {
       margin: 0;
-      font-size: .98rem;
+      color: #2c2e37;
+      font-size: 0.95rem;
       font-weight: 800;
-      color: #233e72;
+      letter-spacing: 0.2px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .tab-btn {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 10px 8px;
+      font: inherit;
+      font-weight: 700;
+      color: #30323b;
+      background: #fbfbfb;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      border-color: var(--line-strong);
+      background: #fff7e8;
+      color: #4d3908;
     }
 
     .grid {
@@ -160,105 +202,163 @@
 
     .field {
       display: grid;
-      gap: 5px;
+      gap: 6px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
     }
 
     .label {
       margin: 0;
-      color: #4f628f;
-      font-size: .75rem;
       text-transform: uppercase;
-      letter-spacing: .35px;
+      letter-spacing: 0.45px;
+      font-size: 0.72rem;
+      color: #646672;
       font-weight: 800;
     }
 
     .input {
       width: 100%;
+      border: 1px solid #cdd2df;
       border-radius: 10px;
-      border: 1px solid #bfceeb;
+      background: #fff;
+      color: #1f2128;
       padding: 10px 11px;
       font: inherit;
       font-weight: 600;
-      color: var(--text);
-      background: #fff;
     }
 
     .input:focus {
-      outline: 2px solid rgba(10, 102, 255, .22);
-      border-color: var(--primary);
+      outline: 2px solid rgba(45, 120, 240, 0.22);
+      border-color: var(--blue);
     }
 
-    .row {
+    .btn-row {
       display: flex;
-      gap: 8px;
       flex-wrap: wrap;
+      gap: 8px;
     }
 
     .btn {
       appearance: none;
-      border: 1px solid #bfd0ef;
+      border: 1px solid #c6ccd8;
+      background: #f8f9fb;
+      color: #2f3440;
       border-radius: 10px;
-      padding: 9px 12px;
+      padding: 10px 12px;
       font: inherit;
       font-weight: 700;
-      color: #19335f;
-      background: #f6faff;
-      text-decoration: none;
       cursor: pointer;
+      text-decoration: none;
+      min-height: 40px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      min-height: 40px;
     }
 
     .btn:hover {
-      background: #ecf4ff;
+      background: #eceff4;
     }
 
     .btn:disabled {
-      opacity: .5;
+      opacity: 0.55;
       cursor: not-allowed;
     }
 
     .btn.primary {
+      border-color: var(--blue);
+      background: var(--blue);
       color: #fff;
-      border-color: var(--primary);
-      background: var(--primary);
     }
 
     .btn.primary:hover {
-      border-color: var(--primary-strong);
-      background: var(--primary-strong);
+      border-color: var(--blue-strong);
+      background: var(--blue-strong);
+    }
+
+    .btn.gold {
+      border-color: var(--gold);
+      background: var(--gold);
+      color: #fff;
+    }
+
+    .btn.gold:hover {
+      border-color: var(--gold-strong);
+      background: var(--gold-strong);
     }
 
     .btn.warn {
-      border-color: #efc38f;
-      background: #fff5df;
-      color: #755000;
+      border-color: #e1bc80;
+      background: #fff2dd;
+      color: #6c4a00;
+    }
+
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .hint {
+      margin: 0;
+      font-size: 0.82rem;
+      color: #646674;
+      line-height: 1.4;
+    }
+
+    .verify-panel {
+      border: 1px dashed #ccbea0;
+      border-radius: 12px;
+      background: #fff9ef;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .session-list {
+      margin: 0;
+      padding-left: 18px;
+      color: #575a64;
+      display: grid;
+      gap: 6px;
+      font-size: 0.86rem;
+      font-weight: 600;
     }
 
     .hidden {
       display: none !important;
     }
 
-    @media (max-width: 720px) {
-      .hero,
-      .content {
-        padding-left: 14px;
-        padding-right: 14px;
+    @media (max-width: 920px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 10px;
       }
 
+      .hero,
+      .layout {
+        padding: 12px;
+      }
+
+      .tabs,
+      .provider-grid,
       .grid {
         grid-template-columns: 1fr;
       }
 
-      .row {
+      .btn-row {
         flex-direction: column;
       }
 
-      .row .btn,
-      .row a.btn {
+      .btn-row .btn,
+      .btn-row a.btn {
         width: 100%;
       }
     }
@@ -268,61 +368,94 @@
   <main class="shell">
     <header class="hero">
       <p class="eyebrow">Classroom 6X Arcade</p>
-      <h1>Account Center</h1>
-      <p class="sub">Sign in once and cloud sync runs automatically. Saves auto-load when your account is detected and auto-save when you close game tabs.</p>
+      <h1>Sign in your way</h1>
+      <p class="sub">A modern account flow inspired by common product patterns: password login, verification codes, and account recovery. Sign in once and cloud save keeps your progress synced automatically.</p>
     </header>
 
-    <section class="content">
-      <p id="authStatus" class="status">Checking cloud setup...</p>
-      <p id="cloudAutoSyncStatus" class="muted">Autosave heartbeat: initializing...</p>
+    <section class="layout">
+      <section class="card">
+        <p id="authStatus" class="status">Checking cloud setup...</p>
+        <p id="cloudAutoSyncStatus" class="meta">Autosave heartbeat: initializing...</p>
 
-      <section class="panel">
-        <h2>Account Access</h2>
-        <div class="grid">
-          <label class="field">
-            <span class="label">Email</span>
-            <input id="authEmail" class="input" type="email" placeholder="you@example.com" autocomplete="email">
-          </label>
-          <label class="field">
-            <span class="label">Password</span>
-            <input id="authPassword" class="input" type="password" placeholder="At least 8 characters" autocomplete="current-password">
-          </label>
-          <label class="field">
-            <span class="label">Confirm Password (Sign Up)</span>
-            <input id="authPasswordConfirm" class="input" type="password" placeholder="Re-enter password for new account" autocomplete="new-password">
-          </label>
-        </div>
-        <p class="muted">Account creation requires password + email code verification. Existing-account login requires email + password.</p>
-        <div class="row">
-          <button id="authSignUpBtn" type="button" class="btn primary">Create Account</button>
-          <button id="authSignInBtn" type="button" class="btn">Log In (Existing Account)</button>
-          <button id="authSignOutBtn" type="button" class="btn warn">Log Out</button>
-          <a href="index.html" class="btn">Back to Hub</a>
-          <a id="adminPortalBtn" href="admin.html" class="btn hidden">Admin</a>
+        <h2 class="section-title">Auth Method</h2>
+        <div class="tabs" role="tablist" aria-label="Account auth modes">
+          <button id="tabPassword" class="tab-btn active" type="button" data-mode="password">Password</button>
+          <button id="tabCode" class="tab-btn" type="button" data-mode="code">Email Code</button>
         </div>
 
-        <section id="verifyPanel" class="panel hidden">
-          <h2>Enter Verification Code</h2>
+        <section id="passwordPanel" class="card" style="box-shadow:none; margin:0;">
+          <h3 class="section-title">Email + Password</h3>
           <div class="grid">
+            <label class="field full">
+              <span class="label">Email</span>
+              <input id="authEmail" class="input" type="email" placeholder="you@example.com" autocomplete="email">
+            </label>
             <label class="field">
-              <span class="label">Code</span>
-              <input id="verifyCodeInput" class="input" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">
+              <span class="label">Password</span>
+              <input id="authPassword" class="input" type="password" placeholder="At least 8 characters" autocomplete="current-password">
+            </label>
+            <label class="field">
+              <span class="label">Confirm Password (For Sign Up)</span>
+              <input id="authPasswordConfirm" class="input" type="password" placeholder="Repeat password" autocomplete="new-password">
             </label>
           </div>
-          <label class="field" style="margin-top:-2px;">
-            <span class="label">Code Visibility</span>
-            <button id="verifyToggleBtn" type="button" class="btn">Show Code</button>
-          </label>
-          <p id="verifyHint" class="muted">Enter the code sent to your email. If your email shows only a link, switch your Supabase email template to include <strong>{{ .Token }}</strong>.</p>
-          <div class="row">
-            <button id="verifyCodeBtn" type="button" class="btn primary">Verify Code</button>
-            <button id="resendVerifyBtn" type="button" class="btn">Resend Code</button>
-            <button id="cancelVerifyBtn" type="button" class="btn">Cancel</button>
+          <div class="btn-row">
+            <button id="authSignInBtn" type="button" class="btn primary">Sign In</button>
+            <button id="authSignUpBtn" type="button" class="btn gold">Create Account</button>
+            <button id="authPasswordResetBtn" type="button" class="btn">Send Password Reset</button>
           </div>
+          <p class="hint">Sign up creates a password account and may ask for email verification depending on Supabase auth settings.</p>
         </section>
+
+        <section id="codePanel" class="card hidden" style="box-shadow:none; margin:0;">
+          <h3 class="section-title">Email One-Time Code</h3>
+          <div class="grid">
+            <label class="field full">
+              <span class="label">Email</span>
+              <input id="otpEmail" class="input" type="email" placeholder="you@example.com" autocomplete="email">
+            </label>
+          </div>
+          <div class="btn-row">
+            <button id="sendCodeSignInBtn" type="button" class="btn primary">Send Sign-In Code</button>
+            <button id="sendCodeSignUpBtn" type="button" class="btn gold">Send Sign-Up Code</button>
+          </div>
+
+          <section id="verifyPanel" class="verify-panel hidden">
+            <label class="field full">
+              <span class="label">Verification Code</span>
+              <input id="verifyCodeInput" class="input" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter email code">
+            </label>
+            <p id="verifyHint" class="hint">Enter the code sent to your email.</p>
+            <div class="btn-row">
+              <button id="verifyCodeBtn" type="button" class="btn primary">Verify Code</button>
+              <button id="resendVerifyBtn" type="button" class="btn">Resend Code</button>
+              <button id="verifyToggleBtn" type="button" class="btn">Show Code</button>
+              <button id="cancelVerifyBtn" type="button" class="btn">Cancel</button>
+            </div>
+          </section>
+        </section>
+
+        <p class="hint">Claude-style account flows typically use email-based login, so the Email Code tab is the closest equivalent for that UX pattern.</p>
+
+        <div class="btn-row">
+          <button id="authSignOutBtn" type="button" class="btn warn">Sign Out</button>
+          <a href="index.html" class="btn">Back to Hub</a>
+          <a href="settings.html" class="btn">Open Settings</a>
+          <a id="adminPortalBtn" href="admin.html" class="btn hidden">Admin</a>
+        </div>
       </section>
 
-      <p class="muted">Need account help? Check <a href="privacy.html">Privacy and Terms</a> for usage rules and account notes.</p>
+      <aside class="card">
+        <h2 class="section-title">Session + Cloud</h2>
+        <p class="meta">When signed in, this page attempts to load cloud saves once and keeps autosave active every 60 seconds.</p>
+        <ul class="session-list">
+          <li>Password sign-in for returning users.</li>
+          <li>Email code sign-in/sign-up for low-friction access.</li>
+          <li>Password recovery flow for forgotten credentials.</li>
+          <li>Cloud save push + pull linked to your account ID.</li>
+        </ul>
+        <p class="meta">Need account rules? See <a href="privacy.html">Privacy and Terms</a>.</p>
+      </aside>
     </section>
   </main>
 
@@ -349,19 +482,33 @@
       "stealzers.com@gmail.com": true
     };
 
+    var tabPassword = document.getElementById("tabPassword");
+    var tabCode = document.getElementById("tabCode");
+
+    var passwordPanel = document.getElementById("passwordPanel");
+    var codePanel = document.getElementById("codePanel");
+
+
     var authEmail = document.getElementById("authEmail");
     var authPassword = document.getElementById("authPassword");
     var authPasswordConfirm = document.getElementById("authPasswordConfirm");
+    var otpEmail = document.getElementById("otpEmail");
+
     var authSignInBtn = document.getElementById("authSignInBtn");
     var authSignUpBtn = document.getElementById("authSignUpBtn");
-    var resendVerifyBtn = document.getElementById("resendVerifyBtn");
+    var authPasswordResetBtn = document.getElementById("authPasswordResetBtn");
     var authSignOutBtn = document.getElementById("authSignOutBtn");
+    var sendCodeSignInBtn = document.getElementById("sendCodeSignInBtn");
+    var sendCodeSignUpBtn = document.getElementById("sendCodeSignUpBtn");
+
     var verifyPanel = document.getElementById("verifyPanel");
     var verifyCodeInput = document.getElementById("verifyCodeInput");
-    var verifyCodeBtn = document.getElementById("verifyCodeBtn");
-    var cancelVerifyBtn = document.getElementById("cancelVerifyBtn");
     var verifyHint = document.getElementById("verifyHint");
+    var verifyCodeBtn = document.getElementById("verifyCodeBtn");
+    var resendVerifyBtn = document.getElementById("resendVerifyBtn");
     var verifyToggleBtn = document.getElementById("verifyToggleBtn");
+    var cancelVerifyBtn = document.getElementById("cancelVerifyBtn");
+
     var authStatus = document.getElementById("authStatus");
     var cloudAutoSyncStatus = document.getElementById("cloudAutoSyncStatus");
     var adminPortalBtn = document.getElementById("adminPortalBtn");
@@ -372,8 +519,10 @@
     var cloudPullInFlight = false;
     var autoCloudLoadedUserId = "";
     var AUTO_SYNC_INTERVAL_MS = 60000;
-    var pendingAuthMode = "";
-    var pendingAuthEmail = "";
+    var authActionInFlight = false;
+
+    var pendingCodeFlow = "";
+    var pendingCodeEmail = "";
 
     function isAdminEmail(email) {
       if (typeof email !== "string") {
@@ -389,7 +538,7 @@
     function storageGet(key) {
       try {
         return localStorage.getItem(key);
-      } catch (error) {
+      } catch (_error) {
         return null;
       }
     }
@@ -397,14 +546,7 @@
     function storageSet(key, value) {
       try {
         localStorage.setItem(key, value);
-      } catch (error) {
-      }
-    }
-
-    function storageRemove(key) {
-      try {
-        localStorage.removeItem(key);
-      } catch (error) {
+      } catch (_error) {
       }
     }
 
@@ -412,7 +554,7 @@
       try {
         var value = JSON.parse(storageGet(key));
         return Array.isArray(value) ? value : [];
-      } catch (error) {
+      } catch (_error) {
         return [];
       }
     }
@@ -424,7 +566,7 @@
           return {};
         }
         return value;
-      } catch (error) {
+      } catch (_error) {
         return {};
       }
     }
@@ -472,10 +614,62 @@
     function setButtonsDisabled(disabled) {
       authSignInBtn.disabled = disabled;
       authSignUpBtn.disabled = disabled;
-      resendVerifyBtn.disabled = disabled;
+      authPasswordResetBtn.disabled = disabled;
       authSignOutBtn.disabled = disabled;
+      sendCodeSignInBtn.disabled = disabled;
+      sendCodeSignUpBtn.disabled = disabled;
       verifyCodeBtn.disabled = disabled;
+      resendVerifyBtn.disabled = disabled;
+      verifyToggleBtn.disabled = disabled;
       cancelVerifyBtn.disabled = disabled;
+    }
+
+    function withAuthAction(action) {
+      if (authActionInFlight) {
+        return;
+      }
+
+      authActionInFlight = true;
+      var disabledBefore = {
+        signIn: authSignInBtn.disabled,
+        signUp: authSignUpBtn.disabled,
+        reset: authPasswordResetBtn.disabled,
+        signOut: authSignOutBtn.disabled,
+        codeSignIn: sendCodeSignInBtn.disabled,
+        codeSignUp: sendCodeSignUpBtn.disabled,
+        verify: verifyCodeBtn.disabled,
+        resend: resendVerifyBtn.disabled,
+        toggle: verifyToggleBtn.disabled,
+        cancel: cancelVerifyBtn.disabled
+      };
+      setButtonsDisabled(true);
+
+      Promise.resolve()
+        .then(action)
+        .finally(function () {
+          authActionInFlight = false;
+          authSignInBtn.disabled = disabledBefore.signIn;
+          authSignUpBtn.disabled = disabledBefore.signUp;
+          authPasswordResetBtn.disabled = disabledBefore.reset;
+          authSignOutBtn.disabled = disabledBefore.signOut;
+          sendCodeSignInBtn.disabled = disabledBefore.codeSignIn;
+          sendCodeSignUpBtn.disabled = disabledBefore.codeSignUp;
+          verifyCodeBtn.disabled = disabledBefore.verify;
+          resendVerifyBtn.disabled = disabledBefore.resend;
+          verifyToggleBtn.disabled = disabledBefore.toggle;
+          cancelVerifyBtn.disabled = disabledBefore.cancel;
+        });
+    }
+
+    function setAuthMode(mode) {
+      var usePassword = mode === "password";
+      var useCode = mode === "code";
+
+      tabPassword.classList.toggle("active", usePassword);
+      tabCode.classList.toggle("active", useCode);
+
+      passwordPanel.classList.toggle("hidden", !usePassword);
+      codePanel.classList.toggle("hidden", !useCode);
     }
 
     function showVerifyPanel(show) {
@@ -488,8 +682,8 @@
     }
 
     function clearPendingVerification() {
-      pendingAuthMode = "";
-      pendingAuthEmail = "";
+      pendingCodeFlow = "";
+      pendingCodeEmail = "";
       verifyCodeInput.value = "";
       verifyCodeInput.type = "password";
       verifyToggleBtn.textContent = "Show Code";
@@ -501,6 +695,10 @@
       return String(value || "").replace(/\s+/g, "").trim();
     }
 
+    function normalizeEmail(value) {
+      return String(value || "").trim();
+    }
+
     function validatePasswordInput(password) {
       var value = String(password || "");
       if (value.length < 8) {
@@ -509,104 +707,12 @@
       return value;
     }
 
-    async function startEmailCodeChallenge(mode) {
-      if (!supabaseClient) {
-        throw new Error("Supabase is not configured.");
-      }
-
-      var email = authEmail.value.trim();
-      if (!email) {
-        throw new Error("Enter your email first.");
-      }
-
-      var password = validatePasswordInput(authPassword.value);
-
-      if (mode === "login") {
-        clearPendingVerification();
-        var loginResult = await supabaseClient.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
-        if (loginResult.error) {
-          throw loginResult.error;
-        }
-        var loginUser = loginResult.data && loginResult.data.user ? loginResult.data.user : null;
-        await autoLoadCloudForUser(loginUser);
-        setStatus("Signed in.", "ok");
-        return;
-      }
-
-      if (mode !== "signup") {
-        throw new Error("Unknown auth mode.");
-      }
-
-      var confirmPassword = String(authPasswordConfirm.value || "");
-      if (!confirmPassword) {
-        throw new Error("Confirm your password to create an account.");
-      }
-      if (password !== confirmPassword) {
-        throw new Error("Passwords do not match.");
-      }
-
-      var signUpResult = await supabaseClient.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          data: {
-            auth_flow: "email_code_signup"
-          }
-        }
-      });
-
-      if (signUpResult.error) {
-        throw signUpResult.error;
-      }
-
-      pendingAuthMode = mode;
-      pendingAuthEmail = email;
-      verifyHint.textContent = "A verification code was sent. Enter it here to finish creating your account.";
-      showVerifyPanel(true);
-      setStatus("Verification code sent to " + email + ".", "ok");
-    }
-
-    async function verifyEmailCode() {
-      if (!supabaseClient) {
-        throw new Error("Supabase is not configured.");
-      }
-      if (!pendingAuthEmail) {
-        throw new Error("Start account creation first to request a code.");
-      }
-      if (pendingAuthMode !== "signup") {
-        throw new Error("Only account creation uses verification codes here.");
-      }
-
-      var code = normalizeCode(verifyCodeInput.value);
-      if (!code) {
-        throw new Error("Enter your verification code.");
-      }
-
-      var verify = await supabaseClient.auth.verifyOtp({
-        email: pendingAuthEmail,
-        token: code,
-        type: "signup"
-      });
-
-      if (verify.error) {
-        throw verify.error;
-      }
-
-      var user = verify.data && verify.data.user ? verify.data.user : null;
-      await autoLoadCloudForUser(user);
-      setStatus("Verification complete. Signed in.", "ok");
-      clearPendingVerification();
-    }
-
     function getSupabaseConfig() {
       var cfg = window.__GAMEHUB_SUPABASE__ || {};
       var localCfg = {};
       try {
         localCfg = JSON.parse(storageGet(SUPABASE_CONFIG_KEY) || "{}") || {};
-      } catch (error) {
+      } catch (_error) {
         localCfg = {};
       }
 
@@ -619,6 +725,185 @@
         url: localUrl || fileUrl,
         anonKey: localAnon || fileAnon
       };
+    }
+
+    function getRedirectUrl() {
+      return window.location.origin + window.location.pathname;
+    }
+
+    async function signInWithPassword() {
+      if (!supabaseClient) {
+        throw new Error("Supabase is not configured.");
+      }
+      var email = normalizeEmail(authEmail.value);
+      if (!email) {
+        throw new Error("Enter your email.");
+      }
+      var password = validatePasswordInput(authPassword.value);
+
+      var result = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+      if (result.error) {
+        throw result.error;
+      }
+
+      var user = result.data && result.data.user ? result.data.user : null;
+      await autoLoadCloudForUser(user);
+      setStatus("Signed in.", "ok");
+    }
+
+    async function signUpWithPassword() {
+      if (!supabaseClient) {
+        throw new Error("Supabase is not configured.");
+      }
+      var email = normalizeEmail(authEmail.value);
+      if (!email) {
+        throw new Error("Enter your email.");
+      }
+      var password = validatePasswordInput(authPassword.value);
+      var confirmPassword = String(authPasswordConfirm.value || "");
+      if (!confirmPassword) {
+        throw new Error("Confirm your password to create an account.");
+      }
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match.");
+      }
+
+      var result = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            auth_flow: "password_signup"
+          }
+        }
+      });
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      var user = result.data && result.data.user ? result.data.user : null;
+      if (user) {
+        await autoLoadCloudForUser(user);
+      }
+
+      setStatus("Account created. Check your email if verification is required.", "ok");
+    }
+
+    async function sendPasswordReset() {
+      if (!supabaseClient) {
+        throw new Error("Supabase is not configured.");
+      }
+      var email = normalizeEmail(authEmail.value);
+      if (!email) {
+        throw new Error("Enter your email.");
+      }
+
+      var result = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: getRedirectUrl()
+      });
+      if (result.error) {
+        throw result.error;
+      }
+      setStatus("Password reset email sent.", "ok");
+    }
+
+    async function sendOtpCode(flow) {
+      if (!supabaseClient) {
+        throw new Error("Supabase is not configured.");
+      }
+      var email = normalizeEmail(otpEmail.value || authEmail.value);
+      if (!email) {
+        throw new Error("Enter your email.");
+      }
+
+      var shouldCreateUser = flow === "otp_signup";
+      var result = await supabaseClient.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: shouldCreateUser,
+          data: {
+            auth_flow: flow
+          }
+        }
+      });
+      if (result.error) {
+        throw result.error;
+      }
+
+      pendingCodeFlow = flow;
+      pendingCodeEmail = email;
+      verifyHint.textContent = "Code sent to " + email + ". Enter it to complete sign in.";
+      showVerifyPanel(true);
+      setStatus("Verification code sent.", "ok");
+    }
+
+    async function verifyOtpCode() {
+      if (!supabaseClient) {
+        throw new Error("Supabase is not configured.");
+      }
+      if (!pendingCodeEmail || !pendingCodeFlow) {
+        throw new Error("Send a code first.");
+      }
+
+      var code = normalizeCode(verifyCodeInput.value);
+      if (!code) {
+        throw new Error("Enter your verification code.");
+      }
+
+      var verifyTypes = pendingCodeFlow === "otp_signup" ? ["email", "signup"] : ["email"];
+      var verified = null;
+      var lastError = null;
+
+      for (var i = 0; i < verifyTypes.length; i++) {
+        var verifyType = verifyTypes[i];
+        var result = await supabaseClient.auth.verifyOtp({
+          email: pendingCodeEmail,
+          token: code,
+          type: verifyType
+        });
+        if (!result.error) {
+          verified = result;
+          break;
+        }
+        lastError = result.error;
+      }
+
+      if (!verified) {
+        throw lastError || new Error("Verification failed.");
+      }
+
+      var user = verified.data && verified.data.user ? verified.data.user : null;
+      await autoLoadCloudForUser(user);
+      clearPendingVerification();
+      setStatus("Email verified. Signed in.", "ok");
+    }
+
+    async function resendOtpCode() {
+      if (!supabaseClient) {
+        throw new Error("Supabase is not configured.");
+      }
+      if (!pendingCodeEmail || !pendingCodeFlow) {
+        throw new Error("Send a code first.");
+      }
+
+      var result = await supabaseClient.auth.signInWithOtp({
+        email: pendingCodeEmail,
+        options: {
+          shouldCreateUser: pendingCodeFlow === "otp_signup",
+          data: {
+            auth_flow: pendingCodeFlow + "_resend"
+          }
+        }
+      });
+      if (result.error) {
+        throw result.error;
+      }
+
+      setStatus("New code sent to " + pendingCodeEmail + ".", "ok");
     }
 
     function snapshotSavedData() {
@@ -827,6 +1112,7 @@
       try {
         supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
         setButtonsDisabled(false);
+
         var auth = await supabaseClient.auth.getUser();
         var user = auth && auth.data ? auth.data.user : null;
 
@@ -859,63 +1145,89 @@
         });
 
         restartCloudPeriodicSync();
-      } catch (error) {
+      } catch (_error) {
         setButtonsDisabled(true);
         setAdminPortalVisibility("");
         setStatus("Cloud init failed.", "error");
       }
     }
 
+    tabPassword.addEventListener("click", function () {
+      setAuthMode("password");
+    });
+
+    tabCode.addEventListener("click", function () {
+      setAuthMode("code");
+    });
+
     authSignInBtn.addEventListener("click", async function () {
-      try {
-        await startEmailCodeChallenge("login");
-      } catch (error) {
-        setStatus(error && error.message ? error.message : "Log in failed.", "error");
-      }
+      withAuthAction(async function () {
+        try {
+          await signInWithPassword();
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Sign in failed.", "error");
+        }
+      });
     });
 
     authSignUpBtn.addEventListener("click", async function () {
-      try {
-        await startEmailCodeChallenge("signup");
-      } catch (error) {
-        setStatus(error && error.message ? error.message : "Create account failed.", "error");
-      }
+      withAuthAction(async function () {
+        try {
+          await signUpWithPassword();
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Sign up failed.", "error");
+        }
+      });
     });
 
-    resendVerifyBtn.addEventListener("click", async function () {
-      try {
-        if (pendingAuthMode !== "signup" || !pendingAuthEmail) {
-          throw new Error("Start account creation first.");
+    authPasswordResetBtn.addEventListener("click", async function () {
+      withAuthAction(async function () {
+        try {
+          await sendPasswordReset();
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Password reset failed.", "error");
         }
-        var resendResult = await supabaseClient.auth.resend({
-          type: "signup",
-          email: pendingAuthEmail,
-          options: {
-            data: {
-              auth_flow: "email_code_signup_resend"
-            }
-          }
-        });
-        if (resendResult.error) {
-          throw resendResult.error;
+      });
+    });
+
+    sendCodeSignInBtn.addEventListener("click", async function () {
+      withAuthAction(async function () {
+        try {
+          await sendOtpCode("otp_signin");
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Failed to send sign-in code.", "error");
         }
-        setStatus("New verification code sent to " + pendingAuthEmail + ".", "ok");
-      } catch (error) {
-        setStatus(error && error.message ? error.message : "Resend failed.", "error");
-      }
+      });
+    });
+
+    sendCodeSignUpBtn.addEventListener("click", async function () {
+      withAuthAction(async function () {
+        try {
+          await sendOtpCode("otp_signup");
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Failed to send sign-up code.", "error");
+        }
+      });
     });
 
     verifyCodeBtn.addEventListener("click", async function () {
-      try {
-        await verifyEmailCode();
-      } catch (error) {
-        setStatus(error && error.message ? error.message : "Verification failed.", "error");
-      }
+      withAuthAction(async function () {
+        try {
+          await verifyOtpCode();
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Verification failed.", "error");
+        }
+      });
     });
 
-    cancelVerifyBtn.addEventListener("click", function () {
-      clearPendingVerification();
-      setStatus("Verification canceled.", "warn");
+    resendVerifyBtn.addEventListener("click", async function () {
+      withAuthAction(async function () {
+        try {
+          await resendOtpCode();
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Resend failed.", "error");
+        }
+      });
     });
 
     verifyToggleBtn.addEventListener("click", function () {
@@ -923,6 +1235,15 @@
       verifyCodeInput.type = show ? "text" : "password";
       verifyToggleBtn.textContent = show ? "Hide Code" : "Show Code";
       verifyCodeInput.focus();
+    });
+
+    cancelVerifyBtn.addEventListener("click", function () {
+      clearPendingVerification();
+      setStatus("Verification canceled.", "warn");
+    });
+
+    authEmail.addEventListener("input", function () {
+      otpEmail.value = normalizeEmail(authEmail.value);
     });
 
     authPassword.addEventListener("keydown", function (event) {
@@ -951,22 +1272,25 @@
     });
 
     authSignOutBtn.addEventListener("click", async function () {
-      try {
-        if (!supabaseClient) {
-          throw new Error("Supabase is not configured.");
+      withAuthAction(async function () {
+        try {
+          if (!supabaseClient) {
+            throw new Error("Supabase is not configured.");
+          }
+          var result = await supabaseClient.auth.signOut();
+          if (result.error) {
+            throw result.error;
+          }
+          clearPendingVerification();
+          setAdminPortalVisibility("");
+          setStatus("Signed out.", "warn");
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Sign out failed.", "error");
         }
-        var result = await supabaseClient.auth.signOut();
-        if (result.error) {
-          throw result.error;
-        }
-        clearPendingVerification();
-        setAdminPortalVisibility("");
-        setStatus("Signed out.", "warn");
-      } catch (error) {
-        setStatus(error && error.message ? error.message : "Sign out failed.", "error");
-      }
+      });
     });
 
+    setAuthMode("password");
     initSupabase();
   </script>
 </body>

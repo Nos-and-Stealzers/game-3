@@ -258,27 +258,102 @@
             document.getElementById('stage').innerHTML = text;
         }
 
+        function normalizeResourcePath(value) {
+            if (typeof value !== 'string') {
+                return '';
+            }
+
+            var trimmed = value.split('#')[0].split('?')[0].trim();
+            if (!trimmed) {
+                return '';
+            }
+
+            try {
+                trimmed = decodeURIComponent(trimmed);
+            } catch (_error) {
+            }
+
+            var protocolIndex = trimmed.indexOf('://');
+            if (protocolIndex !== -1) {
+                var slashAfterHost = trimmed.indexOf('/', protocolIndex + 3);
+                trimmed = slashAfterHost === -1 ? '' : trimmed.slice(slashAfterHost + 1);
+            }
+
+            if (trimmed.charAt(0) === '/') {
+                trimmed = trimmed.slice(1);
+            }
+
+            return trimmed;
+        }
+
+        function resourceBasename(value) {
+            var normalized = normalizeResourcePath(value);
+            if (!normalized) {
+                return '';
+            }
+            var parts = normalized.split('/');
+            return parts[parts.length - 1] || '';
+        }
+
+        function resolveMappedResourceUrl(value) {
+            var normalized = normalizeResourcePath(value);
+            if (!normalized) {
+                return '';
+            }
+
+            if (map.has(normalized)) {
+                return map.get(normalized);
+            }
+
+            var lowered = normalized.toLowerCase();
+            if (map.has(lowered)) {
+                return map.get(lowered);
+            }
+
+            var fileName = resourceBasename(normalized);
+            if (fileName && map.has(fileName)) {
+                return map.get(fileName);
+            }
+
+            var loweredName = fileName ? fileName.toLowerCase() : '';
+            if (loweredName && map.has(loweredName)) {
+                return map.get(loweredName);
+            }
+
+            return '';
+        }
+
+        function mapResource(filePath, objectUrl) {
+            var normalized = normalizeResourcePath(filePath);
+            var fileName = resourceBasename(filePath);
+
+            if (normalized) {
+                map.set(normalized, objectUrl);
+                map.set(normalized.toLowerCase(), objectUrl);
+            }
+            if (fileName) {
+                map.set(fileName, objectUrl);
+                map.set(fileName.toLowerCase(), objectUrl);
+            }
+        }
+
         async function intercept() {
             const ogfetch = window.fetch;
             window.fetch = async function (input, init) {
-                if (typeof input === 'string' && input.startsWith('resources/')) {
-                    const fileName = input.split('/').pop();
-                    if (map.has(fileName)) {
-                        return ogfetch(map.get(fileName), init);
-                    }
+                var requestUrl = typeof input === 'string' ? input : (input && typeof input.url === 'string' ? input.url : '');
+                var mappedUrl = resolveMappedResourceUrl(requestUrl);
+                if (mappedUrl) {
+                    return ogfetch(mappedUrl, init);
                 }
                 return ogfetch(input, init);
             };
 
             const ogopen = XMLHttpRequest.prototype.open;
             XMLHttpRequest.prototype.open = function (method, url) {
-                if (url.startsWith('resources/')) {
-                    const fileName = url.split('/').pop();
-                    if (map.has(fileName)) {
-                        url = map.get(fileName);
-                    }
-                }
-                return ogopen.apply(this, arguments);
+                var mappedUrl = resolveMappedResourceUrl(url);
+                var nextUrl = mappedUrl || url;
+                var args = Array.prototype.slice.call(arguments, 2);
+                return ogopen.call.apply(ogopen, [this, method, nextUrl].concat(args));
             };
 
             const types = [HTMLImageElement, HTMLAudioElement, HTMLVideoElement];
@@ -290,11 +365,9 @@
                         enumerable: true,
                         get: descriptor.get,
                         set: function (val) {
-                            if (typeof val === 'string' && val.startsWith('resources/')) {
-                                const fileName = val.split('/').pop();
-                                if (map.has(fileName)) {
-                                    val = map.get(fileName);
-                                }
+                            var mappedUrl = resolveMappedResourceUrl(val);
+                            if (mappedUrl) {
+                                val = mappedUrl;
                             }
                             descriptor.set.call(this, val);
                         }
@@ -336,7 +409,7 @@
                 const file = zip.files[files[i]];
                 const blob = await file.async("blob");
                 const url = URL.createObjectURL(blob);
-                map.set(files[i], url);
+                mapResource(files[i], url);
                 updateProgress('BOOTING UP ARCHIVE...', calculateHalfProgress(i + 1, totalFiles, 50));
             }
         }
@@ -349,6 +422,7 @@
             script.src = 'src/Runtime.js';
             script.onload = () => {
                 new Runtime("MMFCanvas", runtimecanvas);
+                document.onselectstart = null;
                 if (recovery) {
                     recovery.onRuntimeStarted();
                 }
@@ -397,9 +471,64 @@
             }
             return parts;
         }
-        Promise.all([
-            mergeFiles(getParts("src/resources.zip", 1, parts))
-        ]).then(([resources]) => {
+
+        function preflightParts(fileParts) {
+            return Promise.all(fileParts.map(async function (part) {
+                try {
+                    const headResponse = await fetchWithRetry(part, { method: "HEAD" });
+                    if (headResponse && headResponse.ok) {
+                        return null;
+                    }
+                } catch (_headError) {
+                }
+
+                try {
+                    const probeResponse = await fetchWithRetry(part, {
+                        method: "GET",
+                        headers: { Range: "bytes=0-0" }
+                    });
+                    if (probeResponse && probeResponse.ok) {
+                        return null;
+                    }
+                } catch (_probeError) {
+                }
+
+                return part;
+            })).then(function (results) {
+                return results.filter(Boolean);
+            });
+        }
+
+        function formatLoaderError(error) {
+            var message = error && error.message ? String(error.message) : "";
+            var missingPrefix = "Missing part: ";
+            if (message.indexOf(missingPrefix) === 0) {
+                var missingPart = message.slice(missingPrefix.length);
+                return "MISSING FILE " + missingPart + " (upload all resources.zip.part files)";
+            }
+
+            var missingManyPrefix = "Missing parts: ";
+            if (message.indexOf(missingManyPrefix) === 0) {
+                var missingParts = message.slice(missingManyPrefix.length);
+                return "MISSING FILES " + missingParts + " (upload all resources.zip.part files)";
+            }
+            if (message.indexOf("Unable to download archive") !== -1) {
+                return "ARCHIVE DOWNLOAD FAILED";
+            }
+            if (message.indexOf("Archive stream unavailable") !== -1) {
+                return "ARCHIVE STREAM FAILED";
+            }
+            return "LOADING FAILED";
+        }
+        const resourceParts = getParts("src/resources.zip", 1, parts);
+        preflightParts(resourceParts)
+            .then((missingParts) => {
+                if (missingParts.length) {
+                    throw new Error("Missing parts: " + missingParts.join(", "));
+                }
+                return Promise.all([mergeFiles(resourceParts)]);
+            })
+            .then(([resources]) => {
             window.fetch = async function (url, ...args) {
                 var requestUrl = typeof url === "string" ? url : (url && typeof url.url === "string" ? url.url : "");
                 if (requestUrl && requestUrl.endsWith("resources.zip")) {
@@ -410,7 +539,7 @@
             return wedone();
         }).catch((error) => {
             console.error('FNAF loader failed:', error);
-            showLoadError('LOADING FAILED');
+            showLoadError(formatLoaderError(error));
         });
     };
 </script>

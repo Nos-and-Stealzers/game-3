@@ -650,9 +650,64 @@
             }
             return parts;
         }
-        Promise.all([
-            mergeFiles(getParts("src/resources.zip", 1, parts))
-        ]).then(([resources]) => {
+
+        function preflightParts(fileParts) {
+            return Promise.all(fileParts.map(async function (part) {
+                try {
+                    const headResponse = await fetchWithRetry(part, { method: "HEAD" });
+                    if (headResponse && headResponse.ok) {
+                        return null;
+                    }
+                } catch (_headError) {
+                }
+
+                try {
+                    const probeResponse = await fetchWithRetry(part, {
+                        method: "GET",
+                        headers: { Range: "bytes=0-0" }
+                    });
+                    if (probeResponse && probeResponse.ok) {
+                        return null;
+                    }
+                } catch (_probeError) {
+                }
+
+                return part;
+            })).then(function (results) {
+                return results.filter(Boolean);
+            });
+        }
+
+        function formatLoaderError(error) {
+            var message = error && error.message ? String(error.message) : "";
+            var missingPrefix = "Missing part: ";
+            if (message.indexOf(missingPrefix) === 0) {
+                var missingPart = message.slice(missingPrefix.length);
+                return "MISSING FILE " + missingPart + " (upload all resources.zip.part files)";
+            }
+
+            var missingManyPrefix = "Missing parts: ";
+            if (message.indexOf(missingManyPrefix) === 0) {
+                var missingParts = message.slice(missingManyPrefix.length);
+                return "MISSING FILES " + missingParts + " (upload all resources.zip.part files)";
+            }
+            if (message.indexOf("Unable to download archive") !== -1) {
+                return "ARCHIVE DOWNLOAD FAILED";
+            }
+            if (message.indexOf("Archive stream unavailable") !== -1) {
+                return "ARCHIVE STREAM FAILED";
+            }
+            return "LOADING FAILED";
+        }
+        const resourceParts = getParts("src/resources.zip", 1, parts);
+        preflightParts(resourceParts)
+            .then((missingParts) => {
+                if (missingParts.length) {
+                    throw new Error("Missing parts: " + missingParts.join(", "));
+                }
+                return Promise.all([mergeFiles(resourceParts)]);
+            })
+            .then(([resources]) => {
             window.fetch = async function (url, ...args) {
                 var requestUrl = typeof url === "string" ? url : (url && typeof url.url === "string" ? url.url : "");
                 if (requestUrl && requestUrl.endsWith("resources.zip")) {
@@ -663,7 +718,7 @@
             return wedone();
         }).catch((error) => {
             console.error('FNAF World loader failed:', error);
-            showLoadError('LOADING FAILED');
+            showLoadError(formatLoaderError(error));
         });
     };
 </script>

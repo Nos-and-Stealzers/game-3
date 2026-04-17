@@ -49,6 +49,22 @@ python3 scripts/check_game_compat.py
 
 The script reports status codes and key headers like `X-Frame-Options` and `Content-Security-Policy`.
 
+## FNAF asset integrity checks
+
+Run this to validate local FNAF split archive completeness and merged ZIP integrity:
+
+```bash
+python3 scripts/check_fnaf_integrity.py
+```
+
+The report includes expected part count, missing parts (if any), ZIP test status, and pass/fail totals.
+
+If you only want a fast missing-file check (skip ZIP validation):
+
+```bash
+python3 scripts/check_fnaf_integrity.py --skip-zip-test
+```
+
 ## School Chromebook notes
 
 - Local games (`snow-rider`, `sweet-bakery-local`) are the best chance to work on school-managed devices.
@@ -89,11 +105,17 @@ The script reports status codes and key headers like `X-Frame-Options` and `Cont
 5. Open `js/supabase.config.js` and fill in:
 	- `url`: your Supabase project URL
 	- `anonKey`: your Supabase anon public key
-   - Or open `account.html` and paste these into `Supabase setup`, then click `Save Setup` (stored in local browser storage)
-6. Reload the site and use Settings -> Account Cloud Save:
+6. Reload the site and open `account.html`:
+	- Use **Password** tab for email/password sign in or account creation.
+	- Use **Email Code** tab for one-time-code sign in/sign up.
+	- Use **Send Password Reset** if users forget passwords.
+	- Then return to Settings -> Account Cloud Save as needed.
+	- Cloud auto-sync continues to run after sign-in.
+
+7. In Settings -> Account Cloud Save:
 	- Click `Save your data` to open the dedicated sign-in page
-	- Sign Up or Sign In on `account.html`
-	- Enter the emailed verification code on `account.html` (no redirect required)
+	- Sign in using any supported method from `account.html`
+	- Enter emailed verification code on `account.html` when using OTP mode (no redirect required)
 	- Toggle `Cloud Auto Sync` on/off as desired
 	- `Cloud Save` to upload local favorites/settings/game data snapshot
 	- `Cloud Load` to pull saved data back

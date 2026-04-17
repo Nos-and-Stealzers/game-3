@@ -37,11 +37,37 @@
             dispatchMouseUp(window);
         }
 
+        function allowDiagnosticsCopy() {
+            var canvas = getCanvas();
+            if (document && document.documentElement && document.documentElement.style) {
+                document.documentElement.style.userSelect = 'text';
+            }
+            if (document && document.body && document.body.style) {
+                document.body.style.userSelect = 'text';
+            }
+            if (canvas && canvas.style) {
+                canvas.style.userSelect = 'none';
+            }
+            document.onselectstart = null;
+        }
+
+        allowDiagnosticsCopy();
+        setTimeout(allowDiagnosticsCopy, 0);
+        setTimeout(allowDiagnosticsCopy, 700);
+
         document.addEventListener('mousedown', function (event) {
             const canvas = getCanvas();
             if (!canvas) return;
             if (event.target === canvas) {
                 focusCanvas();
+            }
+        }, true);
+
+        document.addEventListener('selectstart', function (event) {
+            const canvas = getCanvas();
+            if (!canvas || !event) return;
+            if (event.target === canvas) {
+                event.preventDefault();
             }
         }, true);
 

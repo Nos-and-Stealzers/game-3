@@ -4213,6 +4213,7 @@
                 email: activeAccountUser.email,
                 options: {
                     shouldCreateUser: false,
+                    emailRedirectTo: window.location.href.split("#")[0],
                     data: {
                         auth_flow: "sensitive_settings_verify"
                     }

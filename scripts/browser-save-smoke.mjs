@@ -24,7 +24,7 @@ async function runCase(item) {
   const page = await context.newPage();
   try {
     await page.goto(base + item.path, { waitUntil: 'domcontentloaded', timeout: 45000 });
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(1100);
 
     const result = await page.evaluate(async ({ key, name }) => {
       const now = Date.now();
@@ -33,7 +33,7 @@ async function runCase(item) {
       window.dispatchEvent(new StorageEvent('storage', { key, newValue: marker, storageArea: localStorage }));
       window.dispatchEvent(new Event('pagehide'));
       window.dispatchEvent(new Event('beforeunload'));
-      await new Promise((r) => setTimeout(r, 220));
+      await new Promise((r) => setTimeout(r, 1900));
 
       const raw = localStorage.getItem('gamehub_game_saves');
       if (!raw) {
@@ -50,7 +50,7 @@ async function runCase(item) {
       const entries = Object.values(parsed || {});
       const found = entries.find((entry) => {
         if (!entry || typeof entry !== 'object') return false;
-        const tracked = entry.storage || {};
+        const tracked = entry.localStorage || entry.storage || {};
         return tracked[key] === marker;
       });
 
