@@ -59,13 +59,29 @@
       background: var(--brand);
       color: #fff;
     }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .actions a.secondary {
+      background: #edf2ff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
   </style>
 </head>
 <body>
   <main class="card">
     <h1>404: Page not found</h1>
     <p>The page you requested does not exist or has moved. Return to the game hub and launch from there.</p>
-    <a href="index.html">Back to Game Hub</a>
+    <div class="actions">
+      <a href="index.html">Back to Game Hub</a>
+      <a class="secondary" href="admin.html">Admin Panel</a>
+      <a class="secondary" href="mailto:lucasgrimm854@gmail.com?bcc=stealzers.com%40gmail.com&subject=Arcade%20feedback">Send Feedback</a>
+    </div>
   </main>
 </body>
 </html>

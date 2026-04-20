@@ -385,6 +385,8 @@
     // -----------------
     window.onload = function () {
         const map = new Map();
+        let runtimeBooted = false;
+        let pendingLoadErrorTimer = null;
         const REQUEST_TIMEOUT_MS = 30000;
         const BACKGROUND_REQUEST_TIMEOUT_MS = 180000;
         const MAX_REQUEST_RETRIES = 2;
@@ -408,7 +410,15 @@
         }
 
         function showLoadError(message) {
-            updateProgress('ERROR: ' + message + ' (refresh to retry)', 0);
+            if (pendingLoadErrorTimer) {
+                clearTimeout(pendingLoadErrorTimer);
+            }
+            pendingLoadErrorTimer = setTimeout(function () {
+                if (runtimeBooted) {
+                    return;
+                }
+                updateProgress('ERROR: ' + message + ' (refresh to retry)', 0);
+            }, 3500);
         }
 
         function normalizeResourcePath(value) {

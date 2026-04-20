@@ -250,6 +250,8 @@
         <div class="actions">
             <a class="btn alt" href="index.html">Back to Library</a>
             <a class="btn alt" href="settings.html">Settings</a>
+            <a class="btn alt" href="admin.html">Admin</a>
+            <a class="btn alt" href="mailto:lucasgrimm854@gmail.com?bcc=stealzers.com%40gmail.com&subject=Arcade%20feedback">Feedback</a>
             <button id="fullscreenBtn" type="button" class="btn alt">Fullscreen</button>
             <a id="openDirect" class="btn" href="#" target="_blank" rel="noopener noreferrer">Open Direct</a>
         </div>
@@ -308,6 +310,7 @@
         var direct = document.getElementById("openDirect");
         var embedStatus = document.getElementById("embedStatus");
         var loadTimer;
+        var frameLoaded = false;
 
         function isFullscreenActive() {
             return !!(document.fullscreenElement || document.webkitFullscreenElement);
@@ -542,19 +545,24 @@
             }
 
             frame.style.display = "block";
+            frameLoaded = false;
             frame.src = game.source;
 
             clearTimeout(loadTimer);
             setStatus("ok", "Trying embedded mode. If it fails, use Open Direct.");
 
             frame.addEventListener("load", function () {
+                frameLoaded = true;
                 clearTimeout(loadTimer);
                 setStatus("ok", "Game loaded in player window.");
             }, { once: true });
 
             loadTimer = setTimeout(function () {
-                setStatus("warn", "This game may block embedding. Use Open Direct if it does not appear.");
-            }, 4000);
+                if (frameLoaded) {
+                    return;
+                }
+                setStatus("warn", "Game is still loading. If it stays blank, use Open Direct.");
+            }, 9000);
         }
 
         initPlayer();

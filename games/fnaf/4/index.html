@@ -206,6 +206,8 @@
     // -----------------
     window.onload = function () {
         const map = new Map();
+        let runtimeBooted = false;
+        let pendingLoadErrorTimer = null;
         const REQUEST_TIMEOUT_MS = 30000;
         const MAX_REQUEST_RETRIES = 2;
 
@@ -226,7 +228,15 @@
         }
 
         function showLoadError(message) {
-            updateProgress('ERROR: ' + message + ' (refresh to retry)', 0);
+            if (pendingLoadErrorTimer) {
+                clearTimeout(pendingLoadErrorTimer);
+            }
+            pendingLoadErrorTimer = setTimeout(function () {
+                if (runtimeBooted) {
+                    return;
+                }
+                updateProgress('ERROR: ' + message + ' (refresh to retry)', 0);
+            }, 3500);
         }
 
         async function fetchWithRetry(url, options = {}, retries = MAX_REQUEST_RETRIES) {
@@ -421,6 +431,11 @@
             const script = document.createElement('script');
             script.src = 'src/Runtime.js';
             script.onload = () => {
+                runtimeBooted = true;
+                if (pendingLoadErrorTimer) {
+                    clearTimeout(pendingLoadErrorTimer);
+                    pendingLoadErrorTimer = null;
+                }
                 new Runtime("MMFCanvas", runtimecanvas);
                 document.onselectstart = null;
                 if (recovery) {

@@ -1,5 +1,6 @@
 (function () {
   var GAME_SAVES_KEY = "gamehub_game_saves";
+  var LOCAL_SAVE_UPDATED_KEY = "gamehub_local_last_saved";
   var HUB_PREFIX = "gamehub_";
   var SAVE_INTERVAL_MS = 1500;
 
@@ -28,6 +29,10 @@
 
     if (/\/games\/minecraft\/eaglercraft\/index\.html$/i.test(path)) {
       return "minecraft-eaglercraft";
+    }
+
+    if (/\/games\/retro-bowl\/index\.html$/i.test(path) || /\/games\/retro-bowl\/rb\/index\.html$/i.test(path)) {
+      return "retro-bowl-plus";
     }
 
     return "";
@@ -168,6 +173,7 @@
     gameSave.updatedAt = new Date().toISOString();
     allSaves[gameId] = gameSave;
     writeObject(GAME_SAVES_KEY, allSaves);
+    storageSet(LOCAL_SAVE_UPDATED_KEY, gameSave.updatedAt);
 
     return currentSnapshot;
   }

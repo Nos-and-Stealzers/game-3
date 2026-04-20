@@ -546,6 +546,39 @@
       font-weight: 700;
     }
 
+    .dev-health-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .dev-health-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8fbff;
+      padding: 9px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .dev-health-item .meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: .8rem;
+      line-height: 1.35;
+    }
+
+    .dev-role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
+    }
+
     @media (max-width: 860px) {
       .tab-btn,
       .inline-actions .btn,
@@ -578,6 +611,7 @@
         <button type="button" class="tab-btn" data-admin-tab="users">Users</button>
         <button type="button" class="tab-btn" data-admin-tab="activity">Activity</button>
         <button type="button" class="tab-btn" data-admin-tab="tools">Tools</button>
+        <button type="button" class="tab-btn" data-admin-tab="developer" id="developerTabBtn">Developer</button>
       </nav>
 
       <section class="tab-panel" data-admin-tab-panel="overview">
@@ -618,6 +652,7 @@
               <button id="exportBtn" type="button" class="btn">Export CSV</button>
               <a href="account.html" class="btn">Account</a>
               <a href="index.html" class="btn">Back to Hub</a>
+              <a href="mailto:lucasgrimm854@gmail.com?bcc=stealzers.com%40gmail.com&subject=Arcade%20feedback" class="btn">Feedback</a>
             </div>
           </section>
         </div>
@@ -748,6 +783,7 @@
             <div class="inline-actions">
               <button id="makeModeratorBtn" type="button" class="btn">Make Moderator</button>
               <button id="makeAdminBtn" type="button" class="btn">Make Admin</button>
+              <button id="makeDeveloperBtn" type="button" class="btn">Make Developer</button>
               <button id="removeStaffBtn" type="button" class="btn warn">Remove Staff</button>
             </div>
             <div class="inline-actions">
@@ -755,8 +791,29 @@
                 <option value="none">Remove role</option>
                 <option value="moderator">Moderator</option>
                 <option value="admin">Admin</option>
+                <option value="developer">Developer</option>
               </select>
               <button id="applyStaffRoleBtn" type="button" class="btn primary">Apply to selected</button>
+            </div>
+          </article>
+          <article class="panel utility-box">
+            <strong>Moderator Queue</strong>
+            <p>Quick shortcuts for moderation passes without manually changing filters each time.</p>
+            <div class="inline-actions">
+              <button id="modViewActiveBtn" type="button" class="btn">View Active</button>
+              <button id="modViewBannedBtn" type="button" class="btn">View Banned</button>
+              <button id="modRecentSigninsBtn" type="button" class="btn">Recent Sign-Ins</button>
+              <button id="modResetFiltersBtn" type="button" class="btn warn">Reset Filters</button>
+            </div>
+          </article>
+          <article id="developerToolBox" class="panel utility-box">
+            <strong>Developer Tools</strong>
+            <p>Diagnostics and project links for debugging staff actions and account-state issues.</p>
+            <div class="inline-actions">
+              <button id="exportDiagnosticsBtn" type="button" class="btn">Export Diagnostics JSON</button>
+              <button id="copySelectedIdsBtn" type="button" class="btn">Copy Selected User IDs</button>
+              <button id="openSupabaseDashboardBtn" type="button" class="btn">Open Supabase Dashboard</button>
+              <button id="openSupabaseLogsBtn" type="button" class="btn">Open Supabase Logs</button>
             </div>
           </article>
           <article class="panel utility-box">
@@ -769,6 +826,28 @@
             <p>Useful when you want to keep a short record during a moderation pass.</p>
             <div id="sessionStatus" class="notice">No action selected yet.</div>
           </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-admin-tab-panel="developer" id="developerTabPanel" hidden>
+        <div class="panel-stack">
+          <section class="panel">
+            <h2>Developer Diagnostics</h2>
+            <p class="subtle">Run RPC and auth health checks without leaving the admin panel.</p>
+            <div class="inline-actions">
+              <button id="runDeveloperHealthBtn" type="button" class="btn primary">Run Full Health Check</button>
+              <button id="runRpcSmokeBtn" type="button" class="btn">Run RPC Smoke Test</button>
+              <button id="copyHealthReportBtn" type="button" class="btn">Copy Health Report JSON</button>
+            </div>
+            <p id="developerHealthStatus" class="toolbar-note">Ready to run diagnostics.</p>
+            <ul id="developerHealthList" class="dev-health-list"></ul>
+          </section>
+
+          <section class="panel">
+            <h2>Role Capability Matrix</h2>
+            <p class="subtle">Quick reference for what each role can do in this panel.</p>
+            <div id="developerRoleMatrix" class="dev-role-grid"></div>
+          </section>
         </div>
       </section>
     </section>
@@ -795,9 +874,27 @@
     var selectStaffEmailBtn = document.getElementById("selectStaffEmailBtn");
     var makeModeratorBtn = document.getElementById("makeModeratorBtn");
     var makeAdminBtn = document.getElementById("makeAdminBtn");
+    var makeDeveloperBtn = document.getElementById("makeDeveloperBtn");
     var removeStaffBtn = document.getElementById("removeStaffBtn");
     var staffRoleSelect = document.getElementById("staffRoleSelect");
     var applyStaffRoleBtn = document.getElementById("applyStaffRoleBtn");
+    var modViewActiveBtn = document.getElementById("modViewActiveBtn");
+    var modViewBannedBtn = document.getElementById("modViewBannedBtn");
+    var modRecentSigninsBtn = document.getElementById("modRecentSigninsBtn");
+    var modResetFiltersBtn = document.getElementById("modResetFiltersBtn");
+    var developerToolBox = document.getElementById("developerToolBox");
+    var exportDiagnosticsBtn = document.getElementById("exportDiagnosticsBtn");
+    var copySelectedIdsBtn = document.getElementById("copySelectedIdsBtn");
+    var openSupabaseDashboardBtn = document.getElementById("openSupabaseDashboardBtn");
+    var openSupabaseLogsBtn = document.getElementById("openSupabaseLogsBtn");
+    var developerTabBtn = document.getElementById("developerTabBtn");
+    var developerTabPanel = document.getElementById("developerTabPanel");
+    var runDeveloperHealthBtn = document.getElementById("runDeveloperHealthBtn");
+    var runRpcSmokeBtn = document.getElementById("runRpcSmokeBtn");
+    var copyHealthReportBtn = document.getElementById("copyHealthReportBtn");
+    var developerHealthStatus = document.getElementById("developerHealthStatus");
+    var developerHealthList = document.getElementById("developerHealthList");
+    var developerRoleMatrix = document.getElementById("developerRoleMatrix");
     var refreshActivityBtn = document.getElementById("refreshActivityBtn");
     var activityMeta = document.getElementById("activityMeta");
     var activityRows = document.getElementById("activityRows");
@@ -844,6 +941,7 @@
     var activityFetchInFlight = false;
     var activityHasMore = false;
     var currentStaffRole = "";
+    var lastDeveloperHealthReport = null;
     var activityQuery = {
       limit: 50,
       offset: 0,
@@ -874,6 +972,9 @@
       if (role === "admin") {
         return "Admin";
       }
+      if (role === "developer" || role === "dev") {
+        return "Developer";
+      }
       if (role === "moderator") {
         return "Moderator";
       }
@@ -884,9 +985,22 @@
       return String(value || "").trim().toLowerCase() === "admin";
     }
 
+    function isDeveloperRole(value) {
+      var role = String(value || "").trim().toLowerCase();
+      return role === "developer" || role === "dev";
+    }
+
     function isModeratorRole(value) {
       var role = String(value || "").trim().toLowerCase();
-      return role === "admin" || role === "moderator";
+      return role === "admin" || role === "moderator" || role === "developer" || role === "dev";
+    }
+
+    function canManageStaffRoles(value) {
+      return isAdminRole(value) || isDeveloperRole(value);
+    }
+
+    function canDeleteAccounts(value) {
+      return isAdminRole(value) || isDeveloperRole(value);
     }
 
     async function getCurrentStaffRole() {
@@ -906,7 +1020,7 @@
     }
 
     function setActiveAdminTab(tabName) {
-      var activeTab = ["overview", "users", "activity", "tools"].indexOf(tabName) !== -1 ? tabName : "overview";
+      var activeTab = ["overview", "users", "activity", "tools", "developer"].indexOf(tabName) !== -1 ? tabName : "overview";
       adminTabs.forEach(function (button) {
         var isActive = button.getAttribute("data-admin-tab") === activeTab;
         button.classList.toggle("active", isActive);
@@ -916,6 +1030,9 @@
       });
       if (activeTab === "activity") {
         fetchActivity().catch(function () {});
+      }
+      if (activeTab === "developer") {
+        renderRoleMatrix();
       }
     }
 
@@ -1033,7 +1150,7 @@
       bulkCopyEmailsBtn.disabled = !hasSelection;
       bulkBanBtn.disabled = !hasSelection;
       bulkUnbanBtn.disabled = !hasSelection;
-      bulkDeleteBtn.disabled = !hasSelection || !isAdminRole(currentStaffRole);
+      bulkDeleteBtn.disabled = !hasSelection || !canDeleteAccounts(currentStaffRole);
       clearSelectionBtn.disabled = !hasSelection;
     }
 
@@ -1117,6 +1234,163 @@
       }
     }
 
+    function getRoleCapabilities(role) {
+      return {
+        canViewUsers: isModeratorRole(role) || isAdminRole(role) || isDeveloperRole(role),
+        canBan: isModeratorRole(role) || isAdminRole(role) || isDeveloperRole(role),
+        canDelete: canDeleteAccounts(role),
+        canManageStaff: canManageStaffRoles(role),
+        canUseDeveloperTab: isDeveloperRole(role) || isAdminRole(role)
+      };
+    }
+
+    function setDeveloperHealthStatus(message, state) {
+      if (!developerHealthStatus) {
+        return;
+      }
+      developerHealthStatus.textContent = message;
+      developerHealthStatus.classList.remove("ok", "warn", "error");
+      if (state) {
+        developerHealthStatus.classList.add(state);
+      }
+    }
+
+    function renderRoleMatrix() {
+      if (!developerRoleMatrix) {
+        return;
+      }
+      var rows = [
+        { role: "moderator", label: "Moderator" },
+        { role: "developer", label: "Developer" },
+        { role: "admin", label: "Admin" }
+      ];
+      developerRoleMatrix.innerHTML = rows.map(function (entry) {
+        var caps = getRoleCapabilities(entry.role);
+        return '<article class="card">'
+          + '<div class="label">' + escapeHtml(entry.label) + '</div>'
+          + '<div class="hint">View users: ' + (caps.canViewUsers ? 'Yes' : 'No') + '</div>'
+          + '<div class="hint">Ban/unban: ' + (caps.canBan ? 'Yes' : 'No') + '</div>'
+          + '<div class="hint">Delete accounts: ' + (caps.canDelete ? 'Yes' : 'No') + '</div>'
+          + '<div class="hint">Manage staff roles: ' + (caps.canManageStaff ? 'Yes' : 'No') + '</div>'
+          + '<div class="hint">Developer tab: ' + (caps.canUseDeveloperTab ? 'Yes' : 'No') + '</div>'
+          + '</article>';
+      }).join("");
+    }
+
+    function renderDeveloperHealthItems(items) {
+      if (!developerHealthList) {
+        return;
+      }
+      if (!items || !items.length) {
+        developerHealthList.innerHTML = "";
+        return;
+      }
+      developerHealthList.innerHTML = items.map(function (item) {
+        var badgeClass = item.ok ? "badge" : "badge banned";
+        var badgeText = item.ok ? "PASS" : "FAIL";
+        return '<li class="dev-health-item">'
+          + '<div>'
+            + '<div><strong>' + escapeHtml(item.name || "Check") + '</strong></div>'
+            + '<p class="meta">' + escapeHtml(item.detail || "") + '</p>'
+          + '</div>'
+          + '<span class="' + badgeClass + '">' + badgeText + '</span>'
+          + '</li>';
+      }).join("");
+    }
+
+    async function runDeveloperHealthChecks(mode) {
+      if (!supabaseClient) {
+        throw new Error("Supabase client is not ready.");
+      }
+
+      var checks = [];
+      var isSmoke = mode === "smoke";
+
+      setDeveloperHealthStatus(isSmoke ? "Running RPC smoke test..." : "Running full health checks...", "warn");
+
+      async function runCheck(name, fn) {
+        var start = Date.now();
+        try {
+          var result = await fn();
+          checks.push({
+            name: name,
+            ok: true,
+            detail: "OK in " + (Date.now() - start) + "ms" + (result ? " · " + result : "")
+          });
+        } catch (error) {
+          checks.push({
+            name: name,
+            ok: false,
+            detail: error && error.message ? error.message : String(error || "Unknown error")
+          });
+        }
+      }
+
+      await runCheck("Auth Session", async function () {
+        var auth = await supabaseClient.auth.getUser();
+        var email = auth && auth.data && auth.data.user && auth.data.user.email ? auth.data.user.email : "(no email)";
+        return email;
+      });
+
+      await runCheck("RPC: current_user_staff_role", async function () {
+        var result = await supabaseClient.rpc("current_user_staff_role");
+        if (result.error) {
+          throw result.error;
+        }
+        return "role=" + String(result.data || "");
+      });
+
+      await runCheck("RPC: admin_list_users", async function () {
+        var result = await supabaseClient.rpc("admin_list_users");
+        if (result.error) {
+          throw result.error;
+        }
+        var count = Array.isArray(result.data) ? result.data.length : 0;
+        return "users=" + count;
+      });
+
+      await runCheck("RPC: admin_list_activity_filtered", async function () {
+        var result = await supabaseClient.rpc("admin_list_activity_filtered", {
+          limit_count: 1,
+          offset_count: 0,
+          action_filter: null,
+          actor_email_filter: null,
+          target_email_filter: null,
+          from_ts: null,
+          to_ts: null
+        });
+        if (result.error) {
+          throw result.error;
+        }
+        var count = Array.isArray(result.data) ? result.data.length : 0;
+        return "rows=" + count;
+      });
+
+      if (!isSmoke) {
+        await runCheck("Config: Supabase project ref", async function () {
+          var ref = getSupabaseProjectRef();
+          if (!ref) {
+            throw new Error("Project ref missing from configured Supabase URL.");
+          }
+          return ref;
+        });
+      }
+
+      var failed = checks.filter(function (item) { return !item.ok; }).length;
+      var passed = checks.length - failed;
+      var summary = passed + " passed, " + failed + " failed";
+      setDeveloperHealthStatus((isSmoke ? "RPC smoke test complete: " : "Health check complete: ") + summary + ".", failed ? "error" : "ok");
+      renderDeveloperHealthItems(checks);
+
+      lastDeveloperHealthReport = {
+        generatedAt: new Date().toISOString(),
+        mode: isSmoke ? "smoke" : "full",
+        summary: summary,
+        checks: checks,
+        role: currentStaffRole || ""
+      };
+    }
+
     function toIsoFromDatetimeLocal(value) {
       var trimmed = String(value || "").trim();
       if (!trimmed) {
@@ -1189,7 +1463,7 @@
         var roleBadge = '<span class="badge">' + escapeHtml(formatStaffRoleLabel(row.staff_role)) + '</span>';
         var userId = String(row.user_id || "");
         var isSelected = !!selectedUserIds[userId];
-        var deleteButton = isAdminRole(currentStaffRole)
+        var deleteButton = canDeleteAccounts(currentStaffRole)
           ? '<button type="button" class="btn danger" data-action="delete">Delete</button>'
           : '';
 
@@ -1373,7 +1647,11 @@
       }
 
       var desiredRole = String(staffRoleSelect && staffRoleSelect.value ? staffRoleSelect.value : "none").toLowerCase();
-      var confirmLabel = desiredRole === "admin" ? "admin" : (desiredRole === "moderator" ? "moderator" : "clear roles from");
+      var confirmLabel = desiredRole === "admin"
+        ? "admin"
+        : (desiredRole === "moderator"
+          ? "moderator"
+          : (desiredRole === "developer" ? "developer" : "clear roles from"));
       if (!window.confirm("Apply " + confirmLabel + " to " + selected.length + " selected user(s)?")) {
         return;
       }
@@ -1381,14 +1659,21 @@
       for (var i = 0; i < selected.length; i++) {
         var userId = selected[i].user_id;
         if (desiredRole === "none") {
+          await setUserStaffRole(userId, "developer", false);
           await setUserStaffRole(userId, "admin", false);
           await setUserStaffRole(userId, "moderator", false);
         } else if (desiredRole === "admin") {
+          await setUserStaffRole(userId, "developer", false);
           await setUserStaffRole(userId, "moderator", false);
           await setUserStaffRole(userId, "admin", true);
         } else if (desiredRole === "moderator") {
+          await setUserStaffRole(userId, "developer", false);
           await setUserStaffRole(userId, "admin", false);
           await setUserStaffRole(userId, "moderator", true);
+        } else if (desiredRole === "developer") {
+          await setUserStaffRole(userId, "moderator", false);
+          await setUserStaffRole(userId, "admin", false);
+          await setUserStaffRole(userId, "developer", true);
         }
       }
     }
@@ -1422,6 +1707,7 @@
       }
 
       if (desiredRole === "none") {
+        await setUserStaffRole(userId, "developer", false);
         await setUserStaffRole(userId, "admin", false);
         await setUserStaffRole(userId, "moderator", false);
         setSessionStatus("Removed staff roles for " + String(match.email || emailValue) + ".");
@@ -1429,6 +1715,7 @@
       }
 
       if (desiredRole === "admin") {
+        await setUserStaffRole(userId, "developer", false);
         await setUserStaffRole(userId, "moderator", false);
         await setUserStaffRole(userId, "admin", true);
         setSessionStatus("Set admin role for " + String(match.email || emailValue) + ".");
@@ -1436,13 +1723,72 @@
       }
 
       if (desiredRole === "moderator") {
+        await setUserStaffRole(userId, "developer", false);
         await setUserStaffRole(userId, "admin", false);
         await setUserStaffRole(userId, "moderator", true);
         setSessionStatus("Set moderator role for " + String(match.email || emailValue) + ".");
         return;
       }
 
+      if (desiredRole === "developer") {
+        await setUserStaffRole(userId, "admin", false);
+        await setUserStaffRole(userId, "moderator", false);
+        await setUserStaffRole(userId, "developer", true);
+        setSessionStatus("Set developer role for " + String(match.email || emailValue) + ".");
+        return;
+      }
+
       throw new Error("Invalid staff role.");
+    }
+
+    function setUserFilters(nextStatus, nextSort, nextSearch) {
+      if (typeof nextStatus === "string") {
+        statusFilter.value = nextStatus;
+      }
+      if (typeof nextSort === "string") {
+        sortSelect.value = nextSort;
+      }
+      if (typeof nextSearch === "string") {
+        searchInput.value = nextSearch;
+      }
+      setActiveAdminTab("users");
+      renderRows();
+    }
+
+    function getSupabaseProjectRef() {
+      var cfg = getSupabaseConfig();
+      if (!cfg.url) {
+        return "";
+      }
+      var match = String(cfg.url).match(/^https:\/\/([a-z0-9-]+)\.supabase\.co/i);
+      return match && match[1] ? match[1] : "";
+    }
+
+    function openSupabasePath(pathSuffix) {
+      var ref = getSupabaseProjectRef();
+      if (!ref) {
+        throw new Error("Supabase project ref not found in current config.");
+      }
+      var path = String(pathSuffix || "").replace(/^\/+/, "");
+      var url = "https://supabase.com/dashboard/project/" + encodeURIComponent(ref) + "/" + path;
+      window.open(url, "_blank", "noopener");
+    }
+
+    function buildDiagnosticsSnapshot() {
+      return {
+        generatedAt: new Date().toISOString(),
+        staffRole: currentStaffRole || "",
+        loadedAt: lastLoadedAt || "",
+        totalUsers: allUsers.length,
+        selectedUserIds: Object.keys(selectedUserIds).filter(function (id) { return !!selectedUserIds[id]; }),
+        filters: {
+          search: searchInput.value || "",
+          status: statusFilter.value || "all",
+          sort: sortSelect.value || "recent"
+        },
+        activityQuery: activityQuery,
+        sampleUserEmails: allUsers.slice(0, 25).map(function (row) { return row.email || ""; })
+      };
     }
 
     rowsEl.addEventListener("click", async function (event) {
@@ -1478,8 +1824,8 @@
           setStatus("User unbanned: " + email, "ok");
           setSessionStatus("Unban action recorded.");
         } else if (action === "delete") {
-          if (!isAdminRole(currentStaffRole)) {
-            throw new Error("Only admins can delete accounts.");
+          if (!canDeleteAccounts(currentStaffRole)) {
+            throw new Error("Only admins or developers can delete accounts.");
           }
           await deleteUser(userId, email);
           setStatus("User deleted: " + email, "ok");
@@ -1756,7 +2102,112 @@
 
     wireQuickRoleButton(makeModeratorBtn, "moderator", "Moderator role updated.");
     wireQuickRoleButton(makeAdminBtn, "admin", "Admin role updated.");
+    wireQuickRoleButton(makeDeveloperBtn, "developer", "Developer role updated.");
     wireQuickRoleButton(removeStaffBtn, "none", "Staff roles removed.");
+
+    if (modViewActiveBtn) {
+      modViewActiveBtn.addEventListener("click", function () {
+        setUserFilters("active", "recent", "");
+        setSessionStatus("Moderator queue set to active users.");
+      });
+    }
+
+    if (modViewBannedBtn) {
+      modViewBannedBtn.addEventListener("click", function () {
+        setUserFilters("banned", "recent", "");
+        setSessionStatus("Moderator queue set to banned users.");
+      });
+    }
+
+    if (modRecentSigninsBtn) {
+      modRecentSigninsBtn.addEventListener("click", function () {
+        setUserFilters("all", "recent", "");
+        setSessionStatus("Showing most recent sign-ins.");
+      });
+    }
+
+    if (modResetFiltersBtn) {
+      modResetFiltersBtn.addEventListener("click", function () {
+        setUserFilters("all", "recent", "");
+        setSessionStatus("User filters reset.");
+      });
+    }
+
+    if (exportDiagnosticsBtn) {
+      exportDiagnosticsBtn.addEventListener("click", function () {
+        var payload = buildDiagnosticsSnapshot();
+        downloadText("admin-diagnostics-" + new Date().toISOString().slice(0, 10) + ".json", JSON.stringify(payload, null, 2));
+        setSessionStatus("Exported diagnostics snapshot.");
+      });
+    }
+
+    if (copySelectedIdsBtn) {
+      copySelectedIdsBtn.addEventListener("click", async function () {
+        try {
+          var selectedIds = Object.keys(selectedUserIds).filter(function (id) { return !!selectedUserIds[id]; });
+          if (!selectedIds.length) {
+            throw new Error("Select at least one user first.");
+          }
+          await copyText(selectedIds.join("\n"));
+          setStatus("Copied " + selectedIds.length + " selected user ID(s).", "ok");
+          setSessionStatus("Copied selected user IDs.");
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Could not copy selected user IDs.", "error");
+        }
+      });
+    }
+
+    if (openSupabaseDashboardBtn) {
+      openSupabaseDashboardBtn.addEventListener("click", function () {
+        try {
+          openSupabasePath("database/tables");
+          setSessionStatus("Opened Supabase dashboard.");
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Could not open Supabase dashboard.", "error");
+        }
+      });
+    }
+
+    if (openSupabaseLogsBtn) {
+      openSupabaseLogsBtn.addEventListener("click", function () {
+        try {
+          openSupabasePath("logs/explorer");
+          setSessionStatus("Opened Supabase logs.");
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Could not open Supabase logs.", "error");
+        }
+      });
+    }
+
+    if (runDeveloperHealthBtn) {
+      runDeveloperHealthBtn.addEventListener("click", function () {
+        runDeveloperHealthChecks("full").catch(function (error) {
+          setDeveloperHealthStatus(error && error.message ? error.message : "Full health check failed.", "error");
+        });
+      });
+    }
+
+    if (runRpcSmokeBtn) {
+      runRpcSmokeBtn.addEventListener("click", function () {
+        runDeveloperHealthChecks("smoke").catch(function (error) {
+          setDeveloperHealthStatus(error && error.message ? error.message : "RPC smoke test failed.", "error");
+        });
+      });
+    }
+
+    if (copyHealthReportBtn) {
+      copyHealthReportBtn.addEventListener("click", async function () {
+        try {
+          if (!lastDeveloperHealthReport) {
+            throw new Error("Run a health check first.");
+          }
+          await copyText(JSON.stringify(lastDeveloperHealthReport, null, 2));
+          setDeveloperHealthStatus("Copied health report JSON.", "ok");
+        } catch (error) {
+          setDeveloperHealthStatus(error && error.message ? error.message : "Could not copy health report.", "error");
+        }
+      });
+    }
 
     auditNote.addEventListener("input", function () {
       setSessionStatus(getCurrentAuditNote() ? "Audit note updated." : "No action selected yet.");
@@ -1793,16 +2244,29 @@
 
         currentStaffRole = role;
 
-        if (!isAdminRole(role) && !isModeratorRole(role)) {
-          setStatus("This account is not on the admin or moderator list.", "error");
+        if (!isAdminRole(role) && !isModeratorRole(role) && !isDeveloperRole(role)) {
+          setStatus("This account is not on the admin, moderator, or developer list.", "error");
           return;
         }
 
-        if (staffRoleBox && !isAdminRole(role)) {
+        if (staffRoleBox && !canManageStaffRoles(role)) {
           staffRoleBox.hidden = true;
         }
 
+        if (developerToolBox && !isDeveloperRole(role) && !isAdminRole(role)) {
+          developerToolBox.hidden = true;
+        }
+
+        if (developerTabBtn && !isDeveloperRole(role) && !isAdminRole(role)) {
+          developerTabBtn.hidden = true;
+        }
+
+        if (developerTabPanel && !isDeveloperRole(role) && !isAdminRole(role)) {
+          developerTabPanel.hidden = true;
+        }
+
         setSessionStatus("Signed in as " + email + (role ? " (" + role + ")" : "") + ".");
+        renderRoleMatrix();
         await fetchUsers();
         await fetchActivity({ resetOffset: true });
       } catch (error) {

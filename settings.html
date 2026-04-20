@@ -492,6 +492,9 @@
             border: 1px solid var(--line);
             border-radius: 12px;
             padding: 10px 12px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .message-actions {
@@ -1150,6 +1153,9 @@
             border-radius: 16px;
             padding: 10px 12px;
             box-shadow: 0 8px 18px rgba(25, 66, 127, 0.06);
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .chat-message.self .chat-message-bubble {
@@ -1166,6 +1172,8 @@
             color: var(--ink);
             font-size: 0.78rem;
             font-weight: 900;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .chat-message-text {
@@ -2275,6 +2283,7 @@
             <div class="top-actions">
                 <a class="btn alt" href="index.html">Back to Home</a>
                 <a class="btn alt" href="account.html">Open Account</a>
+                <a class="btn alt" href="admin.html">Admin Panel</a>
             </div>
         </section>
 

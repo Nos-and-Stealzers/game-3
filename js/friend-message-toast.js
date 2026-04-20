@@ -60,9 +60,9 @@
     stylesInjected = true;
     var style = document.createElement("style");
     style.textContent = "" +
-      ".gh-toast-stack{position:fixed;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));display:grid;gap:8px;z-index:99999;width:min(360px,calc(100vw - max(20px,env(safe-area-inset-left) + env(safe-area-inset-right) + 20px)));pointer-events:none}" +
+      ".gh-toast-stack{position:fixed;left:14px;bottom:14px;display:grid;gap:8px;z-index:99999;width:min(360px,calc(100vw - 28px));max-width:calc(100vw - 28px);pointer-events:none}" +
       ".gh-toast{pointer-events:auto;border:1px solid rgba(121,133,169,.55);border-left:3px solid #5865f2;border-radius:12px;background:rgba(22,26,34,.95);box-shadow:0 12px 24px rgba(0,0,0,.35);padding:9px 11px;display:grid;gap:4px;text-align:left;cursor:pointer;color:#f2f5ff}" +
-      ".gh-toast h4,.gh-toast p{margin:0}" +
+      ".gh-toast h4,.gh-toast p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}" +
       ".gh-toast h4{font-size:.82rem;font-weight:900;line-height:1.3}" +
       ".gh-toast p{font-size:.78rem;line-height:1.35;color:#d7def0}";
     document.head.appendChild(style);
