@@ -29,7 +29,7 @@ Then open:
 - `games/sweet-bakery/`: Local idle clicker game files.
 - `games/fnaf/`: Local FNAF pack imported from `hd_fnaf` (`1`, `2`, `3`, `4`, `w`, `sl`, `ps`, `ucn`).
 - `games/minecraft/eaglercraft/`: Local Minecraft web client (Eaglercraft) imported from `LucasGrimm389/thing`.
-- `retro-bowl-plus` entry in `games.json`: External game sourced from `LucasGrimm389/help2` via homepage URL.
+- `retro-bowl-plus` entry in `games.json`: Local Retro Bowl build at `games/retro-bowl/index.html`, imported from `Nos-and-Stealzers/Retro-Bowl`.
 - `games.json`: Central game catalog used by both `index.html` and `play.html`.
 - `js/supabase.config.js`: Supabase public config (URL + anon key) loaded by `index.html`.
 - `js/cloud-autosync.js`: Shared periodic cloud sync worker used during active play sessions.

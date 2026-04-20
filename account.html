@@ -519,10 +519,15 @@
     var cloudPullInFlight = false;
     var autoCloudLoadedUserId = "";
     var AUTO_SYNC_INTERVAL_MS = 60000;
+    var OTP_CODE_TTL_MS = 200 * 1000;
     var authActionInFlight = false;
 
     var pendingCodeFlow = "";
     var pendingCodeEmail = "";
+    var pendingCodeSessionId = 0;
+    var pendingCodeExpiresAt = 0;
+    var pendingCodeExpired = false;
+    var pendingCodeExpiryTimer = null;
 
     function isAdminEmail(email) {
       if (typeof email !== "string") {
@@ -675,15 +680,60 @@
     function showVerifyPanel(show) {
       verifyPanel.classList.toggle("hidden", !show);
       if (show) {
+        verifyHint.textContent = pendingCodeEmail
+          ? ("Code sent to " + pendingCodeEmail + ". Expires in 200 seconds. Requesting a new code invalidates the previous one.")
+          : "Enter the code sent to your email.";
         setTimeout(function () {
           verifyCodeInput.focus();
         }, 0);
       }
     }
 
+    function clearPendingCodeExpiryTimer() {
+      if (pendingCodeExpiryTimer) {
+        clearTimeout(pendingCodeExpiryTimer);
+        pendingCodeExpiryTimer = null;
+      }
+    }
+
+    function markPendingCodeIssued() {
+      pendingCodeSessionId += 1;
+      pendingCodeExpiresAt = Date.now() + OTP_CODE_TTL_MS;
+      pendingCodeExpired = false;
+      verifyCodeInput.value = "";
+      verifyCodeInput.type = "password";
+      verifyToggleBtn.textContent = "Show Code";
+      clearPendingCodeExpiryTimer();
+
+      var sessionId = pendingCodeSessionId;
+      pendingCodeExpiryTimer = setTimeout(function () {
+        if (sessionId !== pendingCodeSessionId) {
+          return;
+        }
+        pendingCodeExpired = true;
+        verifyHint.textContent = "Code expired after 200 seconds. Request a new code.";
+        setStatus("Verification code expired. Request a new code.", "warn");
+      }, OTP_CODE_TTL_MS + 20);
+    }
+
+    function ensurePendingCodeIsFresh() {
+      if (!pendingCodeExpiresAt) {
+        return;
+      }
+      if (pendingCodeExpired || Date.now() > pendingCodeExpiresAt) {
+        pendingCodeExpired = true;
+        verifyHint.textContent = "Code expired after 200 seconds. Request a new code.";
+        throw new Error("Code expired after 200 seconds. Request a new code.");
+      }
+    }
+
     function clearPendingVerification() {
       pendingCodeFlow = "";
       pendingCodeEmail = "";
+      pendingCodeSessionId = 0;
+      pendingCodeExpiresAt = 0;
+      pendingCodeExpired = false;
+      clearPendingCodeExpiryTimer();
       verifyCodeInput.value = "";
       verifyCodeInput.type = "password";
       verifyToggleBtn.textContent = "Show Code";
@@ -836,7 +886,8 @@
 
       pendingCodeFlow = flow;
       pendingCodeEmail = email;
-      verifyHint.textContent = "Code sent to " + email + ". Enter it to complete sign in.";
+      markPendingCodeIssued();
+      verifyHint.textContent = "Code sent to " + email + ". Expires in 200 seconds. Requesting a new code invalidates the previous one.";
       showVerifyPanel(true);
       setStatus("Verification code sent.", "ok");
     }
@@ -848,6 +899,7 @@
       if (!pendingCodeEmail || !pendingCodeFlow) {
         throw new Error("Send a code first.");
       }
+      ensurePendingCodeIsFresh();
 
       var code = normalizeCode(verifyCodeInput.value);
       if (!code) {
@@ -902,6 +954,9 @@
       if (result.error) {
         throw result.error;
       }
+
+      markPendingCodeIssued();
+      verifyHint.textContent = "New code sent to " + pendingCodeEmail + ". Expires in 200 seconds. Previous code is now invalid.";
 
       setStatus("New code sent to " + pendingCodeEmail + ".", "ok");
     }

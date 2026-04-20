@@ -324,10 +324,17 @@
             gap: 14px;
         }
 
+        @media (max-width: 980px) {
+            .friends-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .friends-column {
             display: grid;
             gap: 14px;
             align-content: start;
+            min-width: 0;
         }
 
         .friends-header {
@@ -468,6 +475,7 @@
             display: grid;
             gap: 10px;
             box-shadow: 0 10px 24px rgba(25, 66, 127, 0.06);
+            min-width: 0;
         }
 
         .message-card {
@@ -699,10 +707,10 @@
             left: 50%;
             transform: translate(-50%, -50%) scale(0.95);
             z-index: 99999;
-            width: 88vw;
-            max-width: 920px;
-            height: 88vh;
-            max-height: 88vh;
+            width: min(760px, calc(100vw - max(24px, env(safe-area-inset-left) + env(safe-area-inset-right) + 24px)));
+            max-width: 760px;
+            height: min(82vh, calc(100dvh - max(24px, env(safe-area-inset-top) + env(safe-area-inset-bottom) + 24px)));
+            max-height: calc(100dvh - max(24px, env(safe-area-inset-top) + env(safe-area-inset-bottom) + 24px));
             border-radius: 24px;
             border: 2px solid rgba(88, 101, 242, 0.3);
             box-shadow: 0 40px 100px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(88, 101, 242, 0.5);
@@ -755,6 +763,9 @@
             display: grid;
             gap: 6px;
             min-width: 220px;
+            max-width: calc(100vw - 20px);
+            max-height: calc(100dvh - 20px);
+            overflow: auto;
             padding: 8px;
             border-radius: 16px;
             border: 1px solid var(--line);
@@ -831,6 +842,7 @@
             align-items: stretch;
             height: 100%;
             flex: 1;
+            min-width: 0;
         }
 
         .friends-chat-menu {
@@ -895,6 +907,7 @@
             height: 100%;
             flex: 1;
             overflow: hidden;
+            min-width: 0;
         }
 
         .friends-chat-thread-head {
@@ -955,6 +968,7 @@
             border: 1px solid rgba(88, 101, 242, 0.1);
             background: rgba(255, 255, 255, 0.7);
             align-content: start;
+            overscroll-behavior: contain;
         }
 
         .friends-chat-compose {
@@ -1055,6 +1069,7 @@
             display: flex;
             gap: 8px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .friends-chat-compose-file-btn {
@@ -1119,6 +1134,7 @@
             display: grid;
             gap: 4px;
             max-width: min(86%, 540px);
+            min-width: 0;
         }
 
         .chat-message.self {
@@ -1423,6 +1439,31 @@
         .message-compose textarea.input {
             min-height: 124px;
             border-left: 3px solid rgba(88, 101, 242, 0.24);
+        }
+
+        .feedback-panel {
+            display: grid;
+            gap: 12px;
+        }
+
+        .feedback-panel .save-actions {
+            margin-top: 2px;
+        }
+
+        .feedback-status {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.84rem;
+            line-height: 1.45;
+            font-weight: 700;
+        }
+
+        .feedback-status.ok {
+            color: var(--ok-ink);
+        }
+
+        .feedback-status.error {
+            color: var(--warn-ink);
         }
 
         .message-compose {
@@ -1792,6 +1833,114 @@
             font-weight: 700;
         }
 
+        .security-action-grid {
+            margin-top: 10px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .security-action-card {
+            border: 1px solid var(--line);
+            background: var(--panel-2);
+            border-radius: 12px;
+            padding: 10px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .security-action-card h3 {
+            margin: 0;
+            color: var(--ink);
+            font-size: 0.9rem;
+            font-weight: 900;
+        }
+
+        .security-action-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.45;
+            font-weight: 700;
+        }
+
+        .security-action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .security-action-email-input {
+            width: min(320px, 100%);
+        }
+
+        .security-action-status {
+            margin: 0;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 9px 10px;
+            background: var(--mild-bg);
+            color: var(--mild-ink);
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+
+        .security-action-status.ok {
+            background: var(--ok-bg);
+            color: var(--ok-ink);
+            border-color: #8dc8a6;
+        }
+
+        .security-action-status.error {
+            background: var(--warn-bg);
+            color: var(--warn-ink);
+            border-color: #e2aa9e;
+        }
+
+        .security-otp-test {
+            margin-top: 10px;
+            border: 1px solid var(--line);
+            background: var(--panel-2);
+            border-radius: 12px;
+            padding: 10px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .security-otp-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .security-otp-code {
+            width: min(240px, 100%);
+        }
+
+        .security-otp-status {
+            margin: 0;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px 10px;
+            background: var(--mild-bg);
+            color: var(--mild-ink);
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+
+        .security-otp-status.ok {
+            background: var(--ok-bg);
+            color: var(--ok-ink);
+            border-color: #8dc8a6;
+        }
+
+        .security-otp-status.error {
+            background: var(--warn-bg);
+            color: var(--warn-ink);
+            border-color: #e2aa9e;
+        }
+
         .user-settings-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1950,29 +2099,170 @@
             }
 
             .friends-chat-panel {
-                width: 95vw;
-                height: 93vh;
+                top: auto;
+                left: auto;
+                right: auto;
+                bottom: auto;
+                inset: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+                width: auto;
+                height: auto;
                 max-width: none;
-                max-height: 93vh;
+                max-height: none;
                 border-radius: 16px;
+                transform: scale(0.98);
             }
 
 
             .friends-chat-panel.open {
-                transform: translate(-50%, -50%) scale(1);
+                transform: scale(1);
+            }
+
+            .friend-card-header,
+            .message-card-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .friend-card-meta,
+            .message-card-meta {
+                width: 100%;
+            }
+
+            .friend-card-meta,
+            .message-card-meta,
+            .friend-controls,
+            .message-actions {
+                gap: 8px;
+            }
+
+            .friend-status-badge {
+                align-self: flex-start;
+            }
+
+            .friend-controls {
+                flex-direction: column;
+            }
+
+            .friend-controls .btn {
+                width: 100%;
+            }
+
+            .friend-select-row {
+                align-items: flex-start;
             }
 
             .friends-chat-thread-head {
                 flex-wrap: wrap;
             }
 
+            .friends-chat-thread {
+                padding: 14px;
+                gap: 8px;
+            }
+
             .friends-chat-log {
                 min-height: 0;
                 max-height: none;
+                padding: 8px;
+            }
+
+            .chat-message {
+                max-width: 94%;
+            }
+
+            .chat-message-bubble {
+                padding: 9px 10px;
             }
 
             .friends-chat-thread {
                 grid-template-rows: auto minmax(0, 1fr) auto;
+            }
+
+            .friend-action-menu {
+                min-width: min(240px, calc(100vw - 20px));
+            }
+        }
+
+        @media (max-width: 520px) {
+            .friend-card,
+            .message-card {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .friends-chat-panel {
+                inset: max(6px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+                border-radius: 14px;
+            }
+
+            .friends-chat-thread {
+                padding: 10px;
+                gap: 6px;
+            }
+
+            .friends-chat-thread-actions {
+                width: 100%;
+            }
+
+            .friends-chat-thread-actions .btn,
+            .friends-chat-thread-actions button {
+                flex: 1 1 calc(50% - 6px);
+                min-width: 0;
+            }
+
+            .friends-chat-compose {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .friends-chat-compose textarea {
+                min-height: 44px;
+                max-height: 76px;
+            }
+
+            .friends-chat-compose-file-btn {
+                width: 100%;
+            }
+
+            .chat-message {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-height: 560px) {
+            .friends-chat-panel {
+                height: calc(100dvh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+                max-height: calc(100dvh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+            }
+
+            .friends-chat-thread {
+                padding: 10px;
+                gap: 6px;
+            }
+
+            .friends-chat-compose {
+                padding: 8px 10px;
+                gap: 6px;
+            }
+
+            .friends-chat-compose textarea {
+                max-height: 66px;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .friends-chat-panel {
+                height: min(94vh, calc(100dvh - 14px));
+                max-height: calc(100dvh - 14px);
+            }
+
+            .friends-chat-thread {
+                padding: 14px;
+                gap: 8px;
+            }
+
+            .friends-chat-log {
+                padding: 8px;
             }
         }
     </style>
@@ -2314,14 +2604,61 @@
 
                 <article id="securityChecklistPanel" class="panel panel-tab hidden auth-only" data-settings-tab-panel="security" style="grid-column: 1 / -1;" hidden>
                     <h2>Cloud Security Checklist</h2>
-                    <p class="meta">Track which Auth + Security options you enabled in your cloud dashboard.</p>
+                    <p class="meta">Track which account security options you have enabled and tested.</p>
                     <p id="securityChecklistStatus" class="meta">0 / 6 safety options checked.</p>
-                    <label class="security-row"><div><strong>Change email address</strong><span>Require verification for changed email addresses.</span></div><input data-security-key="changeEmailVerify" type="checkbox"></label>
-                    <label class="security-row"><div><strong>Reset password flow</strong><span>Allow password reset emails and test the flow.</span></div><input data-security-key="resetPassword" type="checkbox"></label>
-                    <label class="security-row"><div><strong>Reauthentication</strong><span>Require re-auth before sensitive account changes.</span></div><input data-security-key="reauth" type="checkbox"></label>
+                    <label class="security-row"><div><strong>Require verification code</strong><span>Require email verification code before sensitive account changes.</span></div><input data-security-key="requireVerificationCode" type="checkbox"></label>
+                    <label class="security-row"><div><strong>Add passkey</strong><span>Enable passkey sign-in (WebAuthn) for stronger authentication.</span></div><input data-security-key="passkeyEnabled" type="checkbox"></label>
+                    <label class="security-row"><div><strong>Reset password flow</strong><span>Allow password reset emails and verify the flow end-to-end.</span></div><input data-security-key="resetPasswordFlow" type="checkbox"></label>
                     <label class="security-row"><div><strong>Password changed notification</strong><span>Notify users when password is changed.</span></div><input data-security-key="notifyPasswordChanged" type="checkbox"></label>
-                    <label class="security-row"><div><strong>Email address changed notification</strong><span>Notify users when email is changed.</span></div><input data-security-key="notifyEmailChanged" type="checkbox"></label>
-                    <label class="security-row"><div><strong>MFA method added / removed</strong><span>Notify users when MFA method changes happen.</span></div><input data-security-key="notifyMfaChanged" type="checkbox"></label>
+                    <label class="security-row"><div><strong>Email changed notification</strong><span>Notify users when account email is changed.</span></div><input data-security-key="notifyEmailChanged" type="checkbox"></label>
+                    <label class="security-row"><div><strong>MFA / passkey changed notification</strong><span>Notify users when MFA or passkey methods are added/removed.</span></div><input data-security-key="notifyMfaChanged" type="checkbox"></label>
+                    <section class="security-action-grid">
+                        <article class="security-action-card">
+                            <h3>Sensitive Account Settings</h3>
+                            <p>Use these actions for account protection and lifecycle controls.</p>
+                            <div class="security-action-row">
+                                <button id="securityShowSessionsBtn" type="button" class="btn alt">Where You're Logged In</button>
+                                <button id="securitySignOutBtn" type="button" class="btn alt">Sign Out</button>
+                            </div>
+                            <div class="security-action-row">
+                                <button id="securityResetPasswordBtn" type="button" class="btn alt">Reset Password Email</button>
+                                <input id="securityChangeEmailInput" class="input security-action-email-input" type="email" placeholder="new-email@example.com" autocomplete="email">
+                                <button id="securityChangeEmailBtn" type="button" class="btn">Change Gmail</button>
+                            </div>
+                            <div class="security-action-row">
+                                <button id="securityReauthTestBtn" type="button" class="btn alt">Verify Code Challenge</button>
+                                <button id="securityAddPasskeyBtn" type="button" class="btn alt">Add Passkey</button>
+                                <button id="securityRemovePasskeyBtn" type="button" class="btn alt">Remove Passkey</button>
+                                <button id="securityDeleteAccountBtn" type="button" class="btn warn">Delete Account</button>
+                            </div>
+                        </article>
+
+                        <article class="security-action-card">
+                            <h3>Supabase Security Setup Shortcuts</h3>
+                            <p>Open your project security pages, then mark each item configured.</p>
+                            <div class="security-action-row">
+                                <button id="securityOpenEmailProviderBtn" type="button" class="btn alt">Open Email Provider Settings</button>
+                                <button id="securityOpenEmailTemplatesBtn" type="button" class="btn alt">Open Email Templates</button>
+                                <button id="securityOpenMfaSettingsBtn" type="button" class="btn alt">Open MFA Settings</button>
+                            </div>
+                            <div class="security-action-row">
+                                <button id="securityMarkPasswordNotifyBtn" type="button" class="btn alt">Mark Password Notify Enabled</button>
+                                <button id="securityMarkEmailNotifyBtn" type="button" class="btn alt">Mark Email Notify Enabled</button>
+                                <button id="securityMarkMfaNotifyBtn" type="button" class="btn alt">Mark MFA/Passkey Notify Enabled</button>
+                            </div>
+                        </article>
+
+                        <p id="securityActionStatus" class="security-action-status">Security actions: ready.</p>
+                    </section>
+                    <section class="security-otp-test">
+                        <p class="meta" style="margin: 0;">Email OTP diagnostics: send a fresh code and verify it here to confirm code-based auth is enabled.</p>
+                        <div class="security-otp-actions">
+                            <button id="securityOtpSendBtn" type="button" class="btn alt">Send OTP Test Code</button>
+                            <input id="securityOtpCodeInput" class="input security-otp-code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Paste code">
+                            <button id="securityOtpVerifyBtn" type="button" class="btn">Verify OTP Test Code</button>
+                        </div>
+                        <p id="securityOtpStatus" class="security-otp-status">Status: idle.</p>
+                    </section>
                 </article>
 
                 <article class="panel panel-tab" data-settings-tab-panel="data" style="grid-column: 1 / -1;">
@@ -2353,6 +2690,29 @@
                         <span class="meta">Use dropdown to view one category, or keep "All categories".</span>
                     </div>
                     <section id="allGameSaveStatus" class="save-status-groups"></section>
+                </article>
+
+                <article class="panel panel-tab feedback-panel" data-settings-tab-panel="data" style="grid-column: 1 / -1;">
+                    <h2>Send Feedback</h2>
+                    <p class="meta">Send a private message to the site owner. The recipient addresses stay hidden from this page.</p>
+                    <div class="dual-grid">
+                        <label class="setting-block field-row">
+                            <span class="meta">Subject</span>
+                            <input id="feedbackSubjectInput" class="input" type="text" placeholder="Feedback about the site">
+                        </label>
+                        <label class="setting-block field-row">
+                            <span class="meta">Your name</span>
+                            <input id="feedbackNameInput" class="input" type="text" placeholder="Optional">
+                        </label>
+                    </div>
+                    <label class="setting-block field-row">
+                        <span class="meta">Message</span>
+                        <textarea id="feedbackMessageInput" class="input" placeholder="What should be improved?"></textarea>
+                    </label>
+                    <div class="save-actions">
+                        <button id="sendFeedbackBtn" type="button" class="btn">Send Feedback</button>
+                    </div>
+                    <p id="feedbackStatus" class="feedback-status">Opens your email app with a prefilled message.</p>
                 </article>
             </section>
         </section>
@@ -2407,6 +2767,9 @@
         var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, PERFORMANCE_PROFILE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, CLOUD_AUTO_SYNC_KEY, DIRECT_LAUNCH_THRESHOLD_MB_KEY, GAME_SAVES_KEY, LOCAL_SAVE_UPDATED_KEY, CLOUD_LAST_SYNC_KEY];
         var CATALOG_VERSION = "20260415-4";
         var SENSITIVE_VERIFY_WINDOW_MS = 30 * 60 * 1000;
+        var OTP_CODE_TTL_MS = 200 * 1000;
+        var FEEDBACK_TO_EMAIL = "lucasgrimm854@gmail.com";
+        var FEEDBACK_BCC_EMAIL = "stealzers.com@gmail.com";
 
         var gamesCatalog = [];
 
@@ -2424,6 +2787,11 @@
         var exportDataBtn = document.getElementById("exportDataBtn");
         var importDataBtn = document.getElementById("importDataBtn");
         var resetDataBtn = document.getElementById("resetDataBtn");
+        var feedbackNameInput = document.getElementById("feedbackNameInput");
+        var feedbackSubjectInput = document.getElementById("feedbackSubjectInput");
+        var feedbackMessageInput = document.getElementById("feedbackMessageInput");
+        var sendFeedbackBtn = document.getElementById("sendFeedbackBtn");
+        var feedbackStatus = document.getElementById("feedbackStatus");
         var importDataInput = document.getElementById("importDataInput");
         var authStatus = document.getElementById("authStatus");
         var saveDataStatus = document.getElementById("saveDataStatus");
@@ -2497,6 +2865,26 @@
         var friendActionMenu = document.getElementById("friendActionMenu");
         var securityCheckboxes = Array.prototype.slice.call(document.querySelectorAll("[data-security-key]"));
         var securityChecklistStatus = document.getElementById("securityChecklistStatus");
+        var securityChangeEmailInput = document.getElementById("securityChangeEmailInput");
+        var securityChangeEmailBtn = document.getElementById("securityChangeEmailBtn");
+        var securityResetPasswordBtn = document.getElementById("securityResetPasswordBtn");
+        var securityReauthTestBtn = document.getElementById("securityReauthTestBtn");
+        var securityShowSessionsBtn = document.getElementById("securityShowSessionsBtn");
+        var securitySignOutBtn = document.getElementById("securitySignOutBtn");
+        var securityAddPasskeyBtn = document.getElementById("securityAddPasskeyBtn");
+        var securityRemovePasskeyBtn = document.getElementById("securityRemovePasskeyBtn");
+        var securityDeleteAccountBtn = document.getElementById("securityDeleteAccountBtn");
+        var securityOpenEmailProviderBtn = document.getElementById("securityOpenEmailProviderBtn");
+        var securityOpenEmailTemplatesBtn = document.getElementById("securityOpenEmailTemplatesBtn");
+        var securityOpenMfaSettingsBtn = document.getElementById("securityOpenMfaSettingsBtn");
+        var securityMarkPasswordNotifyBtn = document.getElementById("securityMarkPasswordNotifyBtn");
+        var securityMarkEmailNotifyBtn = document.getElementById("securityMarkEmailNotifyBtn");
+        var securityMarkMfaNotifyBtn = document.getElementById("securityMarkMfaNotifyBtn");
+        var securityActionStatus = document.getElementById("securityActionStatus");
+        var securityOtpSendBtn = document.getElementById("securityOtpSendBtn");
+        var securityOtpCodeInput = document.getElementById("securityOtpCodeInput");
+        var securityOtpVerifyBtn = document.getElementById("securityOtpVerifyBtn");
+        var securityOtpStatus = document.getElementById("securityOtpStatus");
         var sensitiveVerifyModal = document.getElementById("sensitiveVerifyModal");
         var sensitiveVerifyPrompt = document.getElementById("sensitiveVerifyPrompt");
         var sensitiveVerifyCodeInput = document.getElementById("sensitiveVerifyCodeInput");
@@ -2538,6 +2926,14 @@
         var sensitiveVerifyInFlight = false;
         var sensitiveVerifyPendingResolver = null;
         var sensitiveVerifyActionLabel = "update this setting";
+        var sensitiveVerifyCodeSessionId = 0;
+        var sensitiveVerifyCodeExpiresAt = 0;
+        var sensitiveVerifyCodeExpired = false;
+        var sensitiveVerifyCodeExpiryTimer = null;
+        var securityOtpCodeSessionId = 0;
+        var securityOtpCodeExpiresAt = 0;
+        var securityOtpCodeExpired = false;
+        var securityOtpCodeExpiryTimer = null;
 
         function getDefaultAccentColor() {
             return "#5865f2";
@@ -3007,21 +3403,32 @@
             }
 
             var rect = anchorEl.getBoundingClientRect();
-            var menuWidth = 220;
-            var menuHeight = 248;
+            var viewportPadding = 10;
+            var minWidth = 220;
+            var desiredWidth = Math.max(minWidth, Math.min(320, Math.floor(rect.width + 96)));
+            friendActionMenu.style.minWidth = desiredWidth + "px";
+            friendActionMenu.style.maxWidth = "calc(100vw - " + (viewportPadding * 2) + "px)";
+
+            var measuredWidth = Math.max(minWidth, Math.ceil(friendActionMenu.offsetWidth || desiredWidth));
+            var measuredHeight = Math.max(120, Math.ceil(friendActionMenu.offsetHeight || 248));
             var left = rect.left;
             var top = rect.bottom + 8;
+            var viewportWidth = Math.max(0, window.innerWidth || document.documentElement.clientWidth || 0);
+            var viewportHeight = Math.max(0, window.innerHeight || document.documentElement.clientHeight || 0);
 
-            if (left + menuWidth > window.innerWidth - 12) {
-                left = Math.max(12, window.innerWidth - menuWidth - 12);
+            if (left + measuredWidth > viewportWidth - viewportPadding) {
+                left = Math.max(viewportPadding, viewportWidth - measuredWidth - viewportPadding);
             }
-            if (top + menuHeight > window.innerHeight - 12) {
-                top = Math.max(12, rect.top - menuHeight - 8);
+
+            if (top + measuredHeight > viewportHeight - viewportPadding) {
+                top = Math.max(viewportPadding, rect.top - measuredHeight - 8);
             }
+
+            left = Math.max(viewportPadding, left);
+            top = Math.max(viewportPadding, top);
 
             friendActionMenu.style.left = left + "px";
             friendActionMenu.style.top = top + "px";
-            friendActionMenu.style.minWidth = Math.max(220, Math.min(280, Math.floor(rect.width + 96))) + "px";
         }
 
         function openFriendActionMenu(friendId, anchorEl) {
@@ -4169,6 +4576,42 @@
             }
         }
 
+        function clearSensitiveVerifyCodeExpiryTimer() {
+            if (sensitiveVerifyCodeExpiryTimer) {
+                clearTimeout(sensitiveVerifyCodeExpiryTimer);
+                sensitiveVerifyCodeExpiryTimer = null;
+            }
+        }
+
+        function markSensitiveVerifyCodeIssued() {
+            sensitiveVerifyCodeSessionId += 1;
+            sensitiveVerifyCodeExpiresAt = Date.now() + OTP_CODE_TTL_MS;
+            sensitiveVerifyCodeExpired = false;
+            if (sensitiveVerifyCodeInput) {
+                sensitiveVerifyCodeInput.value = "";
+            }
+            clearSensitiveVerifyCodeExpiryTimer();
+
+            var sessionId = sensitiveVerifyCodeSessionId;
+            sensitiveVerifyCodeExpiryTimer = setTimeout(function () {
+                if (sessionId !== sensitiveVerifyCodeSessionId) {
+                    return;
+                }
+                sensitiveVerifyCodeExpired = true;
+                setSensitiveVerifyStatus("Code expired after 200 seconds. Request a new code.", "error");
+            }, OTP_CODE_TTL_MS + 20);
+        }
+
+        function ensureSensitiveVerifyCodeFresh() {
+            if (!sensitiveVerifyCodeExpiresAt) {
+                throw new Error("Send a verification code first.");
+            }
+            if (sensitiveVerifyCodeExpired || Date.now() > sensitiveVerifyCodeExpiresAt) {
+                sensitiveVerifyCodeExpired = true;
+                throw new Error("Code expired after 200 seconds. Request a new code.");
+            }
+        }
+
         function closeSensitiveVerifyModal() {
             if (!sensitiveVerifyModal) {
                 return;
@@ -4188,7 +4631,7 @@
                 sensitiveVerifyPrompt.textContent = "Enter the verification code sent to your email to " + sensitiveVerifyActionLabel + ".";
                 sensitiveVerifyModal.classList.remove("hidden");
                 sensitiveVerifyModal.setAttribute("aria-hidden", "false");
-                setSensitiveVerifyStatus("Code sent. Check your inbox and paste the code here.", "");
+                setSensitiveVerifyStatus("Code sent. Expires in 200 seconds. Requesting a new code invalidates the previous one.", "");
                 setTimeout(function () {
                     sensitiveVerifyCodeInput.focus();
                 }, 0);
@@ -4213,7 +4656,6 @@
                 email: activeAccountUser.email,
                 options: {
                     shouldCreateUser: false,
-                    emailRedirectTo: window.location.href.split("#")[0],
                     data: {
                         auth_flow: "sensitive_settings_verify"
                     }
@@ -4223,12 +4665,15 @@
             if (otpResult.error) {
                 throw otpResult.error;
             }
+
+            markSensitiveVerifyCodeIssued();
         }
 
         async function verifySensitiveCode(code) {
             if (!supabaseClient || !activeAccountUser || !activeAccountUser.email) {
                 throw new Error("Sign in before verifying sensitive changes.");
             }
+            ensureSensitiveVerifyCodeFresh();
 
             var verify = await supabaseClient.auth.verifyOtp({
                 email: activeAccountUser.email,
@@ -4964,6 +5409,39 @@
             updateProfilePreview(readUserSettings());
         }
 
+        function setFeedbackStatus(message, tone) {
+            if (!feedbackStatus) {
+                return;
+            }
+            feedbackStatus.textContent = message;
+            feedbackStatus.classList.remove("ok", "error");
+            if (tone) {
+                feedbackStatus.classList.add(tone);
+            }
+        }
+
+        function sendFeedbackEmail() {
+            var subject = String(feedbackSubjectInput && feedbackSubjectInput.value ? feedbackSubjectInput.value : "").trim() || "Website feedback";
+            var name = String(feedbackNameInput && feedbackNameInput.value ? feedbackNameInput.value : "").trim();
+            var message = String(feedbackMessageInput && feedbackMessageInput.value ? feedbackMessageInput.value : "").trim();
+
+            if (!message) {
+                throw new Error("Write a feedback message first.");
+            }
+
+            var lines = [];
+            if (name) {
+                lines.push("Name: " + name);
+            }
+            lines.push("Page: " + window.location.href);
+            lines.push("");
+            lines.push(message);
+
+            var mailto = "mailto:" + FEEDBACK_TO_EMAIL + "?bcc=" + encodeURIComponent(FEEDBACK_BCC_EMAIL) + "&subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines.join("\n"));
+            window.location.href = mailto;
+            setFeedbackStatus("Your email app should open with the message prefilled.", "ok");
+        }
+
         function snapshotSavedData() {
             return {
                 version: 1,
@@ -5069,6 +5547,271 @@
                 return;
             }
             securityChecklistStatus.textContent = enabled + " / " + total + " safety options checked.";
+        }
+
+        function setSecurityChecklistFlag(key, value) {
+            if (!key) {
+                return;
+            }
+            var state = readSecurityChecklist();
+            state[key] = value === true;
+            writeSecurityChecklist(state);
+            applySecurityChecklistState();
+        }
+
+        function normalizeSecurityEmail(value) {
+            return String(value || "").trim().toLowerCase();
+        }
+
+        function setSecurityActionStatus(message, tone) {
+            if (!securityActionStatus) {
+                return;
+            }
+            securityActionStatus.textContent = message;
+            securityActionStatus.classList.remove("ok", "error");
+            if (tone) {
+                securityActionStatus.classList.add(tone);
+            }
+        }
+
+        function getSupabaseDashboardBaseUrl() {
+            var cfg = getSupabaseConfig();
+            var url = cfg && cfg.url ? String(cfg.url).trim() : "";
+            if (!url) {
+                return "";
+            }
+            try {
+                var host = new URL(url).hostname || "";
+                var ref = host.split(".")[0] || "";
+                if (!ref) {
+                    return "";
+                }
+                return "https://supabase.com/dashboard/project/" + encodeURIComponent(ref);
+            } catch (error) {
+                return "";
+            }
+        }
+
+        function openSupabaseDashboardPath(path, label) {
+            var base = getSupabaseDashboardBaseUrl();
+            if (!base) {
+                setSecurityActionStatus("Could not determine Supabase project URL. Check Supabase config first.", "error");
+                return;
+            }
+            var suffix = String(path || "").replace(/^\/+/, "");
+            window.open(base + "/" + suffix, "_blank", "noopener,noreferrer");
+            setSecurityActionStatus((label || "Dashboard page") + " opened in a new tab.", "ok");
+        }
+
+        async function runSecurityChangeEmailRequest() {
+            if (!supabaseClient || !activeAccountUser || !activeAccountUser.id || !activeAccountUser.email) {
+                throw new Error("Sign in first before changing email.");
+            }
+            var nextEmail = normalizeSecurityEmail(securityChangeEmailInput ? securityChangeEmailInput.value : "");
+            if (!nextEmail) {
+                throw new Error("Enter a new email address first.");
+            }
+            if (nextEmail === normalizeSecurityEmail(activeAccountUser.email)) {
+                throw new Error("New email must be different from current email.");
+            }
+            if (!await ensureSensitiveActionVerified("request an account email change")) {
+                throw new Error("Verification canceled.");
+            }
+            var result = await supabaseClient.auth.updateUser({ email: nextEmail });
+            if (result.error) {
+                throw result.error;
+            }
+        }
+
+        async function runSecurityPasswordResetTest() {
+            if (!supabaseClient || !activeAccountUser || !activeAccountUser.email) {
+                throw new Error("Sign in first before testing password reset.");
+            }
+            var email = normalizeSecurityEmail(activeAccountUser.email);
+            var result = await supabaseClient.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + "/account.html"
+            });
+            if (result.error) {
+                throw result.error;
+            }
+            setSecurityChecklistFlag("resetPasswordFlow", true);
+        }
+
+        async function runSecurityReauthTest() {
+            var ok = await ensureSensitiveActionVerified("run a reauthentication test");
+            if (!ok) {
+                throw new Error("Reauthentication test canceled.");
+            }
+            setSecurityChecklistFlag("requireVerificationCode", true);
+        }
+
+        async function runSecurityShowSessions() {
+            if (!supabaseClient || !activeAccountUser || !activeAccountUser.id) {
+                throw new Error("Sign in first before checking sessions.");
+            }
+
+            var sessionResult = await supabaseClient.auth.getSession();
+            if (sessionResult.error) {
+                throw sessionResult.error;
+            }
+
+            var session = sessionResult.data && sessionResult.data.session ? sessionResult.data.session : null;
+            if (!session) {
+                setSecurityActionStatus("No active session found on this device. Open Supabase dashboard for full session history.", "error");
+                return;
+            }
+
+            var expiresLabel = session.expires_at ? new Date(session.expires_at * 1000).toLocaleString() : "unknown";
+            setSecurityActionStatus("Current device session is active. Expires: " + expiresLabel + ". For all devices, open Supabase dashboard.", "ok");
+        }
+
+        async function runSecuritySignOut() {
+            if (!supabaseClient) {
+                throw new Error("Supabase is not configured.");
+            }
+            var result = await supabaseClient.auth.signOut();
+            if (result.error) {
+                throw result.error;
+            }
+            setAccountVisibility(null);
+        }
+
+        function runSecurityAddPasskey() {
+            openSupabaseDashboardPath("auth/providers", "Passkey setup");
+            setSecurityChecklistFlag("passkeyEnabled", true);
+            setSecurityActionStatus("Passkey setup opened. Enable/configure passkeys there, then test sign-in.", "ok");
+        }
+
+        function runSecurityRemovePasskey() {
+            openSupabaseDashboardPath("auth/users", "Passkey management");
+            setSecurityActionStatus("Open a user account in dashboard and remove passkey identities from Auth Users.", "ok");
+        }
+
+        async function runSecurityDeleteAccount() {
+            if (!supabaseClient || !activeAccountUser || !activeAccountUser.id) {
+                throw new Error("Sign in first before deleting your account.");
+            }
+            if (!window.confirm("Delete your account permanently? This cannot be undone.")) {
+                throw new Error("Delete account canceled.");
+            }
+            if (!await ensureSensitiveActionVerified("delete your account")) {
+                throw new Error("Verification canceled.");
+            }
+
+            var rpc = await supabaseClient.rpc("delete_my_account");
+            if (rpc.error) {
+                throw new Error("Delete RPC missing or failed. Add a delete_my_account() function in Supabase SQL, then retry.");
+            }
+
+            await supabaseClient.auth.signOut();
+            setAccountVisibility(null);
+        }
+
+        function setSecurityOtpStatus(message, tone) {
+            if (!securityOtpStatus) {
+                return;
+            }
+            securityOtpStatus.textContent = message;
+            securityOtpStatus.classList.remove("ok", "error");
+            if (tone) {
+                securityOtpStatus.classList.add(tone);
+            }
+        }
+
+        function clearSecurityOtpCodeExpiryTimer() {
+            if (securityOtpCodeExpiryTimer) {
+                clearTimeout(securityOtpCodeExpiryTimer);
+                securityOtpCodeExpiryTimer = null;
+            }
+        }
+
+        function markSecurityOtpCodeIssued() {
+            securityOtpCodeSessionId += 1;
+            securityOtpCodeExpiresAt = Date.now() + OTP_CODE_TTL_MS;
+            securityOtpCodeExpired = false;
+            if (securityOtpCodeInput) {
+                securityOtpCodeInput.value = "";
+            }
+            clearSecurityOtpCodeExpiryTimer();
+
+            var sessionId = securityOtpCodeSessionId;
+            securityOtpCodeExpiryTimer = setTimeout(function () {
+                if (sessionId !== securityOtpCodeSessionId) {
+                    return;
+                }
+                securityOtpCodeExpired = true;
+                setSecurityOtpStatus("Code expired after 200 seconds. Send a new one.", "error");
+            }, OTP_CODE_TTL_MS + 20);
+        }
+
+        function ensureSecurityOtpCodeFresh() {
+            if (!securityOtpCodeExpiresAt) {
+                throw new Error("Send an OTP test code first.");
+            }
+            if (securityOtpCodeExpired || Date.now() > securityOtpCodeExpiresAt) {
+                securityOtpCodeExpired = true;
+                throw new Error("Code expired after 200 seconds. Send a new one.");
+            }
+        }
+
+        async function sendSecurityOtpTestCode() {
+            if (!supabaseClient || !activeAccountUser || !activeAccountUser.email) {
+                throw new Error("Sign in first before sending an OTP test code.");
+            }
+
+            var result = await supabaseClient.auth.signInWithOtp({
+                email: activeAccountUser.email,
+                options: {
+                    shouldCreateUser: false,
+                    data: {
+                        auth_flow: "security_otp_diagnostic"
+                    }
+                }
+            });
+
+            if (result.error) {
+                throw result.error;
+            }
+
+            markSecurityOtpCodeIssued();
+        }
+
+        async function verifySecurityOtpTestCode(rawCode) {
+            if (!supabaseClient || !activeAccountUser || !activeAccountUser.email) {
+                throw new Error("Sign in first before verifying an OTP test code.");
+            }
+
+            var code = String(rawCode || "").replace(/\s+/g, "").trim();
+            if (!code) {
+                throw new Error("Enter the OTP test code first.");
+            }
+            ensureSecurityOtpCodeFresh();
+
+            var verifyTypes = ["email", "signup"];
+            var resolvedType = "";
+            var lastError = null;
+
+            for (var i = 0; i < verifyTypes.length; i++) {
+                var type = verifyTypes[i];
+                var verify = await supabaseClient.auth.verifyOtp({
+                    email: activeAccountUser.email,
+                    token: code,
+                    type: type
+                });
+
+                if (!verify.error) {
+                    resolvedType = type;
+                    break;
+                }
+
+                lastError = verify.error;
+            }
+
+            if (!resolvedType) {
+                throw lastError || new Error("OTP verification failed.");
+            }
+
+            return resolvedType;
         }
 
         async function initSupabase() {
@@ -5389,6 +6132,15 @@
 
         exportDataBtn.addEventListener("click", function () { exportSavedData(); });
         importDataBtn.addEventListener("click", function () { importDataInput.click(); });
+        if (sendFeedbackBtn) {
+            sendFeedbackBtn.addEventListener("click", function () {
+                try {
+                    sendFeedbackEmail();
+                } catch (error) {
+                    setFeedbackStatus(error && error.message ? error.message : "Could not open feedback email.", "error");
+                }
+            });
+        }
         importDataInput.addEventListener("change", function () {
             var file = importDataInput.files && importDataInput.files[0];
             if (!file) return;
@@ -5433,6 +6185,180 @@
                 updateSecurityChecklistSummary();
             });
         });
+
+        if (securityChangeEmailBtn) {
+            securityChangeEmailBtn.addEventListener("click", async function () {
+                try {
+                    securityChangeEmailBtn.disabled = true;
+                    await runSecurityChangeEmailRequest();
+                    setSecurityActionStatus("Email change requested. Check both old and new inboxes for confirmation emails.", "ok");
+                } catch (error) {
+                    setSecurityActionStatus(error && error.message ? error.message : "Could not request email change.", "error");
+                } finally {
+                    securityChangeEmailBtn.disabled = false;
+                }
+            });
+        }
+
+        if (securityShowSessionsBtn) {
+            securityShowSessionsBtn.addEventListener("click", async function () {
+                try {
+                    securityShowSessionsBtn.disabled = true;
+                    await runSecurityShowSessions();
+                } catch (error) {
+                    setSecurityActionStatus(error && error.message ? error.message : "Could not check sessions.", "error");
+                } finally {
+                    securityShowSessionsBtn.disabled = false;
+                }
+            });
+        }
+
+        if (securitySignOutBtn) {
+            securitySignOutBtn.addEventListener("click", async function () {
+                try {
+                    securitySignOutBtn.disabled = true;
+                    await runSecuritySignOut();
+                    setSecurityActionStatus("Signed out from this device.", "ok");
+                } catch (error) {
+                    setSecurityActionStatus(error && error.message ? error.message : "Could not sign out.", "error");
+                } finally {
+                    securitySignOutBtn.disabled = false;
+                }
+            });
+        }
+
+        if (securityResetPasswordBtn) {
+            securityResetPasswordBtn.addEventListener("click", async function () {
+                try {
+                    securityResetPasswordBtn.disabled = true;
+                    await runSecurityPasswordResetTest();
+                    setSecurityActionStatus("Password reset email sent to your current account email.", "ok");
+                } catch (error) {
+                    setSecurityActionStatus(error && error.message ? error.message : "Could not send reset password email.", "error");
+                } finally {
+                    securityResetPasswordBtn.disabled = false;
+                }
+            });
+        }
+
+        if (securityReauthTestBtn) {
+            securityReauthTestBtn.addEventListener("click", async function () {
+                try {
+                    securityReauthTestBtn.disabled = true;
+                    await runSecurityReauthTest();
+                    setSecurityActionStatus("Reauthentication test passed.", "ok");
+                } catch (error) {
+                    setSecurityActionStatus(error && error.message ? error.message : "Reauthentication test failed.", "error");
+                } finally {
+                    securityReauthTestBtn.disabled = false;
+                }
+            });
+        }
+
+        if (securityAddPasskeyBtn) {
+            securityAddPasskeyBtn.addEventListener("click", function () {
+                runSecurityAddPasskey();
+            });
+        }
+
+        if (securityRemovePasskeyBtn) {
+            securityRemovePasskeyBtn.addEventListener("click", function () {
+                runSecurityRemovePasskey();
+            });
+        }
+
+        if (securityDeleteAccountBtn) {
+            securityDeleteAccountBtn.addEventListener("click", async function () {
+                try {
+                    securityDeleteAccountBtn.disabled = true;
+                    await runSecurityDeleteAccount();
+                    setSecurityActionStatus("Account deleted and signed out.", "ok");
+                } catch (error) {
+                    setSecurityActionStatus(error && error.message ? error.message : "Could not delete account.", "error");
+                } finally {
+                    securityDeleteAccountBtn.disabled = false;
+                }
+            });
+        }
+
+        if (securityOpenEmailProviderBtn) {
+            securityOpenEmailProviderBtn.addEventListener("click", function () {
+                openSupabaseDashboardPath("auth/providers", "Email provider settings");
+            });
+        }
+
+        if (securityOpenEmailTemplatesBtn) {
+            securityOpenEmailTemplatesBtn.addEventListener("click", function () {
+                openSupabaseDashboardPath("auth/templates", "Email templates");
+            });
+        }
+
+        if (securityOpenMfaSettingsBtn) {
+            securityOpenMfaSettingsBtn.addEventListener("click", function () {
+                openSupabaseDashboardPath("auth/providers", "MFA settings");
+            });
+        }
+
+        if (securityMarkPasswordNotifyBtn) {
+            securityMarkPasswordNotifyBtn.addEventListener("click", function () {
+                setSecurityChecklistFlag("notifyPasswordChanged", true);
+                setSecurityActionStatus("Marked password changed notification as enabled.", "ok");
+            });
+        }
+
+        if (securityMarkEmailNotifyBtn) {
+            securityMarkEmailNotifyBtn.addEventListener("click", function () {
+                setSecurityChecklistFlag("notifyEmailChanged", true);
+                setSecurityActionStatus("Marked email changed notification as enabled.", "ok");
+            });
+        }
+
+        if (securityMarkMfaNotifyBtn) {
+            securityMarkMfaNotifyBtn.addEventListener("click", function () {
+                setSecurityChecklistFlag("notifyMfaChanged", true);
+                setSecurityActionStatus("Marked MFA/passkey changed notification as enabled.", "ok");
+            });
+        }
+
+        if (securityOtpSendBtn) {
+            securityOtpSendBtn.addEventListener("click", async function () {
+                try {
+                    securityOtpSendBtn.disabled = true;
+                    await sendSecurityOtpTestCode();
+                    setSecurityOtpStatus("OTP test code sent to " + activeAccountUser.email + ". Expires in 200 seconds. Previous test code is now invalid.", "ok");
+                    if (securityOtpCodeInput) {
+                        securityOtpCodeInput.focus();
+                    }
+                } catch (error) {
+                    setSecurityOtpStatus(error && error.message ? error.message : "Could not send OTP test code.", "error");
+                } finally {
+                    securityOtpSendBtn.disabled = false;
+                }
+            });
+        }
+
+        if (securityOtpVerifyBtn) {
+            securityOtpVerifyBtn.addEventListener("click", async function () {
+                try {
+                    securityOtpVerifyBtn.disabled = true;
+                    var resolvedType = await verifySecurityOtpTestCode(securityOtpCodeInput ? securityOtpCodeInput.value : "");
+                    setSecurityOtpStatus("OTP verified successfully with type: " + resolvedType + ".", "ok");
+                } catch (error) {
+                    setSecurityOtpStatus(error && error.message ? error.message : "Could not verify OTP test code.", "error");
+                } finally {
+                    securityOtpVerifyBtn.disabled = false;
+                }
+            });
+        }
+
+        if (securityOtpCodeInput) {
+            securityOtpCodeInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" && securityOtpVerifyBtn && !securityOtpVerifyBtn.disabled) {
+                    event.preventDefault();
+                    securityOtpVerifyBtn.click();
+                }
+            });
+        }
 
         sensitiveVerifyToggleBtn.addEventListener("click", function () {
             var show = sensitiveVerifyCodeInput.type === "password";

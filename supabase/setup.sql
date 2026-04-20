@@ -115,6 +115,23 @@ create index if not exists admin_activity_logs_actor_email_idx
 create index if not exists admin_activity_logs_target_email_idx
   on public.admin_activity_logs (target_email);
 
+create table if not exists public.user_staff_roles (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  role text not null check (role in ('moderator', 'admin')),
+  assigned_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, role)
+);
+
+alter table public.user_staff_roles enable row level security;
+
+create index if not exists user_staff_roles_role_idx
+  on public.user_staff_roles (role);
+
+create index if not exists user_staff_roles_user_idx
+  on public.user_staff_roles (user_id);
+
 create or replace function public.is_admin_email(email_input text)
 returns boolean
 language sql
@@ -127,6 +144,31 @@ as $$
   );
 $$;
 
+create or replace function public.current_user_staff_role()
+returns text
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select case
+    when public.is_admin_email(auth.jwt() ->> 'email') then 'admin'
+    when exists (
+      select 1
+      from public.user_staff_roles r
+      where r.user_id = auth.uid()
+        and r.role = 'admin'
+    ) then 'admin'
+    when exists (
+      select 1
+      from public.user_staff_roles r
+      where r.user_id = auth.uid()
+        and r.role = 'moderator'
+    ) then 'moderator'
+    else null
+  end;
+$$;
+
 create or replace function public.current_user_is_admin()
 returns boolean
 language sql
@@ -134,7 +176,17 @@ stable
 security definer
 set search_path = public, auth
 as $$
-  select public.is_admin_email(auth.jwt() ->> 'email');
+  select public.current_user_staff_role() = 'admin';
+$$;
+
+create or replace function public.current_user_is_moderator()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select public.current_user_staff_role() in ('admin', 'moderator');
 $$;
 
 create or replace function public.sync_user_profile()
@@ -702,7 +754,7 @@ as $$
 declare
   actor_email text;
 begin
-  if not public.current_user_is_admin() then
+  if not public.current_user_is_moderator() then
     raise exception 'Not authorized.';
   end if;
 
@@ -737,6 +789,7 @@ create or replace function public.admin_list_users()
 returns table (
   user_id uuid,
   email text,
+  staff_role text,
   created_at timestamptz,
   last_sign_in_at timestamptz,
   banned boolean,
@@ -754,6 +807,22 @@ as $$
   select
     u.id,
     lower(coalesce(u.email, p.email, '')) as email,
+    case
+      when public.is_admin_email(auth.jwt() ->> 'email') then 'admin'
+      when exists (
+        select 1
+        from public.user_staff_roles r
+        where r.user_id = u.id
+          and r.role = 'admin'
+      ) then 'admin'
+      when exists (
+        select 1
+        from public.user_staff_roles r
+        where r.user_id = u.id
+          and r.role = 'moderator'
+      ) then 'moderator'
+      else null
+    end as staff_role,
     u.created_at,
     u.last_sign_in_at,
     coalesce(p.banned, false) as banned,
@@ -779,7 +848,7 @@ as $$
   left join public.user_profiles p on p.user_id = u.id
   left join public.user_presence pres on pres.user_id = u.id
   left join public.user_settings us on us.user_id = u.id
-  where public.current_user_is_admin()
+  where public.current_user_is_moderator()
   order by u.created_at desc;
 $$;
 
@@ -808,7 +877,7 @@ as $$
     l.details,
     l.created_at
   from public.admin_activity_logs l
-  where public.current_user_is_admin()
+  where public.current_user_is_moderator()
   order by l.created_at desc
   limit greatest(1, least(coalesce(limit_count, 120), 300))
   offset greatest(0, coalesce(offset_count, 0));
@@ -847,7 +916,7 @@ as $$
     l.details,
     l.created_at
   from public.admin_activity_logs l
-  where public.current_user_is_admin()
+  where public.current_user_is_moderator()
     and (
       action_filter is null
       or action_filter = ''
@@ -935,6 +1004,68 @@ begin
 end;
 $$;
 
+create or replace function public.admin_set_staff_role(target_user_id uuid, role text, enabled boolean default true)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  target_email text;
+  normalized_role text;
+begin
+  if not public.current_user_is_admin() then
+    raise exception 'Not authorized.';
+  end if;
+
+  if target_user_id is null then
+    raise exception 'Target user is required.';
+  end if;
+
+  if target_user_id = auth.uid() then
+    raise exception 'You cannot change your own staff role.';
+  end if;
+
+  normalized_role := lower(trim(coalesce(role, '')));
+  if normalized_role not in ('moderator', 'admin') then
+    raise exception 'Role must be moderator or admin.';
+  end if;
+
+  select lower(coalesce(email, '')) into target_email
+  from auth.users
+  where id = target_user_id;
+
+  if target_email is null then
+    raise exception 'User not found.';
+  end if;
+
+  if enabled then
+    insert into public.user_staff_roles (user_id, role, assigned_by, created_at, updated_at)
+    values (target_user_id, normalized_role, auth.uid(), now(), now())
+    on conflict (user_id, role)
+    do update
+      set assigned_by = excluded.assigned_by,
+          updated_at = now();
+  else
+    delete from public.user_staff_roles
+    where user_id = target_user_id
+      and role = normalized_role;
+  end if;
+
+  perform public.admin_log_action(
+    target_user_id,
+    target_email,
+    case when enabled then 'set_staff_role' else 'clear_staff_role' end,
+    jsonb_build_object(
+      'role', normalized_role,
+      'enabled', enabled
+    )
+  );
+
+  return true;
+end;
+$$;
+
 create or replace function public.admin_delete_account(target_user_id uuid)
 returns boolean
 language plpgsql
@@ -978,16 +1109,22 @@ $$;
 revoke all on function public.admin_list_users() from public;
 revoke all on function public.admin_list_activity(integer, integer) from public;
 revoke all on function public.admin_list_activity_filtered(integer, integer, text, text, text, timestamptz, timestamptz) from public;
+revoke all on function public.admin_set_staff_role(uuid, text, boolean) from public;
 revoke all on function public.admin_set_ban(uuid, boolean, text) from public;
 revoke all on function public.admin_delete_account(uuid) from public;
 revoke all on function public.admin_log_action(uuid, text, text, jsonb) from public;
+revoke all on function public.current_user_staff_role() from public;
+revoke all on function public.current_user_is_moderator() from public;
 
 grant execute on function public.admin_list_users() to authenticated;
 grant execute on function public.admin_list_activity(integer, integer) to authenticated;
 grant execute on function public.admin_list_activity_filtered(integer, integer, text, text, text, timestamptz, timestamptz) to authenticated;
+grant execute on function public.admin_set_staff_role(uuid, text, boolean) to authenticated;
 grant execute on function public.admin_set_ban(uuid, boolean, text) to authenticated;
 grant execute on function public.admin_delete_account(uuid) to authenticated;
 grant execute on function public.admin_log_action(uuid, text, text, jsonb) to authenticated;
+grant execute on function public.current_user_staff_role() to authenticated;
+grant execute on function public.current_user_is_moderator() to authenticated;
 grant execute on function public.upsert_my_user_settings(uuid, jsonb) to authenticated;
 grant execute on function public.upsert_my_presence(text, text, text, boolean) to authenticated;
 grant execute on function public.upsert_friend_link(text, text, boolean) to authenticated;

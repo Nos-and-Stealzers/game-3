@@ -809,6 +809,87 @@
             text-decoration: underline;
         }
 
+        .feedback-trigger {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px 12px;
+            background: var(--panel);
+            color: var(--ink);
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .feedback-trigger:hover {
+            background: var(--panel-2);
+        }
+
+        .feedback-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 99990;
+            display: grid;
+            place-items: center;
+            padding: 12px;
+            background: rgba(8, 18, 38, 0.55);
+            backdrop-filter: blur(3px);
+        }
+
+        .feedback-modal[hidden] {
+            display: none !important;
+        }
+
+        .feedback-modal-card {
+            width: min(560px, 100%);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--panel);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            padding: 14px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .feedback-modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .feedback-modal-head h3,
+        .feedback-modal-head p {
+            margin: 0;
+        }
+
+        .feedback-modal-head p {
+            color: var(--muted);
+            font-size: 0.84rem;
+            line-height: 1.4;
+            font-weight: 700;
+        }
+
+        .feedback-status {
+            margin: 0;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--mild-bg);
+            color: var(--mild-ink);
+            padding: 8px 10px;
+            font-size: 0.83rem;
+            font-weight: 800;
+        }
+
+        .feedback-status.ok {
+            background: var(--ok-bg);
+            color: var(--ok-ink);
+        }
+
+        .feedback-status.error {
+            background: var(--warn-bg);
+            color: var(--warn-ink);
+        }
+
         @keyframes heroIn {
             from { transform: translateY(8px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -981,12 +1062,42 @@
         <footer class="site-footer" aria-label="Site links">
             <span>Testing build. Users are responsible for their own use.</span>
             <span>
+                <button id="openFeedbackBtn" type="button" class="feedback-trigger">Send Feedback</button>
+                |
                 <a href="privacy.html">Privacy and Terms</a>
                 |
                 <a href="404.html">404 Page</a>
             </span>
         </footer>
     </main>
+
+    <section id="feedbackModal" class="feedback-modal" hidden aria-hidden="true">
+        <article class="feedback-modal-card" role="dialog" aria-modal="true" aria-labelledby="feedbackModalTitle">
+            <div class="feedback-modal-head">
+                <div>
+                    <h3 id="feedbackModalTitle">Send Feedback</h3>
+                    <p>Share bugs, ideas, or requests and we will route it to the owner inbox.</p>
+                </div>
+                <button id="closeFeedbackBtn" type="button" class="icon-btn" aria-label="Close feedback">Close</button>
+            </div>
+            <label class="panel" style="padding: 10px;">
+                <div class="meta">Subject</div>
+                <input id="feedbackSubjectInput" class="input" type="text" placeholder="Feedback about the arcade">
+            </label>
+            <label class="panel" style="padding: 10px;">
+                <div class="meta">Your name (optional)</div>
+                <input id="feedbackNameInput" class="input" type="text" placeholder="Optional name">
+            </label>
+            <label class="panel" style="padding: 10px;">
+                <div class="meta">Message</div>
+                <textarea id="feedbackMessageInput" class="input" placeholder="What should we fix or improve?"></textarea>
+            </label>
+            <div class="controls" style="margin-top: 0;">
+                <button id="sendFeedbackBtn" type="button" class="btn play">Send Feedback</button>
+            </div>
+            <p id="feedbackStatus" class="feedback-status">This opens your email app with a prefilled message.</p>
+        </article>
+    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.config.js"></script>
@@ -1006,6 +1117,8 @@
         var LOCAL_SAVE_UPDATED_KEY = "gamehub_local_last_saved";
         var CLOUD_LAST_SYNC_KEY = "gamehub_cloud_last_sync";
         var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
+        var FEEDBACK_TO_EMAIL = "lucasgrimm854@gmail.com";
+        var FEEDBACK_BCC_EMAIL = "stealzers.com@gmail.com";
         var SAVE_KEYS = [FAVORITES_KEY, RECENTS_KEY, THEME_KEY, FAST_MODE_KEY, PERFORMANCE_PROFILE_KEY, LIBRARY_VIEW_KEY, OPEN_SOURCE_ONLY_KEY, PLAYABLE_ONLY_KEY, CLOUD_AUTO_SYNC_KEY, GAME_SAVES_KEY, LOCAL_SAVE_UPDATED_KEY, CLOUD_LAST_SYNC_KEY];
         var FNAF_SAVE_STATUS_ITEMS = [
             { id: "fnaf-1", title: "FNAF 1" },
@@ -1036,6 +1149,14 @@
         var clearFavoritesBtn = document.getElementById("clearFavoritesBtn");
         var clearRecentBtn = document.getElementById("clearRecentBtn");
         var modeBadge = document.getElementById("modeBadge");
+        var openFeedbackBtn = document.getElementById("openFeedbackBtn");
+        var feedbackModal = document.getElementById("feedbackModal");
+        var closeFeedbackBtn = document.getElementById("closeFeedbackBtn");
+        var feedbackSubjectInput = document.getElementById("feedbackSubjectInput");
+        var feedbackNameInput = document.getElementById("feedbackNameInput");
+        var feedbackMessageInput = document.getElementById("feedbackMessageInput");
+        var sendFeedbackBtn = document.getElementById("sendFeedbackBtn");
+        var feedbackStatus = document.getElementById("feedbackStatus");
         var openSourceOnlyToggle = document.getElementById("openSourceOnlyToggle");
         var playableOnlyToggle = document.getElementById("playableOnlyToggle");
         var saveDataStatus = document.getElementById("saveDataStatus");
@@ -1048,6 +1169,61 @@
         var cloudAutoSyncTimer = null;
 
         var fastMode = false;
+
+        function setFeedbackStatus(message, tone) {
+            if (!feedbackStatus) {
+                return;
+            }
+            feedbackStatus.textContent = message;
+            feedbackStatus.classList.remove("ok", "error");
+            if (tone) {
+                feedbackStatus.classList.add(tone);
+            }
+        }
+
+        function openFeedbackModal() {
+            if (!feedbackModal) {
+                return;
+            }
+            feedbackModal.hidden = false;
+            feedbackModal.setAttribute("aria-hidden", "false");
+            setFeedbackStatus("This opens your email app with a prefilled message.", "");
+            if (feedbackMessageInput) {
+                setTimeout(function () {
+                    feedbackMessageInput.focus();
+                }, 0);
+            }
+        }
+
+        function closeFeedbackModal() {
+            if (!feedbackModal) {
+                return;
+            }
+            feedbackModal.hidden = true;
+            feedbackModal.setAttribute("aria-hidden", "true");
+        }
+
+        function sendFeedbackEmail() {
+            var subject = String(feedbackSubjectInput && feedbackSubjectInput.value ? feedbackSubjectInput.value : "").trim() || "Arcade feedback";
+            var senderName = String(feedbackNameInput && feedbackNameInput.value ? feedbackNameInput.value : "").trim();
+            var message = String(feedbackMessageInput && feedbackMessageInput.value ? feedbackMessageInput.value : "").trim();
+
+            if (!message) {
+                throw new Error("Write a message first.");
+            }
+
+            var lines = [];
+            if (senderName) {
+                lines.push("Name: " + senderName);
+            }
+            lines.push("Page: " + window.location.href);
+            lines.push("");
+            lines.push(message);
+
+            var mailto = "mailto:" + FEEDBACK_TO_EMAIL + "?bcc=" + encodeURIComponent(FEEDBACK_BCC_EMAIL) + "&subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines.join("\n"));
+            window.location.href = mailto;
+            setFeedbackStatus("Your email app should open now.", "ok");
+        }
 
         function storageGet(key) {
             try {
@@ -1825,6 +2001,42 @@
             queueCloudAutoSync();
             render();
         });
+
+        if (openFeedbackBtn) {
+            openFeedbackBtn.addEventListener("click", function () {
+                openFeedbackModal();
+            });
+        }
+
+        if (closeFeedbackBtn) {
+            closeFeedbackBtn.addEventListener("click", function () {
+                closeFeedbackModal();
+            });
+        }
+
+        if (feedbackModal) {
+            feedbackModal.addEventListener("click", function (event) {
+                if (event.target === feedbackModal) {
+                    closeFeedbackModal();
+                }
+            });
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && feedbackModal && !feedbackModal.hidden) {
+                closeFeedbackModal();
+            }
+        });
+
+        if (sendFeedbackBtn) {
+            sendFeedbackBtn.addEventListener("click", function () {
+                try {
+                    sendFeedbackEmail();
+                } catch (error) {
+                    setFeedbackStatus(error && error.message ? error.message : "Could not send feedback.", "error");
+                }
+            });
+        }
 
         applySettings();
         initSupabase();

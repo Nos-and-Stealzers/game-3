@@ -170,15 +170,15 @@
   },
   {
     "id": "retro-bowl-plus",
-    "title": "Retro Bowl Plus",
+    "title": "Retro Bowl",
     "category": "sports",
-    "description": "Classic football management and gameplay.",
+    "description": "Local Retro Bowl build imported from Nos-and-Stealzers/Retro-Bowl.",
     "gradient": "linear-gradient(135deg, #8ea1ff, #3843aa)",
-    "source": "https://retro-bowl-plus.vercel.app/",
-    "direct": "https://retro-bowl-plus.vercel.app/",
+    "source": "games/retro-bowl/index.html",
+    "direct": "games/retro-bowl/index.html",
     "preferDirect": true,
-    "platform": "external",
-    "embed": "blocked",
+    "platform": "local",
+    "embed": "allowed",
     "schoolRisk": "medium"
   },
   {

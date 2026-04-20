@@ -11,12 +11,9 @@
     :root {
       --bg: #eef3ff;
       --panel: #ffffff;
-      --line: #d2ddf6;
-      --text: #14213d;
       --muted: #5f6f93;
       --primary: #085dff;
       --primary-strong: #0047be;
-      --danger: #b62e2e;
       --danger-bg: #ffefed;
       --danger-line: #f0c0bb;
       --ok-bg: #e9fff2;
@@ -650,6 +647,7 @@
                 <tr>
                   <th><input id="selectAllVisibleChk" type="checkbox" aria-label="Select all visible users"></th>
                   <th>Email</th>
+                  <th>Role</th>
                   <th>User ID</th>
                   <th>Created</th>
                   <th>Last Sign-In</th>
@@ -740,6 +738,27 @@
             <p>Export the currently filtered rows from the Users tab as CSV for offline review.</p>
             <button id="exportVisibleBtn" type="button" class="btn primary">Export visible rows</button>
           </article>
+          <article id="staffRoleBox" class="panel utility-box">
+            <strong>Staff roles</strong>
+            <p>Assign moderator or admin roles to selected users. Moderators can review and ban, while admins can manage roles and delete accounts.</p>
+            <div class="inline-actions">
+              <input id="staffRoleEmailInput" class="input" type="email" placeholder="Find user by email" autocomplete="off">
+              <button id="selectStaffEmailBtn" type="button" class="btn">Select user</button>
+            </div>
+            <div class="inline-actions">
+              <button id="makeModeratorBtn" type="button" class="btn">Make Moderator</button>
+              <button id="makeAdminBtn" type="button" class="btn">Make Admin</button>
+              <button id="removeStaffBtn" type="button" class="btn warn">Remove Staff</button>
+            </div>
+            <div class="inline-actions">
+              <select id="staffRoleSelect" class="select">
+                <option value="none">Remove role</option>
+                <option value="moderator">Moderator</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button id="applyStaffRoleBtn" type="button" class="btn primary">Apply to selected</button>
+            </div>
+          </article>
           <article class="panel utility-box">
             <strong>Audit note</strong>
             <p>Write down a summary before making destructive changes. It helps keep moderation decisions consistent.</p>
@@ -771,6 +790,14 @@
     var refreshBtn = document.getElementById("refreshBtn");
     var exportBtn = document.getElementById("exportBtn");
     var exportVisibleBtn = document.getElementById("exportVisibleBtn");
+    var staffRoleBox = document.getElementById("staffRoleBox");
+    var staffRoleEmailInput = document.getElementById("staffRoleEmailInput");
+    var selectStaffEmailBtn = document.getElementById("selectStaffEmailBtn");
+    var makeModeratorBtn = document.getElementById("makeModeratorBtn");
+    var makeAdminBtn = document.getElementById("makeAdminBtn");
+    var removeStaffBtn = document.getElementById("removeStaffBtn");
+    var staffRoleSelect = document.getElementById("staffRoleSelect");
+    var applyStaffRoleBtn = document.getElementById("applyStaffRoleBtn");
     var refreshActivityBtn = document.getElementById("refreshActivityBtn");
     var activityMeta = document.getElementById("activityMeta");
     var activityRows = document.getElementById("activityRows");
@@ -816,6 +843,7 @@
     var usersFetchInFlight = false;
     var activityFetchInFlight = false;
     var activityHasMore = false;
+    var currentStaffRole = "";
     var activityQuery = {
       limit: 50,
       offset: 0,
@@ -839,6 +867,34 @@
         return false;
       }
       return !!ADMIN_EMAILS[email.trim().toLowerCase()];
+    }
+
+    function formatStaffRoleLabel(value) {
+      var role = String(value || "").trim().toLowerCase();
+      if (role === "admin") {
+        return "Admin";
+      }
+      if (role === "moderator") {
+        return "Moderator";
+      }
+      return "Member";
+    }
+
+    function isAdminRole(value) {
+      return String(value || "").trim().toLowerCase() === "admin";
+    }
+
+    function isModeratorRole(value) {
+      var role = String(value || "").trim().toLowerCase();
+      return role === "admin" || role === "moderator";
+    }
+
+    async function getCurrentStaffRole() {
+      var result = await supabaseClient.rpc("current_user_staff_role");
+      if (result.error) {
+        throw result.error;
+      }
+      return String(result.data || "").trim().toLowerCase();
     }
 
     function getCurrentAuditNote() {
@@ -977,7 +1033,7 @@
       bulkCopyEmailsBtn.disabled = !hasSelection;
       bulkBanBtn.disabled = !hasSelection;
       bulkUnbanBtn.disabled = !hasSelection;
-      bulkDeleteBtn.disabled = !hasSelection;
+      bulkDeleteBtn.disabled = !hasSelection || !isAdminRole(currentStaffRole);
       clearSelectionBtn.disabled = !hasSelection;
     }
 
@@ -1009,11 +1065,12 @@
     }
 
     function toCsv(rows) {
-      var headers = ["email", "created_at", "last_sign_in_at", "presence_status", "presence_updated_at", "is_online", "in_tab", "banned", "ban_reason"];
+      var headers = ["email", "staff_role", "created_at", "last_sign_in_at", "presence_status", "presence_updated_at", "is_online", "in_tab", "banned", "ban_reason"];
       var lines = [headers.join(",")];
       rows.forEach(function (row) {
         var values = [
           row.email,
+          row.staff_role || "",
           row.created_at,
           row.last_sign_in_at,
           row.presence_status || "",
@@ -1119,7 +1176,7 @@
     function renderRows() {
       var filtered = getFilteredUsers();
       if (!filtered.length) {
-        rowsEl.innerHTML = '<tr><td colspan="9" class="small">No accounts found.</td></tr>';
+        rowsEl.innerHTML = '<tr><td colspan="10" class="small">No accounts found.</td></tr>';
         renderOverview(filtered);
         renderSelectionState();
         return;
@@ -1129,13 +1186,18 @@
         var statusBadge = row.banned
           ? '<span class="badge banned">Banned</span>'
           : '<span class="badge">Active</span>';
+        var roleBadge = '<span class="badge">' + escapeHtml(formatStaffRoleLabel(row.staff_role)) + '</span>';
         var userId = String(row.user_id || "");
         var isSelected = !!selectedUserIds[userId];
+        var deleteButton = isAdminRole(currentStaffRole)
+          ? '<button type="button" class="btn danger" data-action="delete">Delete</button>'
+          : '';
 
         return [
           '<tr data-user-id="' + userId + '" data-email="' + escapeHtml(row.email || '') + '">',
           '<td><input type="checkbox" data-select-user="' + userId + '" ' + (isSelected ? 'checked' : '') + ' aria-label="Select user"></td>',
           '<td><div class="email">' + escapeHtml(row.email || '(no email)') + '</div></td>',
+          '<td>' + roleBadge + '</td>',
           '<td class="small">' + escapeHtml(userId) + '</td>',
           '<td>' + escapeHtml(formatDate(row.created_at)) + '</td>',
           '<td>' + escapeHtml(formatDate(row.last_sign_in_at)) + '</td>',
@@ -1155,7 +1217,7 @@
           row.banned
             ? '<button type="button" class="btn" data-action="unban">Unban</button>'
             : '<button type="button" class="btn" data-action="ban">Ban</button>',
-          '<button type="button" class="btn danger" data-action="delete">Delete</button>',
+          deleteButton,
           '</div>',
           '</td>',
           '</tr>'
@@ -1293,6 +1355,96 @@
       }
     }
 
+    async function setUserStaffRole(userId, role, enabled) {
+      var result = await supabaseClient.rpc("admin_set_staff_role", {
+        target_user_id: userId,
+        role: role,
+        enabled: enabled
+      });
+      if (result.error) {
+        throw result.error;
+      }
+    }
+
+    async function applySelectedStaffRole() {
+      var selected = getSelectedUsers();
+      if (!selected.length) {
+        throw new Error("Select one or more users first.");
+      }
+
+      var desiredRole = String(staffRoleSelect && staffRoleSelect.value ? staffRoleSelect.value : "none").toLowerCase();
+      var confirmLabel = desiredRole === "admin" ? "admin" : (desiredRole === "moderator" ? "moderator" : "clear roles from");
+      if (!window.confirm("Apply " + confirmLabel + " to " + selected.length + " selected user(s)?")) {
+        return;
+      }
+
+      for (var i = 0; i < selected.length; i++) {
+        var userId = selected[i].user_id;
+        if (desiredRole === "none") {
+          await setUserStaffRole(userId, "admin", false);
+          await setUserStaffRole(userId, "moderator", false);
+        } else if (desiredRole === "admin") {
+          await setUserStaffRole(userId, "moderator", false);
+          await setUserStaffRole(userId, "admin", true);
+        } else if (desiredRole === "moderator") {
+          await setUserStaffRole(userId, "admin", false);
+          await setUserStaffRole(userId, "moderator", true);
+        }
+      }
+    }
+
+    function selectUserByEmail(emailValue) {
+      var targetEmail = String(emailValue || "").trim().toLowerCase();
+      if (!targetEmail) {
+        throw new Error("Enter an email address first.");
+      }
+
+      var match = allUsers.find(function (row) {
+        return String(row.email || "").trim().toLowerCase() === targetEmail;
+      });
+
+      if (!match || !match.user_id) {
+        throw new Error("No loaded user matched that email.");
+      }
+
+      selectedUserIds[String(match.user_id)] = true;
+      setActiveAdminTab("users");
+      renderRows();
+      setSessionStatus("Selected user: " + targetEmail + ".");
+      return match;
+    }
+
+    async function applyStaffRoleByEmail(emailValue, desiredRole) {
+      var match = selectUserByEmail(emailValue);
+      var userId = String(match.user_id || "");
+      if (!userId) {
+        throw new Error("User ID not found for that email.");
+      }
+
+      if (desiredRole === "none") {
+        await setUserStaffRole(userId, "admin", false);
+        await setUserStaffRole(userId, "moderator", false);
+        setSessionStatus("Removed staff roles for " + String(match.email || emailValue) + ".");
+        return;
+      }
+
+      if (desiredRole === "admin") {
+        await setUserStaffRole(userId, "moderator", false);
+        await setUserStaffRole(userId, "admin", true);
+        setSessionStatus("Set admin role for " + String(match.email || emailValue) + ".");
+        return;
+      }
+
+      if (desiredRole === "moderator") {
+        await setUserStaffRole(userId, "admin", false);
+        await setUserStaffRole(userId, "moderator", true);
+        setSessionStatus("Set moderator role for " + String(match.email || emailValue) + ".");
+        return;
+      }
+
+      throw new Error("Invalid staff role.");
+    }
+
     rowsEl.addEventListener("click", async function (event) {
       var actionBtn = event.target.closest("button[data-action]");
       if (!(actionBtn instanceof HTMLElement)) {
@@ -1326,6 +1478,9 @@
           setStatus("User unbanned: " + email, "ok");
           setSessionStatus("Unban action recorded.");
         } else if (action === "delete") {
+          if (!isAdminRole(currentStaffRole)) {
+            throw new Error("Only admins can delete accounts.");
+          }
           await deleteUser(userId, email);
           setStatus("User deleted: " + email, "ok");
           setSessionStatus("Delete action recorded.");
@@ -1558,6 +1713,51 @@
       }
     });
 
+    if (applyStaffRoleBtn) {
+      applyStaffRoleBtn.addEventListener("click", async function () {
+        try {
+          await applySelectedStaffRole();
+          setStatus("Staff roles updated.", "ok");
+          setSessionStatus("Staff role change recorded.");
+          await fetchUsers();
+          await fetchActivity({ resetOffset: true });
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Staff role update failed.", "error");
+        }
+      });
+    }
+
+    if (selectStaffEmailBtn) {
+      selectStaffEmailBtn.addEventListener("click", function () {
+        try {
+          selectUserByEmail(staffRoleEmailInput ? staffRoleEmailInput.value : "");
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Could not select user by email.", "error");
+        }
+      });
+    }
+
+    function wireQuickRoleButton(button, role, okMessage) {
+      if (!button) {
+        return;
+      }
+      button.addEventListener("click", async function () {
+        try {
+          var emailValue = staffRoleEmailInput ? staffRoleEmailInput.value : "";
+          await applyStaffRoleByEmail(emailValue, role);
+          setStatus(okMessage, "ok");
+          await fetchUsers();
+          await fetchActivity({ resetOffset: true });
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Role update failed.", "error");
+        }
+      });
+    }
+
+    wireQuickRoleButton(makeModeratorBtn, "moderator", "Moderator role updated.");
+    wireQuickRoleButton(makeAdminBtn, "admin", "Admin role updated.");
+    wireQuickRoleButton(removeStaffBtn, "none", "Staff roles removed.");
+
     auditNote.addEventListener("input", function () {
       setSessionStatus(getCurrentAuditNote() ? "Audit note updated." : "No action selected yet.");
     });
@@ -1577,6 +1777,7 @@
         var auth = await supabaseClient.auth.getUser();
         var user = auth && auth.data ? auth.data.user : null;
         var email = user && user.email ? user.email : "";
+        var role = "";
 
         if (!user) {
           setStatus("Sign in required. Redirecting...", "warn");
@@ -1584,12 +1785,24 @@
           return;
         }
 
-        if (!isAdminEmail(email)) {
-          setStatus("This account is not on the admin allowlist.", "error");
+        if (isAdminEmail(email)) {
+          role = "admin";
+        } else {
+          role = await getCurrentStaffRole();
+        }
+
+        currentStaffRole = role;
+
+        if (!isAdminRole(role) && !isModeratorRole(role)) {
+          setStatus("This account is not on the admin or moderator list.", "error");
           return;
         }
 
-        setSessionStatus("Signed in as " + email + ".");
+        if (staffRoleBox && !isAdminRole(role)) {
+          staffRoleBox.hidden = true;
+        }
+
+        setSessionStatus("Signed in as " + email + (role ? " (" + role + ")" : "") + ".");
         await fetchUsers();
         await fetchActivity({ resetOffset: true });
       } catch (error) {
