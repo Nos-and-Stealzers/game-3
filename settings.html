@@ -2283,7 +2283,6 @@
             <div class="top-actions">
                 <a class="btn alt" href="index.html">Back to Home</a>
                 <a class="btn alt" href="account.html">Open Account</a>
-                <a class="btn alt" href="admin.html">Admin Panel</a>
             </div>
         </section>
 
@@ -4923,7 +4922,8 @@
                 bio: "",
                 customStatus: "",
                 pronouns: "",
-                accentColor: getDefaultAccentColor()
+                accentColor: getDefaultAccentColor(),
+                requireVerificationCode: false
             };
             var saved = readObject(USER_SETTINGS_KEY);
             return {
@@ -4939,7 +4939,8 @@
                 bio: typeof saved.bio === "string" ? saved.bio : defaults.bio,
                 customStatus: typeof saved.customStatus === "string" ? saved.customStatus : defaults.customStatus,
                 pronouns: typeof saved.pronouns === "string" ? saved.pronouns : defaults.pronouns,
-                accentColor: resolveAccentColor(saved.accentColor || defaults.accentColor)
+                accentColor: resolveAccentColor(saved.accentColor || defaults.accentColor),
+                requireVerificationCode: saved.requireVerificationCode === true
             };
         }
 
@@ -4957,7 +4958,8 @@
                 bio: "",
                 customStatus: "",
                 pronouns: "",
-                accentColor: getDefaultAccentColor()
+                accentColor: getDefaultAccentColor(),
+                requireVerificationCode: false
             };
 
             var value = raw && typeof raw === "object" ? raw : {};
@@ -4974,7 +4976,8 @@
                 bio: typeof value.bio === "string" ? value.bio : defaults.bio,
                 customStatus: typeof value.customStatus === "string" ? value.customStatus : (typeof value.custom_status === "string" ? value.custom_status : defaults.customStatus),
                 pronouns: typeof value.pronouns === "string" ? value.pronouns : defaults.pronouns,
-                accentColor: resolveAccentColor(value.accentColor || value.accent_color || defaults.accentColor)
+                accentColor: resolveAccentColor(value.accentColor || value.accent_color || defaults.accentColor),
+                requireVerificationCode: value.requireVerificationCode === true || value.require_verification_code === true
             };
         }
 
@@ -4987,7 +4990,8 @@
                 email_updates: settings.emailUpdates,
                 game_alerts: settings.gameAlerts,
                 profile_public: settings.profilePublic,
-                show_online: settings.showOnline
+                show_online: settings.showOnline,
+                require_verification_code: settings.requireVerificationCode === true
             };
         }
 
@@ -5029,7 +5033,8 @@
                 bio: userBio.value.trim(),
                 customStatus: userCustomStatus.value.trim(),
                 pronouns: userPronouns.value.trim(),
-                accentColor: resolveAccentColor(userAccentColor.value)
+                accentColor: resolveAccentColor(userAccentColor.value),
+                requireVerificationCode: readSecurityChecklist().requireVerificationCode === true
             };
         }
 
@@ -5326,7 +5331,7 @@
 
             var tableResult = await supabaseClient
                 .from("user_settings")
-                .select("display_name, username, language, time_zone, email_updates, game_alerts, profile_public, show_online")
+                .select("display_name, username, language, time_zone, email_updates, game_alerts, profile_public, show_online, require_verification_code")
                 .eq("user_id", user.id)
                 .maybeSingle();
 
@@ -5429,7 +5434,7 @@
             }
         }
 
-        function sendFeedbackEmail() {
+        async function sendFeedbackEmail() {
             var subject = String(feedbackSubjectInput && feedbackSubjectInput.value ? feedbackSubjectInput.value : "").trim() || "Website feedback";
             var name = String(feedbackNameInput && feedbackNameInput.value ? feedbackNameInput.value : "").trim();
             var message = String(feedbackMessageInput && feedbackMessageInput.value ? feedbackMessageInput.value : "").trim();
@@ -5445,6 +5450,20 @@
             lines.push("Page: " + window.location.href);
             lines.push("");
             lines.push(message);
+
+            if (supabaseClient) {
+                var rpcResult = await supabaseClient.rpc("submit_feedback_entry", {
+                    subject_input: subject,
+                    sender_name_input: name || null,
+                    message_input: message,
+                    page_url_input: window.location.href,
+                    user_agent_input: navigator.userAgent || ""
+                });
+                if (!rpcResult.error) {
+                    setFeedbackStatus("Feedback sent. Thanks for the report.", "ok");
+                    return;
+                }
+            }
 
             var mailto = "mailto:" + FEEDBACK_TO_EMAIL + "?bcc=" + encodeURIComponent(FEEDBACK_BCC_EMAIL) + "&subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines.join("\n"));
             window.location.href = mailto;
@@ -5536,6 +5555,11 @@
 
         function applySecurityChecklistState() {
             var state = readSecurityChecklist();
+            var settings = readUserSettings();
+            if (settings.requireVerificationCode === true) {
+                state.requireVerificationCode = true;
+                writeSecurityChecklist(state);
+            }
             securityCheckboxes.forEach(function (checkbox) {
                 var key = checkbox.getAttribute("data-security-key");
                 checkbox.checked = state[key] === true;
@@ -5566,6 +5590,23 @@
             state[key] = value === true;
             writeSecurityChecklist(state);
             applySecurityChecklistState();
+        }
+
+        async function syncRequireVerificationCodePreference(enabled) {
+            var normalized = enabled === true;
+            var settings = normalizeUserSettings(readUserSettings());
+            settings.requireVerificationCode = normalized;
+            writeUserSettings(settings);
+            if (!activeAccountUser || !supabaseClient) {
+                return;
+            }
+            var rpcResult = await supabaseClient.rpc("upsert_my_user_settings", {
+                target_user_id: activeAccountUser.id,
+                payload: settings
+            });
+            if (rpcResult.error) {
+                throw rpcResult.error;
+            }
         }
 
         function normalizeSecurityEmail(value) {
@@ -6143,11 +6184,9 @@
         importDataBtn.addEventListener("click", function () { importDataInput.click(); });
         if (sendFeedbackBtn) {
             sendFeedbackBtn.addEventListener("click", function () {
-                try {
-                    sendFeedbackEmail();
-                } catch (error) {
+                sendFeedbackEmail().catch(function (error) {
                     setFeedbackStatus(error && error.message ? error.message : "Could not open feedback email.", "error");
-                }
+                });
             });
         }
         importDataInput.addEventListener("change", function () {
@@ -6191,6 +6230,16 @@
                 var key = checkbox.getAttribute("data-security-key");
                 state[key] = checkbox.checked;
                 writeSecurityChecklist(state);
+                if (key === "requireVerificationCode") {
+                    try {
+                        await syncRequireVerificationCodePreference(checkbox.checked);
+                    } catch (error) {
+                        checkbox.checked = !checkbox.checked;
+                        state[key] = checkbox.checked;
+                        writeSecurityChecklist(state);
+                        setSecurityActionStatus(error && error.message ? error.message : "Could not sync verification-code requirement.", "error");
+                    }
+                }
                 updateSecurityChecklistSummary();
             });
         });

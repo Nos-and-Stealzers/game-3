@@ -3,6 +3,7 @@
   var LOCAL_SAVE_UPDATED_KEY = "gamehub_local_last_saved";
   var HUB_PREFIX = "gamehub_";
   var SAVE_INTERVAL_MS = 1500;
+  var SIGN_IN_REDIRECT_URL = "/account.html";
 
   function inferGameId() {
     var path = String(window.location.pathname || "").toLowerCase();
@@ -178,35 +179,70 @@
     return currentSnapshot;
   }
 
+  async function ensureSignedInUser() {
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+      return null;
+    }
+
+    var cfg = window.__GAMEHUB_SUPABASE__ || {};
+    if (!cfg.url || !cfg.anonKey) {
+      window.location.replace(SIGN_IN_REDIRECT_URL);
+      return null;
+    }
+
+    var client = window.__GAMEHUB_SIGNIN_CLIENT__;
+    if (!client) {
+      client = window.__GAMEHUB_SIGNIN_CLIENT__ = window.supabase.createClient(cfg.url, cfg.anonKey);
+    }
+
+    var auth = await client.auth.getUser();
+    var user = auth && auth.data ? auth.data.user : null;
+    if (!user) {
+      window.location.replace(SIGN_IN_REDIRECT_URL);
+      return null;
+    }
+
+    return user;
+  }
+
+  async function startGameSaveSync(gameId) {
+    var signedInUser = await ensureSignedInUser();
+    if (!signedInUser) {
+      return;
+    }
+
+    applyImportedState(gameId);
+
+    var lastSnapshot = snapshotTrackedStorage();
+    window.__GAMEHUB_GENERIC_SAVE_SYNC__ = {
+      gameId: gameId,
+      storageKey: GAME_SAVES_KEY
+    };
+
+    setInterval(function () {
+      lastSnapshot = persistChanges(gameId, lastSnapshot);
+    }, SAVE_INTERVAL_MS);
+
+    window.addEventListener("beforeunload", function () {
+      lastSnapshot = persistChanges(gameId, lastSnapshot);
+    });
+
+    window.addEventListener("pagehide", function () {
+      lastSnapshot = persistChanges(gameId, lastSnapshot);
+    });
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState !== "hidden") {
+        return;
+      }
+      lastSnapshot = persistChanges(gameId, lastSnapshot);
+    });
+  }
+
   var gameId = inferGameId();
   if (!gameId) {
     return;
   }
 
-  applyImportedState(gameId);
-
-  var lastSnapshot = snapshotTrackedStorage();
-  window.__GAMEHUB_GENERIC_SAVE_SYNC__ = {
-    gameId: gameId,
-    storageKey: GAME_SAVES_KEY
-  };
-
-  setInterval(function () {
-    lastSnapshot = persistChanges(gameId, lastSnapshot);
-  }, SAVE_INTERVAL_MS);
-
-  window.addEventListener("beforeunload", function () {
-    lastSnapshot = persistChanges(gameId, lastSnapshot);
-  });
-
-  window.addEventListener("pagehide", function () {
-    lastSnapshot = persistChanges(gameId, lastSnapshot);
-  });
-
-  document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState !== "hidden") {
-      return;
-    }
-    lastSnapshot = persistChanges(gameId, lastSnapshot);
-  });
+  startGameSaveSync(gameId);
 })();

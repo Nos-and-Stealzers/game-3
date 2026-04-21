@@ -37,10 +37,15 @@
       place-items: start center;
       font-family: "Sora", "Segoe UI", sans-serif;
       color: var(--text);
+      visibility: hidden;
       background:
         radial-gradient(circle at 0% 0%, rgba(8, 93, 255, 0.16) 0, rgba(8, 93, 255, 0) 34%),
         radial-gradient(circle at 100% 100%, rgba(3, 72, 176, 0.12) 0, rgba(3, 72, 176, 0) 36%),
         var(--bg);
+    }
+
+    body.admin-ready {
+      visibility: visible;
     }
 
     .shell {
@@ -610,6 +615,7 @@
         <button type="button" class="tab-btn active" data-admin-tab="overview">Overview</button>
         <button type="button" class="tab-btn" data-admin-tab="users">Users</button>
         <button type="button" class="tab-btn" data-admin-tab="activity">Activity</button>
+        <button type="button" class="tab-btn" data-admin-tab="feedback">Feedback</button>
         <button type="button" class="tab-btn" data-admin-tab="tools">Tools</button>
         <button type="button" class="tab-btn" data-admin-tab="developer" id="developerTabBtn">Developer</button>
       </nav>
@@ -761,6 +767,31 @@
         </section>
       </section>
 
+      <section class="tab-panel" data-admin-tab-panel="feedback" hidden>
+        <section class="panel table-panel">
+          <h2>User Feedback</h2>
+          <p class="subtle">Latest feedback reports submitted from the site feedback forms.</p>
+          <div class="inline-actions">
+            <button id="refreshFeedbackBtn" type="button" class="btn primary">Refresh Feedback</button>
+            <span id="feedbackMeta" class="toolbar-note">Loading feedback...</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>User</th>
+                  <th>Subject</th>
+                  <th>Message</th>
+                  <th>Page</th>
+                </tr>
+              </thead>
+              <tbody id="feedbackRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
       <section class="tab-panel" data-admin-tab-panel="tools" hidden>
         <div class="utility-grid">
           <article class="panel utility-box">
@@ -815,6 +846,21 @@
               <button id="openSupabaseDashboardBtn" type="button" class="btn">Open Supabase Dashboard</button>
               <button id="openSupabaseLogsBtn" type="button" class="btn">Open Supabase Logs</button>
             </div>
+          </article>
+          <article id="gameVisibilityBox" class="panel utility-box">
+            <strong>Game Visibility</strong>
+            <p>Admins and developers can hide a broken game from public catalog results until it is fixed.</p>
+            <div class="inline-actions">
+              <input id="gameVisibilityIdInput" class="input" type="text" placeholder="Game ID, e.g. fnaf-1" autocomplete="off">
+              <input id="gameVisibilityReasonInput" class="input" type="text" placeholder="Reason (optional)" autocomplete="off">
+            </div>
+            <div class="inline-actions">
+              <button id="hideGameBtn" type="button" class="btn warn">Hide Game</button>
+              <button id="unhideGameBtn" type="button" class="btn">Unhide Game</button>
+              <button id="refreshGameOverridesBtn" type="button" class="btn">Refresh Overrides</button>
+            </div>
+            <div id="gameVisibilityMeta" class="toolbar-note">No overrides loaded yet.</div>
+            <div id="gameVisibilityList" class="small">No hidden games.</div>
           </article>
           <article class="panel utility-box">
             <strong>Audit note</strong>
@@ -887,6 +933,14 @@
     var copySelectedIdsBtn = document.getElementById("copySelectedIdsBtn");
     var openSupabaseDashboardBtn = document.getElementById("openSupabaseDashboardBtn");
     var openSupabaseLogsBtn = document.getElementById("openSupabaseLogsBtn");
+    var gameVisibilityBox = document.getElementById("gameVisibilityBox");
+    var gameVisibilityIdInput = document.getElementById("gameVisibilityIdInput");
+    var gameVisibilityReasonInput = document.getElementById("gameVisibilityReasonInput");
+    var hideGameBtn = document.getElementById("hideGameBtn");
+    var unhideGameBtn = document.getElementById("unhideGameBtn");
+    var refreshGameOverridesBtn = document.getElementById("refreshGameOverridesBtn");
+    var gameVisibilityMeta = document.getElementById("gameVisibilityMeta");
+    var gameVisibilityList = document.getElementById("gameVisibilityList");
     var developerTabBtn = document.getElementById("developerTabBtn");
     var developerTabPanel = document.getElementById("developerTabPanel");
     var runDeveloperHealthBtn = document.getElementById("runDeveloperHealthBtn");
@@ -898,6 +952,10 @@
     var refreshActivityBtn = document.getElementById("refreshActivityBtn");
     var activityMeta = document.getElementById("activityMeta");
     var activityRows = document.getElementById("activityRows");
+    var refreshFeedbackBtn = document.getElementById("refreshFeedbackBtn");
+    var feedbackMeta = document.getElementById("feedbackMeta");
+    var feedbackRows = document.getElementById("feedbackRows");
+    var feedbackRealtimeChannel = null;
     var activityActionFilter = document.getElementById("activityActionFilter");
     var activityActorFilter = document.getElementById("activityActorFilter");
     var activityTargetFilter = document.getElementById("activityTargetFilter");
@@ -933,6 +991,8 @@
     var supabaseClient = null;
     var allUsers = [];
     var activityItems = [];
+    var feedbackItems = [];
+    var gameVisibilityOverrides = [];
     var lastLoadedAt = "";
     var selectedUserIds = {};
     var adminLiveRefreshTimer = null;
@@ -1020,7 +1080,7 @@
     }
 
     function setActiveAdminTab(tabName) {
-      var activeTab = ["overview", "users", "activity", "tools", "developer"].indexOf(tabName) !== -1 ? tabName : "overview";
+      var activeTab = ["overview", "users", "activity", "feedback", "tools", "developer"].indexOf(tabName) !== -1 ? tabName : "overview";
       adminTabs.forEach(function (button) {
         var isActive = button.getAttribute("data-admin-tab") === activeTab;
         button.classList.toggle("active", isActive);
@@ -1030,6 +1090,12 @@
       });
       if (activeTab === "activity") {
         fetchActivity().catch(function () {});
+      }
+      if (activeTab === "feedback") {
+        fetchFeedback().catch(function () {});
+      }
+      if (activeTab === "tools") {
+        fetchGameVisibilityOverrides().catch(function () {});
       }
       if (activeTab === "developer") {
         renderRoleMatrix();
@@ -1578,6 +1644,93 @@
       }
     }
 
+    async function fetchFeedback() {
+      if (!supabaseClient) {
+        return;
+      }
+      var result = await supabaseClient.rpc("admin_list_feedback", {
+        limit_count: 200,
+        offset_count: 0
+      });
+      if (result.error) {
+        throw result.error;
+      }
+      feedbackItems = Array.isArray(result.data) ? result.data : [];
+      feedbackRows.innerHTML = feedbackItems.length ? feedbackItems.map(function (item) {
+        return [
+          '<tr>',
+          '<td>' + escapeHtml(formatDate(item.created_at)) + '</td>',
+          '<td><div class="small">' + escapeHtml(item.user_email || item.sender_name || "anonymous") + '</div></td>',
+          '<td><div class="small">' + escapeHtml(item.subject || "(no subject)") + '</div></td>',
+          '<td><div class="small">' + escapeHtml(item.message || "") + '</div></td>',
+          '<td><div class="small">' + escapeHtml(item.page_url || "-") + '</div></td>',
+          '</tr>'
+        ].join('');
+      }).join('') : '<tr><td colspan="5" class="small">No feedback submissions yet.</td></tr>';
+      feedbackMeta.textContent = 'Loaded ' + feedbackItems.length + ' feedback item(s).';
+    }
+
+    function startFeedbackRealtime() {
+      if (!supabaseClient || typeof supabaseClient.channel !== 'function' || feedbackRealtimeChannel) {
+        return;
+      }
+
+      feedbackRealtimeChannel = supabaseClient
+        .channel('admin-feedback-live')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'feedback_entries'
+        }, function () {
+          if (document.querySelector('[data-admin-tab="feedback"].active')) {
+            fetchFeedback().catch(function () {});
+          }
+        })
+        .subscribe();
+    }
+
+    async function fetchGameVisibilityOverrides() {
+      if (!supabaseClient || !gameVisibilityList) {
+        return;
+      }
+      var result = await supabaseClient.rpc("list_game_visibility_overrides");
+      if (result.error) {
+        throw result.error;
+      }
+      gameVisibilityOverrides = Array.isArray(result.data) ? result.data : [];
+      if (!gameVisibilityOverrides.length) {
+        gameVisibilityList.textContent = 'No game visibility overrides found.';
+        gameVisibilityMeta.textContent = 'No hidden games.';
+        return;
+      }
+      gameVisibilityList.innerHTML = gameVisibilityOverrides.map(function (item) {
+        var state = item.is_hidden ? 'Hidden' : 'Visible';
+        var reason = item.reason ? (' - ' + item.reason) : '';
+        return '<div>' + escapeHtml(item.game_id + ': ' + state + reason) + '</div>';
+      }).join('');
+      gameVisibilityMeta.textContent = 'Loaded ' + gameVisibilityOverrides.length + ' override(s).';
+    }
+
+    async function setGameVisibility(hiddenValue) {
+      if (!supabaseClient) {
+        throw new Error('Supabase client is not ready.');
+      }
+      var gameId = String(gameVisibilityIdInput && gameVisibilityIdInput.value ? gameVisibilityIdInput.value : '').trim().toLowerCase();
+      var reason = String(gameVisibilityReasonInput && gameVisibilityReasonInput.value ? gameVisibilityReasonInput.value : '').trim();
+      if (!gameId) {
+        throw new Error('Enter a game ID first.');
+      }
+      var result = await supabaseClient.rpc('set_game_visibility_override', {
+        game_id_input: gameId,
+        hidden_input: hiddenValue === true,
+        reason_input: reason || null
+      });
+      if (result.error) {
+        throw result.error;
+      }
+      await fetchGameVisibilityOverrides();
+    }
+
     function startAdminLiveRefresh() {
       if (adminLiveRefreshTimer) {
         clearInterval(adminLiveRefreshTimer);
@@ -1589,6 +1742,12 @@
         fetchUsers({ silent: true }).catch(function () {});
         if (document.querySelector('[data-admin-tab="activity"].active')) {
           fetchActivity().catch(function () {});
+        }
+        if (document.querySelector('[data-admin-tab="feedback"].active')) {
+          fetchFeedback().catch(function () {});
+        }
+        if (document.querySelector('[data-admin-tab="tools"].active')) {
+          fetchGameVisibilityOverrides().catch(function () {});
         }
       }, ADMIN_LIVE_REFRESH_MS);
     }
@@ -1632,6 +1791,17 @@
     async function setUserStaffRole(userId, role, enabled) {
       var result = await supabaseClient.rpc("admin_set_staff_role", {
         target_user_id: userId,
+        role: role,
+        enabled: enabled
+      });
+      if (result.error) {
+        throw result.error;
+      }
+    }
+
+    async function setUserStaffRoleByEmail(emailValue, role, enabled) {
+      var result = await supabaseClient.rpc("admin_set_staff_role_by_email", {
+        target_email: emailValue,
         role: role,
         enabled: enabled
       });
@@ -1700,41 +1870,71 @@
     }
 
     async function applyStaffRoleByEmail(emailValue, desiredRole) {
-      var match = selectUserByEmail(emailValue);
-      var userId = String(match.user_id || "");
-      if (!userId) {
-        throw new Error("User ID not found for that email.");
+      var normalizedEmail = String(emailValue || "").trim().toLowerCase();
+      if (!normalizedEmail) {
+        throw new Error("Enter an email address first.");
+      }
+
+      var match = null;
+      try {
+        match = selectUserByEmail(normalizedEmail);
+      } catch (error) {
+        match = null;
       }
 
       if (desiredRole === "none") {
-        await setUserStaffRole(userId, "developer", false);
-        await setUserStaffRole(userId, "admin", false);
-        await setUserStaffRole(userId, "moderator", false);
-        setSessionStatus("Removed staff roles for " + String(match.email || emailValue) + ".");
+        if (match && match.user_id) {
+          await setUserStaffRole(String(match.user_id), "developer", false);
+          await setUserStaffRole(String(match.user_id), "admin", false);
+          await setUserStaffRole(String(match.user_id), "moderator", false);
+        } else {
+          await setUserStaffRoleByEmail(normalizedEmail, "developer", false);
+          await setUserStaffRoleByEmail(normalizedEmail, "admin", false);
+          await setUserStaffRoleByEmail(normalizedEmail, "moderator", false);
+        }
+        setSessionStatus("Removed staff roles for " + String((match && match.email) || normalizedEmail) + ".");
         return;
       }
 
       if (desiredRole === "admin") {
-        await setUserStaffRole(userId, "developer", false);
-        await setUserStaffRole(userId, "moderator", false);
-        await setUserStaffRole(userId, "admin", true);
-        setSessionStatus("Set admin role for " + String(match.email || emailValue) + ".");
+        if (match && match.user_id) {
+          await setUserStaffRole(String(match.user_id), "developer", false);
+          await setUserStaffRole(String(match.user_id), "moderator", false);
+          await setUserStaffRole(String(match.user_id), "admin", true);
+        } else {
+          await setUserStaffRoleByEmail(normalizedEmail, "developer", false);
+          await setUserStaffRoleByEmail(normalizedEmail, "moderator", false);
+          await setUserStaffRoleByEmail(normalizedEmail, "admin", true);
+        }
+        setSessionStatus("Set admin role for " + String((match && match.email) || normalizedEmail) + ".");
         return;
       }
 
       if (desiredRole === "moderator") {
-        await setUserStaffRole(userId, "developer", false);
-        await setUserStaffRole(userId, "admin", false);
-        await setUserStaffRole(userId, "moderator", true);
-        setSessionStatus("Set moderator role for " + String(match.email || emailValue) + ".");
+        if (match && match.user_id) {
+          await setUserStaffRole(String(match.user_id), "developer", false);
+          await setUserStaffRole(String(match.user_id), "admin", false);
+          await setUserStaffRole(String(match.user_id), "moderator", true);
+        } else {
+          await setUserStaffRoleByEmail(normalizedEmail, "developer", false);
+          await setUserStaffRoleByEmail(normalizedEmail, "admin", false);
+          await setUserStaffRoleByEmail(normalizedEmail, "moderator", true);
+        }
+        setSessionStatus("Set moderator role for " + String((match && match.email) || normalizedEmail) + ".");
         return;
       }
 
       if (desiredRole === "developer") {
-        await setUserStaffRole(userId, "admin", false);
-        await setUserStaffRole(userId, "moderator", false);
-        await setUserStaffRole(userId, "developer", true);
-        setSessionStatus("Set developer role for " + String(match.email || emailValue) + ".");
+        if (match && match.user_id) {
+          await setUserStaffRole(String(match.user_id), "admin", false);
+          await setUserStaffRole(String(match.user_id), "moderator", false);
+          await setUserStaffRole(String(match.user_id), "developer", true);
+        } else {
+          await setUserStaffRoleByEmail(normalizedEmail, "admin", false);
+          await setUserStaffRoleByEmail(normalizedEmail, "moderator", false);
+          await setUserStaffRoleByEmail(normalizedEmail, "developer", true);
+        }
+        setSessionStatus("Set developer role for " + String((match && match.email) || normalizedEmail) + ".");
         return;
       }
 
@@ -1868,6 +2068,8 @@
       try {
         await fetchUsers();
         await fetchActivity();
+        await fetchFeedback();
+        await fetchGameVisibilityOverrides();
       } catch (error) {
         setStatus(error && error.message ? error.message : "Unable to refresh users.", "error");
       }
@@ -1880,6 +2082,48 @@
         setStatus(error && error.message ? error.message : "Unable to refresh activity.", "error");
       }
     });
+
+    if (refreshFeedbackBtn) {
+      refreshFeedbackBtn.addEventListener("click", async function () {
+        try {
+          await fetchFeedback();
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Unable to refresh feedback.", "error");
+        }
+      });
+    }
+
+    if (refreshGameOverridesBtn) {
+      refreshGameOverridesBtn.addEventListener("click", async function () {
+        try {
+          await fetchGameVisibilityOverrides();
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Unable to refresh game visibility overrides.", "error");
+        }
+      });
+    }
+
+    if (hideGameBtn) {
+      hideGameBtn.addEventListener("click", async function () {
+        try {
+          await setGameVisibility(true);
+          setStatus("Game hidden from public catalog.", "ok");
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Could not hide game.", "error");
+        }
+      });
+    }
+
+    if (unhideGameBtn) {
+      unhideGameBtn.addEventListener("click", async function () {
+        try {
+          await setGameVisibility(false);
+          setStatus("Game is now visible in the public catalog.", "ok");
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Could not unhide game.", "error");
+        }
+      });
+    }
 
     applyActivityFiltersBtn.addEventListener("click", async function () {
       try {
@@ -2231,7 +2475,6 @@
         var role = "";
 
         if (!user) {
-          setStatus("Sign in required. Redirecting...", "warn");
           window.location.href = "account.html";
           return;
         }
@@ -2245,9 +2488,11 @@
         currentStaffRole = role;
 
         if (!isAdminRole(role) && !isModeratorRole(role) && !isDeveloperRole(role)) {
-          setStatus("This account is not on the admin, moderator, or developer list.", "error");
+          window.location.href = "account.html";
           return;
         }
+
+        document.body.classList.add("admin-ready");
 
         if (staffRoleBox && !canManageStaffRoles(role)) {
           staffRoleBox.hidden = true;
@@ -2255,6 +2500,10 @@
 
         if (developerToolBox && !isDeveloperRole(role) && !isAdminRole(role)) {
           developerToolBox.hidden = true;
+        }
+
+        if (gameVisibilityBox && !isDeveloperRole(role) && !isAdminRole(role)) {
+          gameVisibilityBox.hidden = true;
         }
 
         if (developerTabBtn && !isDeveloperRole(role) && !isAdminRole(role)) {
@@ -2267,8 +2516,11 @@
 
         setSessionStatus("Signed in as " + email + (role ? " (" + role + ")" : "") + ".");
         renderRoleMatrix();
+        startFeedbackRealtime();
         await fetchUsers();
         await fetchActivity({ resetOffset: true });
+        await fetchFeedback();
+        await fetchGameVisibilityOverrides();
       } catch (error) {
         setStatus(error && error.message ? error.message : "Admin panel init failed.", "error");
       }

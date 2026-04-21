@@ -189,6 +189,24 @@ as $$
   select public.current_user_staff_role() in ('admin', 'moderator');
 $$;
 
+create or replace function public.public_online_user_count()
+returns integer
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select count(*)::integer
+  from public.user_presence pres
+  left join public.user_profiles prof on prof.user_id = pres.user_id
+  left join public.user_settings settings on settings.user_id = pres.user_id
+  where coalesce(settings.show_online, true)
+    and coalesce(prof.banned, false) = false
+    and pres.updated_at is not null
+    and pres.updated_at > now() - interval '15 minutes'
+    and coalesce(pres.status, 'offline') in ('online', 'playing');
+$$;
+
 create or replace function public.sync_user_profile()
 returns trigger
 language plpgsql
@@ -1066,6 +1084,33 @@ begin
 end;
 $$;
 
+create or replace function public.admin_set_staff_role_by_email(target_email text, role text, enabled boolean default true)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  target_user_id uuid;
+begin
+  if not public.current_user_is_admin() then
+    raise exception 'Not authorized.';
+  end if;
+
+  select u.id
+  into target_user_id
+  from auth.users u
+  where lower(trim(coalesce(u.email, ''))) = lower(trim(coalesce(target_email, '')))
+  limit 1;
+
+  if target_user_id is null then
+    raise exception 'User not found.';
+  end if;
+
+  return public.admin_set_staff_role(target_user_id, role, enabled);
+end;
+$$;
+
 create or replace function public.admin_delete_account(target_user_id uuid)
 returns boolean
 language plpgsql
@@ -1110,21 +1155,26 @@ revoke all on function public.admin_list_users() from public;
 revoke all on function public.admin_list_activity(integer, integer) from public;
 revoke all on function public.admin_list_activity_filtered(integer, integer, text, text, text, timestamptz, timestamptz) from public;
 revoke all on function public.admin_set_staff_role(uuid, text, boolean) from public;
+revoke all on function public.admin_set_staff_role_by_email(text, text, boolean) from public;
 revoke all on function public.admin_set_ban(uuid, boolean, text) from public;
 revoke all on function public.admin_delete_account(uuid) from public;
 revoke all on function public.admin_log_action(uuid, text, text, jsonb) from public;
 revoke all on function public.current_user_staff_role() from public;
 revoke all on function public.current_user_is_moderator() from public;
+revoke all on function public.public_online_user_count() from public;
 
 grant execute on function public.admin_list_users() to authenticated;
 grant execute on function public.admin_list_activity(integer, integer) to authenticated;
 grant execute on function public.admin_list_activity_filtered(integer, integer, text, text, text, timestamptz, timestamptz) to authenticated;
 grant execute on function public.admin_set_staff_role(uuid, text, boolean) to authenticated;
+grant execute on function public.admin_set_staff_role_by_email(text, text, boolean) to authenticated;
 grant execute on function public.admin_set_ban(uuid, boolean, text) to authenticated;
 grant execute on function public.admin_delete_account(uuid) to authenticated;
 grant execute on function public.admin_log_action(uuid, text, text, jsonb) to authenticated;
 grant execute on function public.current_user_staff_role() to authenticated;
 grant execute on function public.current_user_is_moderator() to authenticated;
+grant execute on function public.public_online_user_count() to anon;
+grant execute on function public.public_online_user_count() to authenticated;
 grant execute on function public.upsert_my_user_settings(uuid, jsonb) to authenticated;
 grant execute on function public.upsert_my_presence(text, text, text, boolean) to authenticated;
 grant execute on function public.upsert_friend_link(text, text, boolean) to authenticated;

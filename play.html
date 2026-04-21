@@ -250,7 +250,6 @@
         <div class="actions">
             <a class="btn alt" href="index.html">Back to Library</a>
             <a class="btn alt" href="settings.html">Settings</a>
-            <a class="btn alt" href="admin.html">Admin</a>
             <a class="btn alt" href="mailto:lucasgrimm854@gmail.com?bcc=stealzers.com%40gmail.com&subject=Arcade%20feedback">Feedback</a>
             <button id="fullscreenBtn" type="button" class="btn alt">Fullscreen</button>
             <a id="openDirect" class="btn" href="#" target="_blank" rel="noopener noreferrer">Open Direct</a>
@@ -272,6 +271,17 @@
         var PERFORMANCE_PROFILE_KEY = "gamehub_performance_profile";
         var DIRECT_LAUNCH_THRESHOLD_MB_KEY = "gamehub_direct_launch_threshold_mb";
         var CATALOG_VERSION = "20260415-4";
+        var PROTECTED_GAME_IDS = {
+            "fnaf-1": true,
+            "fnaf-2": true,
+            "fnaf-3": true,
+            "fnaf-4": true,
+            "fnaf-world": true,
+            "fnaf-sl": true,
+            "fnaf-ps": true,
+            "fnaf-ucn": true,
+            "retro-bowl-plus": true
+        };
 
         var storageFallback = {};
 
@@ -398,6 +408,29 @@
             }
         }
 
+        function isProtectedGame(game) {
+            return !!(game && game.id && PROTECTED_GAME_IDS[game.id]);
+        }
+
+        async function ensureSignedInUser() {
+            if (!window.supabase || typeof window.supabase.createClient !== "function") {
+                return null;
+            }
+
+            var cfg = window.__GAMEHUB_SUPABASE__ || {};
+            if (!cfg.url || !cfg.anonKey) {
+                return null;
+            }
+
+            var client = window.__GAMEHUB_SIGNIN_CLIENT__;
+            if (!client) {
+                client = window.__GAMEHUB_SIGNIN_CLIENT__ = window.supabase.createClient(cfg.url, cfg.anonKey);
+            }
+
+            var auth = await client.auth.getUser();
+            return auth && auth.data ? auth.data.user : null;
+        }
+
         function shouldSkipEmbed(game) {
             return game && game.embed === "blocked";
         }
@@ -510,6 +543,15 @@
                 games.find(function (item) { return item.id === "snow-rider"; }) ||
                 buildFallbackGame();
 
+            if (isProtectedGame(game)) {
+                var signedInUser = await ensureSignedInUser();
+                if (!signedInUser) {
+                    setStatus("warn", "Sign in required to play this game.");
+                    window.location.replace("account.html");
+                    return;
+                }
+            }
+
             titleEl.textContent = "Now Playing: " + game.title;
             window.__GAMEHUB_CURRENT_GAME__ = {
                 id: game.id,
@@ -565,11 +607,16 @@
             }, 9000);
         }
 
-        initPlayer();
+        window.__GAMEHUB_PLAY_INIT__ = initPlayer;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.config.js"></script>
     <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { intervalMs: 60000, captureIndexedDb: true };</script>
     <script src="js/cloud-autosync.js"></script>
+    <script>
+        if (window.__GAMEHUB_PLAY_INIT__) {
+            window.__GAMEHUB_PLAY_INIT__();
+        }
+    </script>
 </body>
 </html>

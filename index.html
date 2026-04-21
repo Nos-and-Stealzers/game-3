@@ -995,7 +995,6 @@
             <div class="logo">Classroom 6X Arcade</div>
             <div class="header-actions">
                 <div id="modeBadge" class="badge">Local-First Mode</div>
-                <a href="admin.html" class="icon-btn settings-cta">Admin</a>
                 <a href="settings.html" class="icon-btn settings-cta"><span class="settings-icon" aria-hidden="true"></span><span class="settings-label">Settings</span></a>
             </div>
         </header>
@@ -1008,6 +1007,7 @@
                 <span class="pill">Embed warning labels</span>
                 <span class="pill">Light, Gray, Black themes</span>
                 <span class="pill">Fast mode for performance</span>
+                <span id="websitePeopleCount" class="pill">Website visitors: -- online</span>
             </div>
         </section>
 
@@ -1066,8 +1066,6 @@
                 <button id="openFeedbackBtn" type="button" class="feedback-trigger">Send Feedback</button>
                 |
                 <a href="privacy.html">Privacy and Terms</a>
-                |
-                <a href="admin.html">Admin Panel</a>
                 |
                 <a href="404.html">404 Page</a>
             </span>
@@ -1164,12 +1162,17 @@
         var playableOnlyToggle = document.getElementById("playableOnlyToggle");
         var saveDataStatus = document.getElementById("saveDataStatus");
         var cloudDataStatus = document.getElementById("cloudDataStatus");
+        var websitePeopleCount = document.getElementById("websitePeopleCount");
         var localSaveChip = document.getElementById("localSaveChip");
         var cloudSaveChip = document.getElementById("cloudSaveChip");
         var fnafSaveStatus = document.getElementById("fnafSaveStatus");
         var storageFallback = {};
         var supabaseClient = null;
         var cloudAutoSyncTimer = null;
+        var homePresenceTimer = null;
+        var homePresenceEventsBound = false;
+        var hiddenGameIds = {};
+        var currentStaffRole = "";
 
         var fastMode = false;
 
@@ -1206,7 +1209,7 @@
             feedbackModal.setAttribute("aria-hidden", "true");
         }
 
-        function sendFeedbackEmail() {
+        async function sendFeedbackEmail() {
             var subject = String(feedbackSubjectInput && feedbackSubjectInput.value ? feedbackSubjectInput.value : "").trim() || "Arcade feedback";
             var senderName = String(feedbackNameInput && feedbackNameInput.value ? feedbackNameInput.value : "").trim();
             var message = String(feedbackMessageInput && feedbackMessageInput.value ? feedbackMessageInput.value : "").trim();
@@ -1223,9 +1226,61 @@
             lines.push("");
             lines.push(message);
 
+            if (supabaseClient) {
+                var rpcResult = await supabaseClient.rpc("submit_feedback_entry", {
+                    subject_input: subject,
+                    sender_name_input: senderName || null,
+                    message_input: message,
+                    page_url_input: window.location.href,
+                    user_agent_input: navigator.userAgent || ""
+                });
+                if (!rpcResult.error) {
+                    setFeedbackStatus("Feedback sent. Thanks for the report.", "ok");
+                    return;
+                }
+            }
+
             var mailto = "mailto:" + FEEDBACK_TO_EMAIL + "?bcc=" + encodeURIComponent(FEEDBACK_BCC_EMAIL) + "&subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines.join("\n"));
             window.location.href = mailto;
             setFeedbackStatus("Your email app should open now.", "ok");
+        }
+
+        function isStaffRole(role) {
+            var normalized = String(role || "").trim().toLowerCase();
+            return normalized === "admin" || normalized === "moderator" || normalized === "developer" || normalized === "dev";
+        }
+
+        async function refreshStaffRole() {
+            if (!supabaseClient) {
+                currentStaffRole = "";
+                return;
+            }
+            try {
+                var roleResult = await supabaseClient.rpc("current_user_staff_role");
+                if (!roleResult.error) {
+                    currentStaffRole = String(roleResult.data || "").trim().toLowerCase();
+                    return;
+                }
+            } catch (error) {
+            }
+            currentStaffRole = "";
+        }
+
+        async function loadHiddenGameIds() {
+            hiddenGameIds = {};
+            if (!supabaseClient) {
+                return;
+            }
+            var result = await supabaseClient.rpc("public_list_hidden_games");
+            if (result.error || !Array.isArray(result.data)) {
+                return;
+            }
+            result.data.forEach(function (row) {
+                var id = row && typeof row.game_id === "string" ? row.game_id.trim().toLowerCase() : "";
+                if (id) {
+                    hiddenGameIds[id] = true;
+                }
+            });
         }
 
         function storageGet(key) {
@@ -1434,6 +1489,98 @@
             return message;
         }
 
+        function getHomePresenceStatus() {
+            if (document.visibilityState === "hidden") {
+                return "background";
+            }
+            if (typeof document.hasFocus === "function" && !document.hasFocus()) {
+                return "away";
+            }
+            return "online";
+        }
+
+        async function refreshWebsitePeopleCount() {
+            if (!supabaseClient || !websitePeopleCount) {
+                return;
+            }
+
+            try {
+                var result = await supabaseClient.rpc("public_online_user_count");
+                if (result.error) {
+                    throw result.error;
+                }
+
+                var count = typeof result.data === "number" ? result.data : parseInt(result.data, 10);
+                if (!Number.isFinite(count)) {
+                    throw new Error("Invalid visitor count.");
+                }
+
+                websitePeopleCount.textContent = "Website visitors: " + count + " online";
+            } catch (error) {
+                websitePeopleCount.textContent = "Website visitors: -- online";
+            }
+        }
+
+        async function publishHomePresence() {
+            if (!supabaseClient) {
+                return;
+            }
+
+            try {
+                var auth = await supabaseClient.auth.getUser();
+                var user = auth && auth.data ? auth.data.user : null;
+                if (!user) {
+                    return;
+                }
+
+                var result = await supabaseClient.rpc("upsert_my_presence", {
+                    current_game_id: null,
+                    current_game_title: null,
+                    status: getHomePresenceStatus(),
+                    message_opt_in: true
+                });
+
+                if (result && result.error) {
+                    throw result.error;
+                }
+            } catch (error) {
+            }
+        }
+
+        function bindHomePresenceEvents() {
+            if (homePresenceEventsBound) {
+                return;
+            }
+
+            homePresenceEventsBound = true;
+
+            window.addEventListener("focus", function () {
+                publishHomePresence().catch(function () {});
+                refreshWebsitePeopleCount().catch(function () {});
+            });
+
+            document.addEventListener("visibilitychange", function () {
+                if (document.visibilityState !== "visible") {
+                    return;
+                }
+                publishHomePresence().catch(function () {});
+                refreshWebsitePeopleCount().catch(function () {});
+            });
+        }
+
+        function startHomePresenceLoop() {
+            if (homePresenceTimer) {
+                clearInterval(homePresenceTimer);
+            }
+
+            homePresenceTimer = setInterval(function () {
+                publishHomePresence().catch(function () {});
+                refreshWebsitePeopleCount().catch(function () {});
+            }, 30000);
+
+            bindHomePresenceEvents();
+        }
+
         async function initSupabase() {
             var cfg = getSupabaseConfig();
             var hasFactory = !!(window.supabase && typeof window.supabase.createClient === "function");
@@ -1446,11 +1593,30 @@
                 supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
                 var auth = await supabaseClient.auth.getUser();
                 var user = auth && auth.data ? auth.data.user : null;
+                await refreshStaffRole();
+                await loadHiddenGameIds();
+                await refreshWebsitePeopleCount();
+                if (user) {
+                    await publishHomePresence();
+                    startHomePresenceLoop();
+                }
                 updateAuthStatus(user && user.email ? ("Signed in: " + user.email) : "Cloud ready. Sign in to use cloud save.");
 
                 supabaseClient.auth.onAuthStateChange(function (_event, session) {
                     var sessionUser = session && session.user ? session.user : null;
                     updateAuthStatus(sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Cloud ready. Sign in to use cloud save.");
+                    refreshStaffRole()
+                        .then(loadHiddenGameIds)
+                        .then(render)
+                        .catch(function () {});
+                    refreshWebsitePeopleCount().catch(function () {});
+                    if (sessionUser) {
+                        publishHomePresence().catch(function () {});
+                        startHomePresenceLoop();
+                    } else if (homePresenceTimer) {
+                        clearInterval(homePresenceTimer);
+                        homePresenceTimer = null;
+                    }
                 });
             } catch (error) {
                 supabaseClient = null;
@@ -1608,7 +1774,14 @@
                 return [];
             }
             return list.filter(function (game) {
-                return !isBlockedCatalogGame(game);
+                if (isBlockedCatalogGame(game)) {
+                    return false;
+                }
+                var gameId = game && typeof game.id === "string" ? game.id.trim().toLowerCase() : "";
+                if (gameId && hiddenGameIds[gameId] && !isStaffRole(currentStaffRole)) {
+                    return false;
+                }
+                return true;
             });
         }
 
@@ -1926,6 +2099,7 @@
                 }
 
                 var data = await response.json();
+                await loadHiddenGameIds();
                 games = sanitizeCatalog(data);
                 populateCategoryFilter();
                 render();
@@ -2033,11 +2207,9 @@
 
         if (sendFeedbackBtn) {
             sendFeedbackBtn.addEventListener("click", function () {
-                try {
-                    sendFeedbackEmail();
-                } catch (error) {
+                sendFeedbackEmail().catch(function (error) {
                     setFeedbackStatus(error && error.message ? error.message : "Could not send feedback.", "error");
-                }
+                });
             });
         }
 

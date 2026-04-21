@@ -13,6 +13,9 @@
         overflow: hidden;
         background: #000;
       }
+      body {
+        visibility: hidden;
+      }
       iframe {
         position: fixed;
         inset: 0;
@@ -24,5 +27,30 @@
   </head>
   <body>
     <iframe src="rb/index.html" title="Retro Bowl"></iframe>
+    <script src="../../js/supabase.config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      (async function () {
+        try {
+          var cfg = window.__GAMEHUB_SUPABASE__ || {};
+          if (!window.supabase || !cfg.url || !cfg.anonKey) {
+            window.location.replace("/account.html");
+            return;
+          }
+
+          var client = window.supabase.createClient(cfg.url, cfg.anonKey);
+          var auth = await client.auth.getUser();
+          var user = auth && auth.data ? auth.data.user : null;
+          if (!user) {
+            window.location.replace("/account.html");
+            return;
+          }
+
+          document.body.style.visibility = "visible";
+        } catch (error) {
+          window.location.replace("/account.html");
+        }
+      })();
+    </script>
   </body>
 </html>

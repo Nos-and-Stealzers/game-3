@@ -73,7 +73,11 @@
 
     <!--Game code -->
     <script type="text/javascript" src="html5game/RetroBowl.js?WAEAC=1633155445"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../../../js/supabase.config.js"></script>
     <script type="text/javascript" src="../../../js/game-save-sync.js"></script>
+    <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { intervalMs: 60000, captureIndexedDb: true };</script>
+    <script src="../../../js/cloud-autosync.js"></script>
     <script>
       window.onload = GameMaker_Init;
     </script>

@@ -441,7 +441,6 @@
           <button id="authSignOutBtn" type="button" class="btn warn">Sign Out</button>
           <a href="index.html" class="btn">Back to Hub</a>
           <a href="settings.html" class="btn">Open Settings</a>
-          <a href="admin.html" class="btn">Admin Panel</a>
           <a href="mailto:lucasgrimm854@gmail.com?bcc=stealzers.com%40gmail.com&subject=Arcade%20feedback" class="btn">Feedback</a>
           <a id="adminPortalBtn" href="admin.html" class="btn hidden">Admin</a>
         </div>
@@ -783,6 +782,19 @@
       return window.location.origin + window.location.pathname;
     }
 
+    async function requiresSigninCodeForEmail(email) {
+      if (!supabaseClient) {
+        return false;
+      }
+      var result = await supabaseClient.rpc("user_requires_signin_code", {
+        email_input: email
+      });
+      if (result.error) {
+        return false;
+      }
+      return result.data === true;
+    }
+
     async function signInWithPassword() {
       if (!supabaseClient) {
         throw new Error("Supabase is not configured.");
@@ -792,6 +804,14 @@
         throw new Error("Enter your email.");
       }
       var password = validatePasswordInput(authPassword.value);
+
+      var requiresCode = await requiresSigninCodeForEmail(email);
+      if (requiresCode) {
+        await sendOtpCode("otp_signin", email);
+        setAuthMode("code");
+        setStatus("Verification code required for this account. We sent a sign-in code.", "warn");
+        return;
+      }
 
       var result = await supabaseClient.auth.signInWithPassword({
         email: email,
@@ -863,11 +883,11 @@
       setStatus("Password reset email sent.", "ok");
     }
 
-    async function sendOtpCode(flow) {
+    async function sendOtpCode(flow, emailOverride) {
       if (!supabaseClient) {
         throw new Error("Supabase is not configured.");
       }
-      var email = normalizeEmail(otpEmail.value || authEmail.value);
+      var email = normalizeEmail(emailOverride || otpEmail.value || authEmail.value);
       if (!email) {
         throw new Error("Enter your email.");
       }

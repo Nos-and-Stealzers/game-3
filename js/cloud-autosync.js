@@ -53,6 +53,7 @@
   var RUN_ON_START = options.runOnStart !== false;
   var PULL_ON_START = options.pullOnStart !== false;
   var PAGEHIDE_ONLY = options.pagehideOnly === true;
+  var RELOAD_AFTER_PULL = options.reloadAfterPull !== false;
 
   var inFlight = false;
   var loadInFlight = false;
@@ -918,6 +919,31 @@
     return true;
   }
 
+  function snapshotLocalStorage() {
+    var out = {};
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (typeof key === "string") {
+          out[key] = localStorage.getItem(key);
+        }
+      }
+    } catch (error) {
+      return out;
+    }
+    return out;
+  }
+
+  function storageSignature(snapshot) {
+    var keys = Object.keys(snapshot || {}).sort();
+    var parts = [];
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      parts.push(key + "\u0000" + String(snapshot[key]));
+    }
+    return parts.join("\u0001");
+  }
+
   async function runCloudLoadOnce() {
     if (loadInFlight) {
       return false;
@@ -937,8 +963,13 @@
         return false;
       }
       if (loadedUserId === user.id) {
-        return false;
+        return {
+          applied: false,
+          storageChanged: false
+        };
       }
+
+      var beforeStorage = snapshotLocalStorage();
 
       var result = await supabaseClient
         .from("user_saves")
@@ -951,19 +982,30 @@
       }
       if (!result || !result.data || !result.data.payload) {
         loadedUserId = user.id;
-        return false;
+        return {
+          applied: false,
+          storageChanged: false
+        };
       }
 
       var applied = applyPayload(result.data.payload);
+      var afterStorage = snapshotLocalStorage();
+      var storageChanged = storageSignature(beforeStorage) !== storageSignature(afterStorage);
       loadedUserId = user.id;
       if (applied) {
         storageSet(CLOUD_LAST_SYNC_KEY, new Date().toISOString());
       }
       syncMyPresence(supabaseClient, user);
       pollUnreadFriendMessages(supabaseClient, user);
-      return applied;
+      return {
+        applied: applied,
+        storageChanged: storageChanged
+      };
     } catch (error) {
-      return false;
+      return {
+        applied: false,
+        storageChanged: false
+      };
     } finally {
       loadInFlight = false;
     }
@@ -1013,7 +1055,11 @@
     }
 
     if (PULL_ON_START) {
-      runCloudLoadOnce().finally(function () {
+      runCloudLoadOnce().then(function (result) {
+        if (result && result.storageChanged && RELOAD_AFTER_PULL) {
+          window.location.reload();
+          return;
+        }
         if (RUN_ON_START) {
           runCloudSync();
         }

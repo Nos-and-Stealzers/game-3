@@ -35,6 +35,7 @@ create table if not exists public.user_settings (
   custom_status text,
   pronouns text,
   accent_color text,
+  require_verification_code boolean not null default false,
   updated_at timestamptz not null default now()
 );
 
@@ -53,6 +54,7 @@ alter table public.user_settings add column if not exists bio text;
 alter table public.user_settings add column if not exists custom_status text;
 alter table public.user_settings add column if not exists pronouns text;
 alter table public.user_settings add column if not exists accent_color text;
+alter table public.user_settings add column if not exists require_verification_code boolean not null default false;
 alter table public.user_settings add column if not exists updated_at timestamptz not null default now();
 
 create unique index if not exists user_settings_username_unique_idx
@@ -119,6 +121,50 @@ create index if not exists admin_activity_logs_actor_email_idx
 create index if not exists admin_activity_logs_target_email_idx
   on public.admin_activity_logs (target_email);
 
+create table if not exists public.user_staff_roles (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  role text not null check (role in ('moderator', 'admin', 'developer')),
+  assigned_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, role)
+);
+
+alter table public.user_staff_roles enable row level security;
+
+create index if not exists user_staff_roles_role_idx
+  on public.user_staff_roles (role);
+
+create index if not exists user_staff_roles_user_idx
+  on public.user_staff_roles (user_id);
+
+create table if not exists public.game_catalog_overrides (
+  game_id text primary key,
+  is_hidden boolean not null default false,
+  reason text,
+  updated_by uuid references auth.users(id) on delete set null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.game_catalog_overrides enable row level security;
+
+create table if not exists public.feedback_entries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  user_email text,
+  subject text,
+  sender_name text,
+  message text not null,
+  page_url text,
+  user_agent text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.feedback_entries enable row level security;
+
+create index if not exists feedback_entries_created_at_idx
+  on public.feedback_entries (created_at desc);
+
 create or replace function public.is_admin_email(email_input text)
 returns boolean
 language sql
@@ -131,6 +177,37 @@ as $$
   );
 $$;
 
+create or replace function public.current_user_staff_role()
+returns text
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select case
+    when public.is_admin_email(auth.jwt() ->> 'email') then 'admin'
+    when exists (
+      select 1
+      from public.user_staff_roles r
+      where r.user_id = auth.uid()
+        and r.role = 'admin'
+    ) then 'admin'
+    when exists (
+      select 1
+      from public.user_staff_roles r
+      where r.user_id = auth.uid()
+        and r.role = 'developer'
+    ) then 'developer'
+    when exists (
+      select 1
+      from public.user_staff_roles r
+      where r.user_id = auth.uid()
+        and r.role = 'moderator'
+    ) then 'moderator'
+    else null
+  end;
+$$;
+
 create or replace function public.current_user_is_admin()
 returns boolean
 language sql
@@ -138,7 +215,45 @@ stable
 security definer
 set search_path = public, auth
 as $$
-  select public.is_admin_email(auth.jwt() ->> 'email');
+  select public.current_user_staff_role() = 'admin';
+$$;
+
+create or replace function public.current_user_is_moderator()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select public.current_user_staff_role() in ('admin', 'developer', 'moderator');
+$$;
+
+create or replace function public.current_user_is_dev_or_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select public.current_user_staff_role() in ('admin', 'developer');
+$$;
+
+create or replace function public.public_online_user_count()
+returns integer
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select count(*)::integer
+  from public.user_presence pres
+  left join public.user_profiles prof on prof.user_id = pres.user_id
+  left join public.user_settings settings on settings.user_id = pres.user_id
+  where coalesce(settings.show_online, true)
+    and coalesce(prof.banned, false) = false
+    and pres.updated_at is not null
+    and pres.updated_at > now() - interval '15 minutes'
+    and coalesce(pres.status, 'offline') in ('online', 'playing');
 $$;
 
 create or replace function public.sync_user_profile()
@@ -304,6 +419,7 @@ begin
     custom_status,
     pronouns,
     accent_color,
+    require_verification_code,
     updated_at
   )
   values (
@@ -321,6 +437,7 @@ begin
     nullif(coalesce(payload ->> 'customStatus', payload ->> 'custom_status', ''), ''),
     nullif(coalesce(payload ->> 'pronouns', ''), ''),
     nullif(coalesce(payload ->> 'accentColor', payload ->> 'accent_color', ''), ''),
+    coalesce((payload ->> 'requireVerificationCode')::boolean, (payload ->> 'require_verification_code')::boolean, false),
     now()
   )
   on conflict (user_id)
@@ -338,6 +455,7 @@ begin
         custom_status = excluded.custom_status,
         pronouns = excluded.pronouns,
         accent_color = excluded.accent_color,
+        require_verification_code = excluded.require_verification_code,
         updated_at = now();
 
   return true;
@@ -766,7 +884,48 @@ drop policy if exists "Admins can read admin activity logs" on public.admin_acti
 create policy "Admins can read admin activity logs"
   on public.admin_activity_logs
   for select
-  using (public.current_user_is_admin());
+  using (public.current_user_is_moderator());
+
+drop policy if exists "Staff can read staff roles" on public.user_staff_roles;
+drop policy if exists "Admins can manage staff roles" on public.user_staff_roles;
+
+create policy "Staff can read staff roles"
+  on public.user_staff_roles
+  for select
+  using (public.current_user_is_moderator());
+
+create policy "Admins can manage staff roles"
+  on public.user_staff_roles
+  for all
+  using (public.current_user_is_admin())
+  with check (public.current_user_is_admin());
+
+drop policy if exists "Public can read game overrides" on public.game_catalog_overrides;
+drop policy if exists "Dev/admin can manage game overrides" on public.game_catalog_overrides;
+
+create policy "Public can read game overrides"
+  on public.game_catalog_overrides
+  for select
+  using (true);
+
+create policy "Dev/admin can manage game overrides"
+  on public.game_catalog_overrides
+  for all
+  using (public.current_user_is_dev_or_admin())
+  with check (public.current_user_is_dev_or_admin());
+
+drop policy if exists "Users can submit feedback entries" on public.feedback_entries;
+drop policy if exists "Staff can read feedback entries" on public.feedback_entries;
+
+create policy "Users can submit feedback entries"
+  on public.feedback_entries
+  for insert
+  with check (true);
+
+create policy "Staff can read feedback entries"
+  on public.feedback_entries
+  for select
+  using (public.current_user_is_moderator());
 
 create or replace function public.admin_log_action(
   target_user_id uuid,
@@ -782,7 +941,7 @@ as $$
 declare
   actor_email text;
 begin
-  if not public.current_user_is_admin() then
+  if not public.current_user_is_moderator() then
     raise exception 'Not authorized.';
   end if;
 
@@ -813,10 +972,13 @@ begin
 end;
 $$;
 
+drop function if exists public.admin_list_users();
+
 create or replace function public.admin_list_users()
 returns table (
   user_id uuid,
   email text,
+  staff_role text,
   created_at timestamptz,
   last_sign_in_at timestamptz,
   banned boolean,
@@ -834,6 +996,28 @@ as $$
   select
     u.id,
     lower(coalesce(u.email, p.email, '')) as email,
+    case
+      when public.is_admin_email(lower(coalesce(u.email, p.email, ''))) then 'admin'
+      when exists (
+        select 1
+        from public.user_staff_roles r
+        where r.user_id = u.id
+          and r.role = 'admin'
+      ) then 'admin'
+      when exists (
+        select 1
+        from public.user_staff_roles r
+        where r.user_id = u.id
+          and r.role = 'developer'
+      ) then 'developer'
+      when exists (
+        select 1
+        from public.user_staff_roles r
+        where r.user_id = u.id
+          and r.role = 'moderator'
+      ) then 'moderator'
+      else null
+    end as staff_role,
     u.created_at,
     u.last_sign_in_at,
     coalesce(p.banned, false) as banned,
@@ -859,7 +1043,7 @@ as $$
   left join public.user_profiles p on p.user_id = u.id
   left join public.user_presence pres on pres.user_id = u.id
   left join public.user_settings us on us.user_id = u.id
-  where public.current_user_is_admin()
+  where public.current_user_is_moderator()
   order by u.created_at desc;
 $$;
 
@@ -888,7 +1072,7 @@ as $$
     l.details,
     l.created_at
   from public.admin_activity_logs l
-  where public.current_user_is_admin()
+  where public.current_user_is_moderator()
   order by l.created_at desc
   limit greatest(1, least(coalesce(limit_count, 120), 300))
   offset greatest(0, coalesce(offset_count, 0));
@@ -927,7 +1111,7 @@ as $$
     l.details,
     l.created_at
   from public.admin_activity_logs l
-  where public.current_user_is_admin()
+  where public.current_user_is_moderator()
     and (
       action_filter is null
       or action_filter = ''
@@ -1015,6 +1199,291 @@ begin
 end;
 $$;
 
+create or replace function public.admin_set_staff_role(target_user_id uuid, role text, enabled boolean default true)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  target_email text;
+  normalized_role text;
+begin
+  if not public.current_user_is_admin() then
+    raise exception 'Not authorized.';
+  end if;
+
+  if target_user_id is null then
+    raise exception 'Target user is required.';
+  end if;
+
+  if target_user_id = auth.uid() then
+    raise exception 'You cannot change your own staff role.';
+  end if;
+
+  normalized_role := lower(trim(coalesce(role, '')));
+  if normalized_role not in ('moderator', 'admin', 'developer') then
+    raise exception 'Role must be moderator, developer, or admin.';
+  end if;
+
+  select lower(coalesce(email, '')) into target_email
+  from auth.users
+  where id = target_user_id;
+
+  if target_email is null then
+    raise exception 'User not found.';
+  end if;
+
+  if enabled then
+    insert into public.user_staff_roles (user_id, role, assigned_by, created_at, updated_at)
+    values (target_user_id, normalized_role, auth.uid(), now(), now())
+    on conflict (user_id, role)
+    do update
+      set assigned_by = excluded.assigned_by,
+          updated_at = now();
+  else
+    delete from public.user_staff_roles
+    where user_id = target_user_id
+      and role = normalized_role;
+  end if;
+
+  perform public.admin_log_action(
+    target_user_id,
+    target_email,
+    case when enabled then 'set_staff_role' else 'clear_staff_role' end,
+    jsonb_build_object(
+      'role', normalized_role,
+      'enabled', enabled
+    )
+  );
+
+  return true;
+end;
+$$;
+
+create or replace function public.admin_set_staff_role_by_email(target_email text, role text, enabled boolean default true)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  target_user_id uuid;
+begin
+  if not public.current_user_is_admin() then
+    raise exception 'Not authorized.';
+  end if;
+
+  select u.id
+  into target_user_id
+  from auth.users u
+  where lower(trim(coalesce(u.email, ''))) = lower(trim(coalesce(target_email, '')))
+  limit 1;
+
+  if target_user_id is null then
+    raise exception 'User not found.';
+  end if;
+
+  return public.admin_set_staff_role(target_user_id, role, enabled);
+end;
+$$;
+
+create or replace function public.set_game_visibility_override(game_id_input text, hidden_input boolean, reason_input text default null)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  clean_game_id text;
+begin
+  if not public.current_user_is_dev_or_admin() then
+    raise exception 'Not authorized.';
+  end if;
+
+  clean_game_id := lower(trim(coalesce(game_id_input, '')));
+  if clean_game_id = '' then
+    raise exception 'Game ID is required.';
+  end if;
+
+  insert into public.game_catalog_overrides (game_id, is_hidden, reason, updated_by, updated_at)
+  values (
+    clean_game_id,
+    coalesce(hidden_input, false),
+    nullif(trim(coalesce(reason_input, '')), ''),
+    auth.uid(),
+    now()
+  )
+  on conflict (game_id)
+  do update
+    set is_hidden = excluded.is_hidden,
+        reason = excluded.reason,
+        updated_by = excluded.updated_by,
+        updated_at = now();
+
+  perform public.admin_log_action(
+    null,
+    null,
+    case when coalesce(hidden_input, false) then 'hide_game' else 'unhide_game' end,
+    jsonb_build_object(
+      'game_id', clean_game_id,
+      'hidden', coalesce(hidden_input, false),
+      'reason', nullif(trim(coalesce(reason_input, '')), '')
+    )
+  );
+
+  return true;
+end;
+$$;
+
+create or replace function public.list_game_visibility_overrides()
+returns table (
+  game_id text,
+  is_hidden boolean,
+  reason text,
+  updated_by uuid,
+  updated_at timestamptz
+)
+language sql
+security definer
+set search_path = public, auth
+as $$
+  select
+    g.game_id,
+    g.is_hidden,
+    g.reason,
+    g.updated_by,
+    g.updated_at
+  from public.game_catalog_overrides g
+  where public.current_user_is_moderator()
+  order by g.game_id asc;
+$$;
+
+create or replace function public.public_list_hidden_games()
+returns table (
+  game_id text
+)
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select g.game_id
+  from public.game_catalog_overrides g
+  where g.is_hidden = true;
+$$;
+
+create or replace function public.submit_feedback_entry(
+  subject_input text default null,
+  sender_name_input text default null,
+  message_input text default null,
+  page_url_input text default null,
+  user_agent_input text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  message_id uuid;
+  clean_message text;
+  auth_user_id uuid;
+  auth_email text;
+begin
+  clean_message := nullif(trim(coalesce(message_input, '')), '');
+  if clean_message is null then
+    raise exception 'Feedback message is required.';
+  end if;
+
+  if length(clean_message) > 4000 then
+    raise exception 'Feedback message is too long.';
+  end if;
+
+  auth_user_id := auth.uid();
+  if auth_user_id is not null then
+    select lower(coalesce(email, '')) into auth_email
+    from auth.users
+    where id = auth_user_id;
+  end if;
+
+  insert into public.feedback_entries (
+    user_id,
+    user_email,
+    subject,
+    sender_name,
+    message,
+    page_url,
+    user_agent,
+    created_at
+  )
+  values (
+    auth_user_id,
+    nullif(trim(coalesce(auth_email, '')), ''),
+    nullif(trim(coalesce(subject_input, '')), ''),
+    nullif(trim(coalesce(sender_name_input, '')), ''),
+    clean_message,
+    nullif(trim(coalesce(page_url_input, '')), ''),
+    nullif(trim(coalesce(user_agent_input, '')), ''),
+    now()
+  )
+  returning id into message_id;
+
+  return message_id;
+end;
+$$;
+
+create or replace function public.admin_list_feedback(limit_count integer default 200, offset_count integer default 0)
+returns table (
+  id uuid,
+  user_id uuid,
+  user_email text,
+  subject text,
+  sender_name text,
+  message text,
+  page_url text,
+  user_agent text,
+  created_at timestamptz
+)
+language sql
+security definer
+set search_path = public, auth
+as $$
+  select
+    f.id,
+    f.user_id,
+    f.user_email,
+    f.subject,
+    f.sender_name,
+    f.message,
+    f.page_url,
+    f.user_agent,
+    f.created_at
+  from public.feedback_entries f
+  where public.current_user_is_moderator()
+  order by f.created_at desc
+  limit greatest(1, least(coalesce(limit_count, 200), 500))
+  offset greatest(0, coalesce(offset_count, 0));
+$$;
+
+create or replace function public.user_requires_signin_code(email_input text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  with target_user as (
+    select u.id
+    from auth.users u
+    where lower(trim(coalesce(u.email, ''))) = lower(trim(coalesce(email_input, '')))
+    limit 1
+  )
+  select coalesce(us.require_verification_code, false)
+  from target_user tu
+  left join public.user_settings us on us.user_id = tu.id;
+$$;
+
 create or replace function public.admin_delete_account(target_user_id uuid)
 returns boolean
 language plpgsql
@@ -1058,16 +1527,38 @@ $$;
 revoke all on function public.admin_list_users() from public;
 revoke all on function public.admin_list_activity(integer, integer) from public;
 revoke all on function public.admin_list_activity_filtered(integer, integer, text, text, text, timestamptz, timestamptz) from public;
+revoke all on function public.admin_set_staff_role(uuid, text, boolean) from public;
+revoke all on function public.admin_set_staff_role_by_email(text, text, boolean) from public;
 revoke all on function public.admin_set_ban(uuid, boolean, text) from public;
 revoke all on function public.admin_delete_account(uuid) from public;
 revoke all on function public.admin_log_action(uuid, text, text, jsonb) from public;
+revoke all on function public.current_user_staff_role() from public;
+revoke all on function public.current_user_is_moderator() from public;
+revoke all on function public.current_user_is_dev_or_admin() from public;
+revoke all on function public.public_online_user_count() from public;
+revoke all on function public.set_game_visibility_override(text, boolean, text) from public;
+revoke all on function public.list_game_visibility_overrides() from public;
+revoke all on function public.public_list_hidden_games() from public;
+revoke all on function public.submit_feedback_entry(text, text, text, text, text) from public;
+revoke all on function public.admin_list_feedback(integer, integer) from public;
+revoke all on function public.user_requires_signin_code(text) from public;
 
 grant execute on function public.admin_list_users() to authenticated;
 grant execute on function public.admin_list_activity(integer, integer) to authenticated;
 grant execute on function public.admin_list_activity_filtered(integer, integer, text, text, text, timestamptz, timestamptz) to authenticated;
+grant execute on function public.admin_set_staff_role(uuid, text, boolean) to authenticated;
+grant execute on function public.admin_set_staff_role_by_email(text, text, boolean) to authenticated;
 grant execute on function public.admin_set_ban(uuid, boolean, text) to authenticated;
 grant execute on function public.admin_delete_account(uuid) to authenticated;
 grant execute on function public.admin_log_action(uuid, text, text, jsonb) to authenticated;
+grant execute on function public.current_user_staff_role() to authenticated;
+grant execute on function public.current_user_is_moderator() to authenticated;
+grant execute on function public.current_user_is_dev_or_admin() to authenticated;
+grant execute on function public.public_online_user_count() to anon;
+grant execute on function public.public_online_user_count() to authenticated;
+grant execute on function public.set_game_visibility_override(text, boolean, text) to authenticated;
+grant execute on function public.list_game_visibility_overrides() to authenticated;
+grant execute on function public.admin_list_feedback(integer, integer) to authenticated;
 grant execute on function public.upsert_my_user_settings(uuid, jsonb) to authenticated;
 grant execute on function public.upsert_my_presence(text, text, text, boolean) to authenticated;
 grant execute on function public.upsert_friend_link(text, text, boolean) to authenticated;
@@ -1076,6 +1567,12 @@ grant execute on function public.list_my_friends() to authenticated;
 grant execute on function public.send_friend_message(uuid, text) to authenticated;
 grant execute on function public.list_my_unread_friend_messages(integer) to authenticated;
 grant execute on function public.mark_friend_message_read(uuid) to authenticated;
+grant execute on function public.user_requires_signin_code(text) to anon;
+grant execute on function public.user_requires_signin_code(text) to authenticated;
+grant execute on function public.public_list_hidden_games() to anon;
+grant execute on function public.public_list_hidden_games() to authenticated;
+grant execute on function public.submit_feedback_entry(text, text, text, text, text) to anon;
+grant execute on function public.submit_feedback_entry(text, text, text, text, text) to authenticated;
 
 insert into storage.buckets (id, name, public, file_size_limit)
 values ('friend-chat-attachments', 'friend-chat-attachments', true, 5242880)
@@ -1134,6 +1631,9 @@ select 'user_presence table exists' as check_name, to_regclass('public.user_pres
 select 'friend_links table exists' as check_name, to_regclass('public.friend_links') is not null as ok;
 select 'friend_messages table exists' as check_name, to_regclass('public.friend_messages') is not null as ok;
 select 'admin_activity_logs table exists' as check_name, to_regclass('public.admin_activity_logs') is not null as ok;
+select 'user_staff_roles table exists' as check_name, to_regclass('public.user_staff_roles') is not null as ok;
+select 'game_catalog_overrides table exists' as check_name, to_regclass('public.game_catalog_overrides') is not null as ok;
+select 'feedback_entries table exists' as check_name, to_regclass('public.feedback_entries') is not null as ok;
 
 select 'admin_list_users rpc exists' as check_name,
   to_regprocedure('public.admin_list_users()') is not null as ok;
@@ -1145,6 +1645,16 @@ select 'admin_set_ban rpc exists' as check_name,
   to_regprocedure('public.admin_set_ban(uuid,boolean,text)') is not null as ok;
 select 'admin_delete_account rpc exists' as check_name,
   to_regprocedure('public.admin_delete_account(uuid)') is not null as ok;
+select 'admin_set_staff_role rpc exists' as check_name,
+  to_regprocedure('public.admin_set_staff_role(uuid,text,boolean)') is not null as ok;
+select 'admin_list_feedback rpc exists' as check_name,
+  to_regprocedure('public.admin_list_feedback(integer,integer)') is not null as ok;
+select 'set_game_visibility_override rpc exists' as check_name,
+  to_regprocedure('public.set_game_visibility_override(text,boolean,text)') is not null as ok;
+select 'public_list_hidden_games rpc exists' as check_name,
+  to_regprocedure('public.public_list_hidden_games()') is not null as ok;
+select 'submit_feedback_entry rpc exists' as check_name,
+  to_regprocedure('public.submit_feedback_entry(text,text,text,text,text)') is not null as ok;
 
 -- Optional: should return 0 rows when not signed in as an admin.
 select count(*) as admin_list_users_preview_count from public.admin_list_users();
