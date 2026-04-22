@@ -779,6 +779,21 @@
     }
 
     function getRedirectUrl() {
+      var params = new URLSearchParams(window.location.search);
+      var returnUrl = params.get("return");
+      
+      if (returnUrl) {
+        try {
+          // Ensure the return URL is safe (same origin)
+          var url = new URL(returnUrl, window.location.origin);
+          if (url.origin === window.location.origin) {
+            return url.toString();
+          }
+        } catch (e) {
+          // Invalid URL
+        }
+      }
+      
       return window.location.origin + window.location.pathname;
     }
 

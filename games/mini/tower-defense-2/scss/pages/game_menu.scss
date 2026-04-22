@@ -1,0 +1,477 @@
+.game-menu-main-container {
+  background-image: $game-menu-bg;
+  height: 600px;
+  margin: auto;
+  width: 800px;
+}
+
+.game-menu-back-button {
+  cursor: pointer;
+  height: 55px;
+  margin-left: 53px;
+  position: absolute;
+  margin-top: 520px;
+  width: 58px;
+  &:hover {
+    background-image: $game-menu-menu-hover-bg;
+  }
+}
+
+.game-menu-startable {
+  animation: game-menu-startable 0.2s forwards;
+  animation-delay: 1s;
+  animation-timing-function: ease-out;
+  background-image: $game-menu-startable-bg;
+  height: 79px;
+  margin-left: 605px;
+  margin-top: -79px;
+  position: absolute;
+  width: 136px;
+}
+
+@keyframes game-menu-startable {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(79px); }
+}
+
+.game-menu-battlepointer {
+  animation: game-menu-battlepointer 0.3s forwards;
+  animation-delay: 1.4s;
+  animation-timing-function: ease-out;
+  background-image: $game-menu-battlepointer-bg;
+  cursor: pointer;
+  height: 49px;
+  margin-left: 232px;
+  margin-top: 113px;
+  opacity: 0;
+  position: absolute;
+  width: 35px;
+  &:hover {
+    background-image: $game-menu-battlepointer-hover-bg;
+    height: 62px;
+    margin-left: 226px;
+    margin-top: 106px;
+    width: 47px;
+  }
+}
+
+@keyframes game-menu-battlepointer {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+   }
+  100% {
+    transform: translateY(20px);
+    opacity: 1;
+  }
+}
+
+.game-menu-starthere-text {
+  animation: game-menu-starthere-text 0.3s infinite;
+  animation-timing-function: ease-out;
+  background-image: $game-menu-starthere-bg;
+  height: 49px;
+  margin-left: 178px;
+  margin-top: 78px;
+  position: absolute;
+  white-space: nowrap;
+  width: 140px;
+}
+
+@keyframes game-menu-starthere-text {
+  0% { transform: scale(0.97, 0.97); }
+  50% { transform: scale(1, 1); }
+  100% { transform: scale(0.97, 0.97); }
+}
+
+.game-menu-music-button {
+  cursor: pointer;
+  height: 27px;
+  margin-left: 92px;
+  position: absolute;
+  margin-top: 15px;
+  width: 30px;
+  &:hover {
+    background-image: $game-menu-music-hover-bg;
+  }
+}
+
+.game-menu-music-button-disabled {
+  background-image: $game-menu-music-disabled-bg;
+  cursor: pointer;
+  height: 25px;
+  margin-left: 92px;
+  position: absolute;
+  margin-top: 16px;
+  width: 29px;
+  &:hover {
+    background-image: $game-menu-music-disabled-hover-bg;
+    height: 26px;
+    margin-left: 92px;
+    margin-top: 16px;
+    width: 30px;
+  }
+}
+
+.game-menu-sound-button {
+  cursor: pointer;
+  height: 27px;
+  margin-left: 55px;
+  position: absolute;
+  margin-top: 14px;
+  width: 32px;
+  &:hover {
+    background-image: $game-menu-sound-hover-bg;
+  }
+}
+
+.game-menu-sound-button-disabled {
+  background-image: $game-menu-sound-disabled-bg;
+  cursor: pointer;
+  height: 26px;
+  margin-left: 57px;
+  position: absolute;
+  margin-top: 15px;
+  width: 30px;
+  &:hover {
+    background-image: $game-menu-sound-disabled-hover-bg;
+    height: 26px;
+    margin-left: 56px;
+    margin-top: 15px;
+    width: 31px;
+  }
+}
+
+.game-menu-startable-stars {
+  color: rgb(251, 239, 212);
+  font-size: 20px;
+  font-weight: bold;
+  margin-left: 35px;
+  margin-top: 37px;
+  position: absolute;
+}
+
+.game-menu-feature-coming-soon-hero-hover, .game-menu-feature-coming-soon-upgrades-hover, .game-menu-feature-coming-soon-encyclopedia-hover, .game-menu-feature-coming-soon-achievements-hover {
+    cursor: pointer;
+    height: 74px;
+    margin-left: 373px;
+    margin-top: 504px;
+    position: absolute;
+    width: 78px;
+    &:hover {
+      height: 74px;
+      margin-left: 373px;
+      margin-top: 504px;
+      width: 78px;
+    }
+}
+
+.game-menu-feature-coming-soon-hero-info, .game-menu-feature-coming-soon-upgrades-info , .game-menu-feature-coming-soon-encyclopedia-info, .game-menu-feature-coming-soon-achievements-info  {
+  display: none;
+}
+
+.game-menu-feature-coming-soon-hero-hover:hover + .game-menu-feature-coming-soon-hero-info, .game-menu-feature-coming-soon-upgrades-hover:hover + .game-menu-feature-coming-soon-upgrades-info, .game-menu-feature-coming-soon-encyclopedia-hover:hover + .game-menu-feature-coming-soon-encyclopedia-info, .game-menu-feature-coming-soon-achievements-hover:hover + .game-menu-feature-coming-soon-achievements-info {
+  background-image: $game-menu-black-pointer-arrow-bg;
+  background-repeat: no-repeat;
+  background-position-x: right;
+  background-position-y: bottom;
+  display: inline-block;
+  float: right;
+  position: relative;
+  top: 429px;
+}
+
+.game-menu-feature-coming-soon-hero-hover:hover + .game-menu-feature-coming-soon-hero-info {
+  margin-right: 400px;
+}
+
+.game-menu-feature-coming-soon-upgrades-hover:hover + .game-menu-feature-coming-soon-upgrades-info {
+  margin-right: 320px;
+}
+
+.game-menu-feature-coming-soon-encyclopedia-hover:hover + .game-menu-feature-coming-soon-encyclopedia-info {
+  margin-right: 230px;
+}
+
+.game-menu-feature-coming-soon-achievements-hover:hover + .game-menu-feature-coming-soon-achievements-info {
+  margin-right: 125px;
+}
+
+.game-menu-feature-coming-soon-info-header {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: rgb(250, 250, 250);
+  font-size: 14px;
+  margin-right: 6px;
+  padding: 10px;
+  padding-bottom: 5px;
+  white-space: nowrap;
+}
+
+.game-menu-feature-coming-soon-info-text {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: rgb(254, 225, 1);
+  font-size: 14px;
+  margin-bottom: 6px;
+  margin-right: 6px;
+  padding: 10px;
+  padding-top: 5px;
+}
+
+.game-menu-feature-coming-soon-upgrades-hover {
+  margin-left: 461px;
+
+  &:hover {
+    margin-left: 461px;
+  }
+}
+
+.game-menu-feature-coming-soon-upgrades-info {
+  margin-left: 202px;
+}
+
+.game-menu-feature-coming-soon-upgrades-hover:hover + .game-menu-feature-coming-soon-upgrades-info {
+  margin-left: 202px;
+}
+
+.game-menu-feature-coming-soon-encyclopedia-hover {
+  margin-left: 550px;
+  width: 88px;
+
+  &:hover {
+    margin-left: 550px;
+    width: 88px;
+  }
+}
+
+.game-menu-feature-coming-soon-encyclopedia-info {
+  margin-left: 291px;
+}
+
+.game-menu-feature-coming-soon-encyclopedia-hover:hover + .game-menu-feature-coming-soon-encyclopedia-info {
+  margin-left: 291px;
+}
+
+ .game-menu-feature-coming-soon-achievements-hover {
+   margin-left: 649px;
+    width: 88px;
+
+   &:hover {
+     margin-left: 649px;
+    width: 88px;
+   }
+ }
+
+ .game-menu-feature-coming-soon-achievements-info {
+   margin-left: 389px;
+ }
+
+.game-menu-feature-coming-soon-achievements-hover:hover + .game-menu-feature-coming-soon-achievements-info {
+  margin-left: 389px;
+}
+
+.game-menu-battle-start-panel-1 {
+  animation: game-menu-battle-start-panel 0.4s forwards;
+  animation-delay: 0.2s;
+  animation-timing-function: ease-out;
+  background-image: $game-menu-battle-start-panel-bg;
+  height: 389px;
+  margin-left: 126px;
+  margin-top: 44px;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  width: 548px;
+}
+
+@keyframes game-menu-battle-start-panel {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+   }
+  100% {
+    transform: translateY(50px);
+    opacity: 1;
+  }
+}
+
+.game-menu-battle-start-panel-fadeout {
+  animation: game-menu-battle-start-panel-fadeout 0.4s forwards;
+  animation-timing-function: ease-out;
+}
+
+@keyframes game-menu-battle-start-panel-fadeout {
+  0% {
+    transform: translateY(50px);
+    opacity: 1;
+   }
+  100% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+}
+
+.game-menu-battle-start-panel-close {
+  cursor: pointer;
+  height: 25px;
+  margin-left: 504px;
+  margin-top: 48px;
+  position: absolute;
+  width: 25px;
+
+  &:hover {
+    background-image: $game-menu-battle-start-panel-close-hover-bg;
+  }
+}
+
+.game-menu-battle-start-panel-tobattle {
+  cursor: pointer;
+  height: 53px;
+  margin-left: 411px;
+  margin-top: 321px;
+  position: absolute;
+  width: 118px;
+
+  &:hover {
+    background-image: $game-menu-battle-start-panel-tobattle-hover-bg;
+  }
+}
+
+.game-menu-dark-layer {
+  animation: game-menu-dark-layer 0.4s forwards;
+  animation-delay: 0.2s;
+  animation-timing-function: ease-out;
+  background-color: rgb(0, 0, 0);
+  height: 100%;
+  opacity: 0;
+  width: 100%;
+  z-index: 2;
+}
+
+@keyframes game-menu-dark-layer {
+  0% { opacity: 0; }
+  100% { opacity: 0.5; }
+}
+
+.game-menu-dark-layer-fadeout {
+  animation: game-menu-dark-layer-fadeout 0.4s forwards;
+  animation-timing-function: ease-out;
+}
+
+@keyframes game-menu-dark-layer-fadeout {
+  0% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+
+.game-menu-battle-start-panel-locked-mode-shields  {
+  cursor: pointer;
+  height: 45px;
+  margin-left: 91px;
+  margin-top: 327px;
+  position: absolute;
+  width: 48px;
+  z-index: 3;
+  &:hover {
+    background-image: $game-menu-battle-start-panel-locked-mode-hover-bg;
+    height: 132px;
+    margin-left: 48px;
+    margin-top: 242px;
+    width: 135px;
+    z-index: 2;
+  }
+}
+
+.game-menu-battle-start-panel-locked-mode-stars  {
+  cursor: pointer;
+  height: 45px;
+  margin-left: 149px;
+  margin-top: 327px;
+  position: absolute;
+  width: 48px;
+  z-index: 3;
+  &:hover {
+    background-image: $game-menu-battle-start-panel-locked-mode-hover-bg;
+    height: 132px;
+    margin-left: 106px;
+    margin-top: 242px;
+    width: 135px;
+    z-index: 2;
+  }
+}
+
+.game-menu-battle-start-panel-choose-difficulty {
+  cursor: pointer;
+  opacity: 0;
+  height: 20px;
+  margin-left: 34px;
+  margin-top: 279px;
+  width: 160px;
+  z-index: 2;
+}
+
+.game-menu-battle-start-panel-choose-difficulty-menu {
+  opacity: 0;
+}
+
+.game-menu-battle-start-panel-choose-difficulty:checked ~ .game-menu-battle-start-panel-choose-difficulty-menu {
+  background-image: $game-menu-battle-start-panel-choose-difficulty-bg;
+  cursor: pointer;
+  height: 65px;
+  margin-left: 34px;
+  margin-top: -5px;
+  opacity: 1;
+  position: absolute;
+  width: 161px;
+  z-index: 5;
+}
+
+.game-menu-battle-start-panel-choose-difficulty-casual {
+  height: 18px;
+  margin-left: 2px;
+  margin-top: 2px;
+  position: absolute;
+  width: 157px;
+  &:hover {
+    background-color: rgba(198, 183, 140, 0.1);
+  }
+}
+
+.game-menu-battle-start-panel-choose-difficulty-normal {
+  height: 18px;
+  margin-left: 2px;
+  margin-top: 24px;
+  position: absolute;
+  width: 157px;
+  &:hover {
+    background-color: rgba(198, 183, 140, 0.1);
+  }
+}
+
+.game-menu-battle-start-panel-choose-difficulty-veteran {
+  height: 18px;
+  margin-left: 2px;
+  margin-top: 45px;
+  position: absolute;
+  width: 157px;
+  &:hover {
+    background-color: rgba(198, 183, 140, 0.1);
+  }
+}
+
+.game-menu-battle-start-panel-actual-difficulty {
+  cursor: pointer;
+  height: 19px;
+  margin-left: -158px;
+  margin-top: 278px;
+  position: absolute;
+  width: 137px;
+  z-index: 1;
+  &-casual {
+    background-image: $game-menu-battle-start-panel-difficulty-casual-bg;
+  }
+  &-normal {
+    background-image: $game-menu-battle-start-panel-difficulty-normal-bg;
+  }
+  &-veteran {
+    background-image: $game-menu-battle-start-panel-difficulty-veteran-bg;
+  }
+}

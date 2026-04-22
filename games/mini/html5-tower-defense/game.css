@@ -1,0 +1,29 @@
+body {
+    background-color: #DDD;
+}
+
+.game canvas {
+    position: absolute;
+    border-width: 2px;
+    border-style: solid;
+    border-radius: 10px;
+}
+
+.game canvas[data-layer="highlights"] {
+    opacity: 0.4;
+}
+
+.game canvas[data-layer="ranges"] {
+    opacity: 0.2;
+}
+
+.game .controls-side {
+    position: absolute;
+    left: 680;
+    width: 120;
+}
+
+.game .controls-bottom {
+    position: absolute;
+    top: 485;
+}

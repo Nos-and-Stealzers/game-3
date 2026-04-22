@@ -52,6 +52,30 @@
     "schoolRisk": "low"
   },
   {
+    "id": "html5-tower-defense",
+    "title": "HTML5 Tower Defense",
+    "category": "strategy",
+    "description": "Local HTML5 tower defense game imported from LucasGrimm389/html5-tower-defense.",
+    "gradient": "linear-gradient(135deg, #4361ee, #1d2f8a)",
+    "source": "games/mini/html5-tower-defense/index.html",
+    "direct": "games/mini/html5-tower-defense/index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
+  },
+  {
+    "id": "tower-defense-2",
+    "title": "Tower Defense 2",
+    "category": "strategy",
+    "description": "Local tower defense build imported from LucasGrimm389/tower_defense2.",
+    "gradient": "linear-gradient(135deg, #1f9d8a, #1c4f66)",
+    "source": "games/mini/tower-defense-2/build/xp_webtech_krf_index.html",
+    "direct": "games/mini/tower-defense-2/build/xp_webtech_krf_index.html",
+    "platform": "local",
+    "embed": "allowed",
+    "schoolRisk": "low"
+  },
+  {
     "id": "fnaf-1",
     "title": "Five Nights at Freddy's 1",
     "category": "horror",

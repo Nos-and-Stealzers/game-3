@@ -427,8 +427,13 @@
                 client = window.__GAMEHUB_SIGNIN_CLIENT__ = window.supabase.createClient(cfg.url, cfg.anonKey);
             }
 
-            var auth = await client.auth.getUser();
-            return auth && auth.data ? auth.data.user : null;
+            try {
+                var auth = await client.auth.getUser();
+                return auth && auth.data && auth.data.user ? auth.data.user : null;
+            } catch (error) {
+                console.warn("Auth check error:", error);
+                return null;
+            }
         }
 
         function shouldSkipEmbed(game) {
@@ -546,8 +551,9 @@
             if (isProtectedGame(game)) {
                 var signedInUser = await ensureSignedInUser();
                 if (!signedInUser) {
-                    setStatus("warn", "Sign in required to play this game.");
-                    window.location.replace("account.html");
+                    setStatus("warn", "Sign in required. Redirecting to account...");
+                    var returnUrl = "play.html?game=" + encodeURIComponent(game.id);
+                    window.location.replace("account.html?return=" + encodeURIComponent(returnUrl));
                     return;
                 }
             }
@@ -562,19 +568,19 @@
             applyEmbedPolicy(game);
 
             if (fastMode && typeof game.direct === "string" && game.direct.length > 0) {
-                setStatus("warn", "Fast mode is active. Opening direct mode for speed...");
+                setStatus("warn", "Fast mode active. Opening direct mode...");
                 window.location.replace(game.direct);
                 return;
             }
 
             if (shouldPreferDirect(game)) {
-                setStatus("warn", "Opening direct mode for better performance...");
+                setStatus("warn", "Opening direct mode...");
                 window.location.replace(game.direct);
                 return;
             }
 
             if (shouldForceDirectForPerformance(game, performanceProfile)) {
-                setStatus("warn", "Performance profile active. Opening direct mode for faster startup...");
+                setStatus("warn", "Optimized launch...");
                 window.location.replace(game.direct);
                 return;
             }
@@ -582,7 +588,7 @@
             if (shouldSkipEmbed(game)) {
                 frame.removeAttribute("src");
                 frame.style.display = "none";
-                setStatus("warn", "This game is marked as blocked in iframes. Use Open Direct.");
+                setStatus("warn", "This game requires direct mode. Use Open Direct.");
                 return;
             }
 
@@ -591,12 +597,12 @@
             frame.src = game.source;
 
             clearTimeout(loadTimer);
-            setStatus("ok", "Trying embedded mode. If it fails, use Open Direct.");
+            setStatus("ok", "Launching game...");
 
             frame.addEventListener("load", function () {
                 frameLoaded = true;
                 clearTimeout(loadTimer);
-                setStatus("ok", "Game loaded in player window.");
+                setStatus("ok", "Game loaded.");
             }, { once: true });
 
             loadTimer = setTimeout(function () {

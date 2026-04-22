@@ -1,0 +1,27 @@
+@charset 'UTF-8';
+
+// stylesheet.scss: Including all scss excpet the fastload.scss components
+
+// fastload.scss content: home.scss, premenu.scss, fonst.scss, defaults.scss, and the home and premenu base64 images
+
+// 1. Mixins
+// 2. Images
+// 3. Pages
+
+// 1. Mixins
+@import
+  'global/mixins';
+
+// 2. Base64 images
+@import
+  'base64_images/images';
+
+// 3. Page styles
+@import
+  'pages/main_menu',
+  'pages/credits',
+  'pages/load_saved_menu',
+  'pages/game_menu',
+  'pages/prologue',
+  'pages/battle_map_1',
+  'pages/battle_map_global';

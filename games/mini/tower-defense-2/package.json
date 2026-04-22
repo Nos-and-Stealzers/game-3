@@ -1,0 +1,32 @@
+{
+  "name": "tower_defense",
+  "version": "1.0.0",
+  "description": "This is an Experimental HTML5 tower defense game clone.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "node compiler.js",
+    "sass": "sass ./scss/stylesheet.scss ./build/xp_webtech_krf_stylesheet.css",
+    "sass fast": "sass ./scss/fastload.scss ./build/xp_webtech_krf_fastload.css",
+    "server": "http-server",
+    "build": "run-s compile sass server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fekapapa/tower_defense.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Fekapapa/tower_defense/issues"
+  },
+  "homepage": "https://github.com/Fekapapa/tower_defense#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-sass": "^3.1.0",
+    "gulp-webserver": "^0.9.1",
+    "gulp-plumber": "^1.2.0"
+  }
+}

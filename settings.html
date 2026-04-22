@@ -1568,6 +1568,45 @@
             flex-wrap: wrap;
         }
 
+        .settings-overview {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .overview-card {
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            background: rgba(7, 20, 45, 0.28);
+            border-radius: 14px;
+            padding: 10px 12px;
+            display: grid;
+            gap: 4px;
+            min-height: 74px;
+            align-content: start;
+        }
+
+        .overview-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.78);
+            font-weight: 900;
+        }
+
+        .overview-value {
+            font-size: 0.92rem;
+            color: #fff;
+            font-weight: 800;
+            line-height: 1.35;
+        }
+
+        @media (max-width: 820px) {
+            .settings-overview {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .layout {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
@@ -2279,10 +2318,24 @@
     <main class="shell">
         <section class="hero">
             <h1>Settings</h1>
-            <p>Settings now live on their own page so everything stays organized and easy to use.</p>
+            <p>Control your account, security, cloud sync, and game experience from one place.</p>
             <div class="top-actions">
                 <a class="btn alt" href="index.html">Back to Home</a>
                 <a class="btn alt" href="account.html">Open Account</a>
+            </div>
+            <div class="settings-overview" aria-live="polite">
+                <article class="overview-card">
+                    <span class="overview-label">Account</span>
+                    <span id="overviewAccountStatus" class="overview-value">Checking account...</span>
+                </article>
+                <article class="overview-card">
+                    <span class="overview-label">Cloud Sync</span>
+                    <span id="overviewCloudStatus" class="overview-value">Checking cloud sync...</span>
+                </article>
+                <article class="overview-card">
+                    <span class="overview-label">Security</span>
+                    <span id="overviewSecurityStatus" class="overview-value">Loading security status...</span>
+                </article>
             </div>
         </section>
 

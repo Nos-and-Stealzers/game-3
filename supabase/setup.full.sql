@@ -1235,16 +1235,20 @@ begin
   end if;
 
   if enabled then
-    insert into public.user_staff_roles (user_id, role, assigned_by, created_at, updated_at)
-    values (target_user_id, normalized_role, auth.uid(), now(), now())
-    on conflict (user_id, role)
-    do update
-      set assigned_by = excluded.assigned_by,
-          updated_at = now();
+    if exists (select 1 from public.user_staff_roles sr where sr.user_id = target_user_id and sr.role = normalized_role) then
+      update public.user_staff_roles sr
+      set assigned_by = auth.uid(),
+          updated_at = now()
+      where sr.user_id = target_user_id
+        and sr.role = normalized_role;
+    else
+      insert into public.user_staff_roles (user_id, role, assigned_by, created_at, updated_at)
+      values (target_user_id, normalized_role, auth.uid(), now(), now());
+    end if;
   else
-    delete from public.user_staff_roles
-    where user_id = target_user_id
-      and role = normalized_role;
+    delete from public.user_staff_roles sr
+    where sr.user_id = target_user_id
+      and sr.role = normalized_role;
   end if;
 
   perform public.admin_log_action(

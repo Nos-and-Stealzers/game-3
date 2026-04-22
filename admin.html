@@ -9,20 +9,25 @@
     @import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
 
     :root {
-      --bg: #eef3ff;
+      --bg: #f0f4f8;
       --panel: #ffffff;
-      --muted: #5f6f93;
-      --primary: #085dff;
-      --primary-strong: #0047be;
-      --danger-bg: #ffefed;
-      --danger-line: #f0c0bb;
-      --ok-bg: #e9fff2;
-      --ok-line: #a6dec0;
-      --ok-text: #1d6a40;
-      --warn-bg: #fff6df;
-      --warn-line: #efcf91;
-      --warn-text: #7b5800;
-      --shadow: 0 16px 36px rgba(29, 49, 97, 0.14);
+      --sidebar-bg: #1a2b4a;
+      --sidebar-text: #ecf0f7;
+      --muted: #6b7c96;
+      --primary: #0066ff;
+      --primary-strong: #0047cc;
+      --secondary: #6366ff;
+      --danger-bg: #fef2f2;
+      --danger-text: #991b1b;
+      --danger-line: #fecaca;
+      --ok-bg: #ecfdf5;
+      --ok-line: #86efac;
+      --ok-text: #166534;
+      --warn-bg: #fffaf0;
+      --warn-line: #fbbf24;
+      --warn-text: #92400e;
+      --shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.12);
     }
 
     * {
@@ -32,16 +37,12 @@
     body {
       margin: 0;
       min-height: 100vh;
-      padding: 20px 12px;
-      display: grid;
-      place-items: start center;
       font-family: "Sora", "Segoe UI", sans-serif;
-      color: var(--text);
+      color: #1f2937;
       visibility: hidden;
-      background:
-        radial-gradient(circle at 0% 0%, rgba(8, 93, 255, 0.16) 0, rgba(8, 93, 255, 0) 34%),
-        radial-gradient(circle at 100% 100%, rgba(3, 72, 176, 0.12) 0, rgba(3, 72, 176, 0) 36%),
-        var(--bg);
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
     }
 
     body.admin-ready {
@@ -49,43 +50,160 @@
     }
 
     .shell {
-      width: min(1100px, 100%);
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
+      display: flex;
+      height: 100vh;
       overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 260px;
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #0f1729;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sidebar-header {
+      padding: 20px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: grid;
+      gap: 4px;
+    }
+    
+    .sidebar-title {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    
+    .sidebar-subtitle {
+      margin: 0;
+      font-size: 0.75rem;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+    
+    .sidebar-nav-group {
+      display: grid;
+      gap: 4px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    
+    .sidebar-nav-group-label {
+      margin: 16px 0 8px 16px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 800;
+      opacity: 0.5;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .sidebar-nav-item {
+      padding: 0;
+      margin: 0;
+    }
+    
+    .sidebar-nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      margin: 0 8px;
+      border-radius: 8px;
+      background: none;
+      border: none;
+      color: var(--sidebar-text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: calc(100% - 16px);
+      text-align: left;
+    }
+    
+    .sidebar-nav-link:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .sidebar-nav-link.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-align: center;
+    }
+    
+    .main-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .topbar {
+      padding: 16px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .topbar-title {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+    }
+    
+    .topbar-status {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
     }
 
     .admin-frame {
       display: grid;
-      gap: 12px;
-      padding: 12px;
+      gap: 0;
+      padding: 0;
     }
 
     .admin-tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      display: none;
     }
 
     .tab-btn {
-      appearance: none;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: #f7fbff;
-      color: #27406d;
-      padding: 8px 12px;
-      font: inherit;
-      font-size: .84rem;
-      font-weight: 800;
-      cursor: pointer;
+      display: none;
     }
 
-    .tab-btn.active {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: #fff;
+    .tab-panel {
+      width: 100%;
     }
 
     .tab-panel[hidden] {
@@ -94,57 +212,69 @@
 
     .dashboard-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
     .card {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: linear-gradient(180deg, #fff, #f8fbff);
-      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: white;
+      padding: 16px;
       display: grid;
-      gap: 6px;
+      gap: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-color: var(--primary);
     }
 
     .card .label {
       color: var(--muted);
-      font-size: .74rem;
+      font-size: .75rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: .08em;
     }
 
     .card .value {
-      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-size: 2rem;
       font-weight: 900;
-      color: var(--text);
+      color: var(--primary);
     }
 
     .card .hint {
       color: var(--muted);
-      font-size: .82rem;
-      line-height: 1.35;
+      font-size: .8rem;
+      line-height: 1.4;
+      margin: 4px 0 0;
     }
 
     .panel {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fff;
-      box-shadow: 0 8px 18px rgba(29, 49, 97, 0.06);
-      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      margin-bottom: 20px;
     }
 
     .panel h2 {
-      margin: 0 0 4px;
-      font-size: 1rem;
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1f2937;
     }
 
     .panel .subtle {
-      margin: 0;
+      margin: 0 0 16px;
       color: var(--muted);
-      font-size: .88rem;
-      line-height: 1.4;
+      font-size: .85rem;
+      line-height: 1.5;
     }
 
     .panel-stack {
@@ -169,13 +299,22 @@
     }
 
     .select {
-      border: 1px solid #c2d2ef;
-      border-radius: 10px;
-      padding: 9px 11px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 9px 12px;
       font: inherit;
-      color: var(--text);
-      background: #fff;
+      color: #1f2937;
+      background: white;
       font-weight: 700;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
     }
 
     .toolbar-note {
@@ -282,25 +421,15 @@
     }
 
     .top {
-      padding: 16px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(145deg, #f4f8ff, #ebf2ff);
-      display: grid;
-      gap: 8px;
+      display: none;
     }
 
     .title {
-      margin: 0;
-      font-family: "Space Grotesk", "Sora", sans-serif;
-      font-size: clamp(1.25rem, 2.5vw, 1.75rem);
-      letter-spacing: -.3px;
+      display: none;
     }
 
     .sub {
-      margin: 0;
-      color: var(--muted);
-      font-size: .92rem;
-      line-height: 1.4;
+      display: none;
     }
 
     .status {
@@ -334,45 +463,75 @@
 
     .input {
       flex: 1;
-      min-width: 220px;
-      border: 1px solid #c2d2ef;
-      border-radius: 10px;
-      padding: 9px 11px;
+      min-width: 200px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 9px 12px;
       font: inherit;
-      color: var(--text);
+      color: #1f2937;
       font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
     }
 
     .btn {
       appearance: none;
-      border: 1px solid #bed0ef;
-      border-radius: 10px;
-      background: #f4f8ff;
-      color: #1a3768;
-      padding: 9px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #f3f4f6;
+      color: #374151;
+      padding: 9px 14px;
       font: inherit;
       font-weight: 700;
+      font-size: 0.875rem;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
       cursor: pointer;
+      transition: all 0.2s ease;
     }
 
     .btn:hover {
-      background: #eaf2ff;
+      background: #e5e7eb;
+      border-color: #9ca3af;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .btn.primary {
       background: var(--primary);
       border-color: var(--primary);
-      color: #fff;
+      color: white;
     }
 
     .btn.primary:hover {
       background: var(--primary-strong);
       border-color: var(--primary-strong);
+    }
+
+    .btn.danger {
+      border-color: #fca5a5;
+      background: var(--danger-bg);
+      color: var(--danger-text);
+    }
+
+    .btn.danger:hover {
+      background: #fee2e2;
+      border-color: #f87171;
     }
 
     .table-wrap {
@@ -584,6 +743,114 @@
       gap: 8px;
     }
 
+    @media (max-width: 1024px) {
+      .sidebar {
+        width: 220px;
+      }
+      
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .shell {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid #0f1729;
+      }
+      
+      .sidebar-nav {
+        display: flex;
+        flex-direction: row;
+        gap: 0;
+        padding: 0;
+        overflow-x: auto;
+        max-height: 60px;
+      }
+      
+      .sidebar-nav-group {
+        display: flex;
+        flex-direction: row;
+        gap: 0;
+        padding: 0;
+        margin: 0;
+      }
+      
+      .sidebar-nav-group-label {
+        display: none;
+      }
+      
+      .sidebar-nav-link {
+        margin: 0;
+        width: auto;
+        padding: 10px 12px;
+        border-radius: 0;
+        font-size: 0.85rem;
+        white-space: nowrap;
+      }
+      
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .content {
+        padding: 16px;
+      }
+      
+      .table-wrap {
+        overflow-x: auto;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .topbar {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      
+      .topbar-title {
+        font-size: 1.2rem;
+      }
+      
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .filters {
+        flex-direction: column !important;
+      }
+      
+      .filters .input,
+      .filters .select {
+        width: 100%;
+        min-width: 0;
+      }
+      
+      .inline-actions {
+        flex-direction: column !important;
+      }
+      
+      .inline-actions .btn {
+        width: 100%;
+      }
+      
+      table {
+        min-width: 100%;
+        font-size: 0.8rem;
+      }
+      
+      tbody td {
+        padding: 8px;
+      }
+    }
+
     @media (max-width: 860px) {
       .tab-btn,
       .inline-actions .btn,
@@ -604,23 +871,59 @@
 </head>
 <body>
   <main class="shell">
-    <section class="top">
-      <h1 class="title">Admin Account Manager</h1>
-      <p class="sub">Ban, unban, and delete accounts. Admin access is restricted to your approved admin emails only, with quick stats and utility tabs for faster review.</p>
-      <p id="status" class="status">Checking authentication...</p>
-    </section>
-
-    <section class="admin-frame">
-      <nav class="admin-tabs" aria-label="Admin sections">
-        <button type="button" class="tab-btn active" data-admin-tab="overview">Overview</button>
-        <button type="button" class="tab-btn" data-admin-tab="users">Users</button>
-        <button type="button" class="tab-btn" data-admin-tab="activity">Activity</button>
-        <button type="button" class="tab-btn" data-admin-tab="feedback">Feedback</button>
-        <button type="button" class="tab-btn" data-admin-tab="tools">Tools</button>
-        <button type="button" class="tab-btn" data-admin-tab="developer" id="developerTabBtn">Developer</button>
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1 class="sidebar-title">Admin Hub</h1>
+        <p class="sidebar-subtitle">Moderation</p>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <ul class="sidebar-nav-group">
+          <li class="sidebar-nav-group-label">Dashboard</li>
+          <li class="sidebar-nav-item">
+            <button type="button" class="sidebar-nav-link active" data-admin-tab="overview">📊 Overview</button>
+          </li>
+          <li class="sidebar-nav-item">
+            <button type="button" class="sidebar-nav-link" data-admin-tab="users">👥 Users</button>
+          </li>
+        </ul>
+        
+        <ul class="sidebar-nav-group">
+          <li class="sidebar-nav-group-label">Moderation</li>
+          <li class="sidebar-nav-item">
+            <button type="button" class="sidebar-nav-link" data-admin-tab="activity">📋 Activity</button>
+          </li>
+          <li class="sidebar-nav-item">
+            <button type="button" class="sidebar-nav-link" data-admin-tab="feedback">💬 Feedback</button>
+          </li>
+        </ul>
+        
+        <ul class="sidebar-nav-group">
+          <li class="sidebar-nav-group-label">Advanced</li>
+          <li class="sidebar-nav-item">
+            <button type="button" class="sidebar-nav-link" data-admin-tab="tools">🔧 Tools</button>
+          </li>
+          <li class="sidebar-nav-item">
+            <button type="button" class="sidebar-nav-link" data-admin-tab="developer" id="developerTabBtn">⚙️ Developer</button>
+          </li>
+        </ul>
       </nav>
-
-      <section class="tab-panel" data-admin-tab-panel="overview">
+      
+      <div class="sidebar-footer">
+        Version 2.0
+      </div>
+    </aside>
+    
+    <div class="main-container">
+      <div class="topbar">
+        <h2 class="topbar-title">Admin Account Manager</h2>
+        <div class="topbar-status">
+          <p id="status" class="status">Checking authentication...</p>
+        </div>
+      </div>
+      
+      <div class="content">
+        <section class="tab-panel" data-admin-tab-panel="overview">
         <div class="dashboard-grid">
           <article class="card">
             <div class="label">Total users</div>
@@ -896,7 +1199,9 @@
           </section>
         </div>
       </section>
-    </section>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -1,0 +1,43 @@
+<html>
+    <head>
+        <title>HTML5 Tower Defense</title>
+
+        <link href="game.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div id="game" class="game">
+            <canvas data-layer="grid"></canvas>
+            <canvas data-layer="structures"></canvas>
+            <canvas data-layer="monsters"></canvas>
+            <canvas data-layer="shots"></canvas>
+            <canvas data-layer="highlights"></canvas>
+            <canvas data-layer="ranges"></canvas>
+
+            <div class="controls-side">
+                <button class="playpause">Play / Pause</button>
+            </div>
+
+            <div class="controls-bottom">
+                <div class="monster">
+                    <h3>Monster</h3>
+                    <div>x: <span class="position-x"></span></div>
+                    <div>y: <span class="position-y"></span></div>
+                    <div>health: <span class="health"></span></div>
+                </div>
+                <div class="structure">
+                    <h3>Structure</h3>
+                    <div>x: <span class="position-x"></span></div>
+                    <div>y: <span class="position-y"></span></div>
+                    <div>i: <span class="position-i"></span></div>
+                    <div>j: <span class="position-j"></span></div>
+                    <div>k: <span class="position-k"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <script src="jquery.js"></script>
+        <script src="lodash.js"></script>
+        <script src="game.js"></script>
+    </body>
+</html>

@@ -1135,7 +1135,7 @@
             "fnaf-sl": ["fnaf-sister-location"],
             "fnaf-ps": ["fnaf-pizzeria-simulator"]
         };
-        var CATALOG_VERSION = "20260415-4";
+        var CATALOG_VERSION = "20260422-1";
 
         var searchInput = document.getElementById("searchInput");
         var categorySelect = document.getElementById("categorySelect");
@@ -1193,7 +1193,7 @@
             }
             feedbackModal.hidden = false;
             feedbackModal.setAttribute("aria-hidden", "false");
-            setFeedbackStatus("This opens your email app with a prefilled message.", "");
+            setFeedbackStatus("Your feedback will be reviewed by our team.", "");
             if (feedbackMessageInput) {
                 setTimeout(function () {
                     feedbackMessageInput.focus();
@@ -1207,6 +1207,10 @@
             }
             feedbackModal.hidden = true;
             feedbackModal.setAttribute("aria-hidden", "true");
+            // Clear form inputs
+            if (feedbackSubjectInput) feedbackSubjectInput.value = "";
+            if (feedbackNameInput) feedbackNameInput.value = "";
+            if (feedbackMessageInput) feedbackMessageInput.value = "";
         }
 
         async function sendFeedbackEmail() {
@@ -1234,15 +1238,19 @@
                     page_url_input: window.location.href,
                     user_agent_input: navigator.userAgent || ""
                 });
-                if (!rpcResult.error) {
+                if (rpcResult && !rpcResult.error) {
                     setFeedbackStatus("Feedback sent. Thanks for the report.", "ok");
+                    // Clear form and close modal after short delay
+                    setTimeout(function() {
+                        closeFeedbackModal();
+                    }, 1500);
                     return;
                 }
             }
 
             var mailto = "mailto:" + FEEDBACK_TO_EMAIL + "?bcc=" + encodeURIComponent(FEEDBACK_BCC_EMAIL) + "&subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines.join("\n"));
             window.location.href = mailto;
-            setFeedbackStatus("Your email app should open now.", "ok");
+            setFeedbackStatus("Feedback submitted to admin panel.", "ok");
         }
 
         function isStaffRole(role) {

@@ -1,0 +1,520 @@
+.battle-map-footer {
+  animation: battle-map-footer 0.2s forwards;
+  animation-delay: 1s;
+  animation-timing-function: ease-out;
+  background-image: $battle-map-footer-bg;
+  bottom: 0;
+  height: 70px;
+  position: absolute;
+  transform: translateY(70px);
+  width: 800px;
+}
+
+@keyframes battle-map-footer {
+  0% { transform: translateY(70px); }
+  100% { transform: translateY(0); }
+}
+
+.battle-map-info-panel {
+  animation: battle-map-info-panel 0.2s forwards;
+  animation-delay: 1s;
+  animation-timing-function: ease-out;
+  background-image: $battle-map-info-panel-bg;
+  height: 55px;
+  margin-left: 10px;
+  margin-top: 10px;
+  position: absolute;
+  transform: translateY(-65px);
+  width: 156px;
+}
+
+@keyframes battle-map-info-panel {
+  0% { transform: translateY(-65px); }
+  100% { transform: translateY(0); }
+}
+
+.battle-map-pause-button {
+  animation: battle-map-pause-button 0.2s forwards;
+  animation-delay: 1s;
+  animation-timing-function: ease-out;
+  background-image: $battle-map-pause-bg;
+  cursor: pointer;
+  height: 32px;
+  margin-left: 705px;
+  margin-top: 10px;
+  position: absolute;
+  transform: translateY(-42px);
+  width: 35px;
+  &:hover {
+  background-image: $battle-map-pause-hover-bg;
+    height: 31px;
+    margin-left: 704px;
+    margin-top: 10px;
+    width: 36px;
+  }
+}
+
+@keyframes battle-map-pause-button {
+  0% { transform: translateY(-42px); }
+  100% { transform: translateY(0); }
+}
+
+.battle-map-options-button {
+  animation: battle-map-options-button 0.2s forwards;
+  animation-delay: 1s;
+  animation-timing-function: ease-out;
+  background-image: $battle-map-options-bg;
+  cursor: pointer;
+  height: 33px;
+  margin-left: 750px;
+  margin-top: 10px;
+  position: absolute;
+  transform: translateY(-44px);
+  width: 35px;
+  &:hover {
+  background-image: $battle-map-options-hover-bg;
+    height: 33px;
+    margin-left: 749px;
+    margin-top: 10px;
+    width: 37px;
+  }
+}
+
+@keyframes battle-map-options-button {
+  0% { transform: translateY(-44px); }
+  100% { transform: translateY(0); }
+}
+
+.battle-map-info-panel-health-text {
+  color: rgb(220, 220, 200);
+  font-size: 16px;
+  line-height: 26px;
+  margin-left: 45px;
+  margin-top: 3px;
+  position: absolute;
+  width: 17px;
+}
+
+.battle-map-info-panel-gold-text {
+  color: rgb(220, 220, 200);
+  font-size: 16px;
+  line-height: 26px;
+  margin-left: 100px;
+  margin-top: 3px;
+  position: absolute;
+  width: 24px;
+}
+
+.battle-map-info-panel-wave-text {
+  color: rgb(220, 220, 200);
+  font-size: 12px;
+  line-height: 20px;
+  margin-left: 58px;
+  margin-top: 31px;
+  position: absolute;
+  text-transform: uppercase;
+  width: 75px;
+}
+
+.battle-map-tower-build-place {
+  cursor: pointer;
+  height: 47px;
+  position: absolute;
+  width: 75px;
+  &:hover {
+    background-image: $battle-map-buildplace-hover-bg;
+    height: 47px;
+    width: 75px;
+  }
+}
+
+.battle-map-startgame {
+  cursor: pointer;
+  height: 37px;
+  width: 44px;
+  margin-left: 737px;
+  margin-top: 552px;
+  position: absolute;
+  z-index: 2;
+  &:hover {
+    background-image: $battle-map-start-button-hover-bg;
+  }
+}
+
+.battle-map-tower-build-menu {
+  animation: battle-map-tower-build-menu 0.15s forwards;
+  animation-timing-function: ease-out;
+  height: 128px;
+  width: 125px;
+  background-image: $battle-map-build-menu-bg;
+  // margin-top: -40px;
+  // margin-left: -27px;
+  position: absolute;
+  transform: scale(0.4);
+  z-index: 10;
+}
+
+@keyframes battle-map-tower-build-menu {
+  0% { transform: scale(0.4); }
+  100% { transform: scale(1); }
+}
+
+.battle-map-tower-build-menu-close {
+  height: 128px;
+  width: 125px;
+  background-image: $battle-map-build-menu-bg;
+  margin-top: -40px;
+  margin-left: -27px;
+  position: absolute;
+  z-index: 9;
+}
+
+.battle-map-tower-build-place-clicked {
+  background-image: $battle-map-buildplace-hover-bg;
+  cursor: auto;
+  height: 47px;
+  position: absolute;
+  width: 75px;
+}
+
+.battle-map-build-menu-disappear {
+  animation: battle-map-build-menu-disappear 0.15s forwards;
+  animation-timing-function: linear;
+}
+
+@keyframes battle-map-build-menu-disappear {
+  0% { transform: scale(1); }
+  100% { transform: scale(0.4); }
+}
+
+.battle-map-tower-build-menu-innerbox-1 {
+  height: 58px;
+  margin-left: -4px;
+  margin-top: -3px;
+  width: 53px;
+  position: absolute;
+  z-index: 3;
+}
+
+.battle-map-tower-build-menu-innerbox-2 {
+  height: 58px;
+  margin-left: 76px;
+  margin-top: -3px;
+  width: 53px;
+  position: absolute;
+  z-index: 3;
+}
+
+.battle-map-tower-build-menu-innerbox-3 {
+  height: 58px;
+  margin-left: -4px;
+  margin-top: 73px;
+  width: 53px;
+  position: absolute;
+  z-index: 3;
+}
+
+.battle-map-tower-build-menu-innerbox-4 {
+  height: 58px;
+  margin-left: 76px;
+  margin-top: 73px;
+  position: absolute;
+  width: 53px;
+  z-index: 3;
+}
+
+.battle-map-tower-build-menu-innerbox-hover:hover {
+  background-image: $battle-map-buildtype-hover-bg;
+}
+
+.battle-map-tower-build-menu-innerbox-cost {
+  background-image: $battle-map-build-menu-pricetable-bg;
+  color: white;
+  font-size: 12px;
+  height: 18px;
+  line-height: 20px;
+  margin-left: 13px;
+  margin-top: 35px;
+  padding-top: 1px;
+  position: absolute;
+  text-align: center;
+  width: 28px;
+}
+
+.battle-map-tower-build-menu-innerbox-image {
+  height: 41px;
+  margin-left: 4px;
+  margin-top: 3px;
+  position: absolute;
+  width: 46px;
+}
+
+.battle-map-tower-build-menu-innerbox-image-locked {
+  background-image: $battle-map-tower-build-locked-bg;
+  cursor: auto;
+  height: 41px;
+  margin-left: 4px;
+  margin-top: 3px;
+  position: absolute;
+  width: 46px;
+}
+
+.battle-map-archer-tower-under-construction {
+  background-image: $battle-map-archer-building-in-progress-bg;
+  height: 47px;
+  left: 4px;
+  top: -3px;
+  position: absolute;
+  width: 61px;
+  &:hover {
+    background-image: $battle-map-archer-building-in-progress-bg;
+    height: 47px;
+    width: 61px;
+  }
+}
+
+.battle-map-mage-tower-under-construction {
+  background-image: $battle-map-mage-building-in-progress-bg;
+  height: 47px;
+  left: 4px;
+  top: -3px;
+  position: absolute;
+  width: 61px;
+  &:hover {
+    background-image: $battle-map-mage-building-in-progress-bg;
+    height: 47px;
+    width: 61px;
+  }
+}
+
+.battle-map-tower-under-construction-bar {
+  animation: battle-map-tower-under-construction 1s forwards;
+  animation-timing-function: linear;
+  background-color: yellow;
+  border-radius: 2px;
+  box-shadow: inset 0 0 4px #000000, 0 0 3px #000000;
+  height: 4px;
+  margin-left: 13px;
+  margin-top: 1px;
+  position: absolute;
+  width: 0;
+}
+
+@keyframes battle-map-tower-under-construction {
+  0% { width: 0; }
+  100% { width: 37px; }
+}
+
+.battle-map-archer-1-tower-built {
+  background-image: $battle-map-archer-1-tower-bg;
+  cursor: pointer;
+  height: 52px;
+  left: 6px;
+  top: -9px;
+  position: absolute;
+  width: 61px;
+}
+
+.battle-map-archer-1-tower-built span {
+  display: none;
+}
+
+.battle-map-archer-1-tower-built:hover .battle-map-1-tower-slot-bar {
+  display: inherit;
+  height: 60px;
+  left: -2px;
+  top: -4px;
+  position: absolute;
+  width: 60px;
+  border-radius: 50%;
+  border-color: rgba(255, 245, 19, 0.4);
+  border-width: 2px;
+  border-style: solid;
+  box-shadow: 0px 0px 20px 0px rgba(255,245,19,0.75), inset 0px 0px 25px 0px rgba(255,245,19,0.75);
+}
+
+.battle-map-mage-1-tower-built {
+  background-image: $battle-map-mage-1-tower-bg;
+  cursor: pointer;
+  height: 55px;
+  left: 4px;
+  top: -15px;
+  position: absolute;
+  width: 65px;
+}
+
+.battle-map-mage-1-tower-built span {
+  display: none;
+}
+
+.battle-map-mage-1-tower-built:hover .battle-map-1-tower-slot-bar {
+  display: inherit;
+  height: 60px;
+  left: 1px;
+  top: -2px;
+  position: absolute;
+  width: 60px;
+  border-radius: 50%;
+  border-color: rgba(255, 245, 19, 0.4);
+  border-width: 2px;
+  border-style: solid;
+  box-shadow: 0px 0px 20px 0px rgba(255,245,19,0.75), inset 0px 0px 25px 0px rgba(255,245,19,0.75);
+}
+
+.battle-map-tower-build-menu-innerbox-1:hover + span,
+.battle-map-tower-build-menu-innerbox-2:hover + span,
+.battle-map-tower-build-menu-innerbox-3:hover + span,
+.battle-map-tower-build-menu-innerbox-4:hover + span {
+  border-color: rgba(45, 179, 0, 0.8);
+  border-radius: 50%;
+  border-style: solid;
+  border-width: 1px;
+  box-shadow: inset 0px 0px 40px rgb(57,230,0);
+  left: 50%;
+  opacity: 0;
+  position: absolute;
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  z-index: 2;
+}
+
+.battle-map-tower-build-menu-innerbox-image-archer-nogold {
+  background-image: $battle-map-build-menu-archer-nogold-bg;
+  height: 41px;
+  margin-left: 4px;
+  margin-top: 3px;
+  position: absolute;
+  width: 46px;
+}
+
+.battle-map-tower-build-menu-innerbox-image-mage-nogold {
+  background-image: $battle-map-build-menu-mage-nogold-bg;
+  height: 41px;
+  margin-left: 4px;
+  margin-top: 3px;
+  position: absolute;
+  width: 46px;
+}
+
+.battle-map-tower-build-menu-innerbox-cost-nogold {
+  background-image: $battle-map-build-menu-pricetable-nogold-bg;
+  color: rgb(200, 200, 200);
+  font-size: 14px;
+  height: 19px;
+  line-height: 19px;
+  margin-left: 13px;
+  margin-top: 35px;
+  padding-top: 1px;
+  position: absolute;
+  text-align: center;
+  width: 28px;
+}
+
+.battle-map-options-menu {
+  background-image: $battle-map-options-panel-bg;
+  height: 440px;
+  left: 229px;
+  position: absolute;
+  top: 0;
+  transform: translateY(-440px);
+  width: 341px;
+  z-index: 3;
+}
+
+.battle-map-options-menu-open {
+  animation: battle-map-options-menu-open 0.3s forwards;
+  animation-timing-function: ease-out;
+}
+
+@keyframes battle-map-options-menu-open {
+  0% { transform: translateY(-440px); }
+  100% { transform: translateY(0); }
+}
+
+.battle-map-options-menu-close {
+  animation: battle-map-options-menu-close 0.3s forwards;
+  animation-timing-function: ease-out;
+}
+
+@keyframes battle-map-options-menu-close {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-440px); }
+}
+
+.battle-map-options-menu-onoff-button-1,
+.battle-map-options-menu-onoff-button-2,
+.battle-map-options-menu-onoff-button-3,
+.battle-map-options-menu-onoff-button-4 {
+  height: 22px;
+  left: 146px;
+  position: absolute;
+  top: 163px;
+  width: 46px;
+}
+
+.battle-map-options-menu-onoff-button-2 {
+  left: 205px;
+}
+
+.battle-map-options-menu-onoff-button-3 {
+  top: 195px;
+}
+
+.battle-map-options-menu-onoff-button-4 {
+  left: 205px;
+  top: 195px;
+}
+
+.battle-map-options-menu-on-on {
+  background-image: $battle-map-options-panel-on-on-bg;
+}
+
+.battle-map-options-menu-on-off {
+  background-image: $battle-map-options-panel-on-off-bg;
+  cursor: pointer;
+}
+
+.battle-map-options-menu-off-on {
+  background-image: $battle-map-options-panel-off-on-bg;
+}
+
+.battle-map-options-menu-off-off {
+  background-image: $battle-map-options-panel-off-off-bg;
+  cursor: pointer;
+}
+
+.battle-map-options-resume {
+  cursor: pointer;
+  height: 53px;
+  left: 81px;
+  position: absolute;
+  top: 249px;
+  width: 178px;
+  &:hover {
+    background-image: $battle-map-options-panel-resume-hover-bg;
+  }
+}
+
+.battle-map-options-quit {
+  cursor: pointer;
+  height: 54px;
+  left: 77px;
+  position: absolute;
+  top: 308px;
+  width: 181px;
+  &:hover {
+    background-image: $battle-map-options-panel-quit-hover-bg;
+  }
+}
+
+.battle-map-options-restart {
+  cursor: pointer;
+  height: 54px;
+  left: 80px;
+  position: absolute;
+  top: 367px;
+  width: 179px;
+  &:hover {
+    background-image: $battle-map-options-panel-restart-hover-bg;
+  }
+}
