@@ -162,6 +162,16 @@ create table if not exists public.feedback_entries (
 
 alter table public.feedback_entries enable row level security;
 
+create table if not exists public.signin_code_attempts (
+  email text primary key,
+  window_started_at timestamptz not null default now(),
+  attempts integer not null default 0,
+  last_attempt_at timestamptz not null default now()
+);
+
+create index if not exists signin_code_attempts_window_idx
+  on public.signin_code_attempts (window_started_at desc);
+
 create index if not exists feedback_entries_created_at_idx
   on public.feedback_entries (created_at desc);
 
@@ -1209,7 +1219,7 @@ declare
   target_email text;
   normalized_role text;
 begin
-  if not public.current_user_is_admin() then
+  if not public.current_user_is_dev_or_admin() then
     raise exception 'Not authorized.';
   end if;
 
@@ -1274,7 +1284,7 @@ as $$
 declare
   target_user_id uuid;
 begin
-  if not public.current_user_is_admin() then
+  if not public.current_user_is_dev_or_admin() then
     raise exception 'Not authorized.';
   end if;
 
@@ -1472,20 +1482,294 @@ $$;
 
 create or replace function public.user_requires_signin_code(email_input text)
 returns boolean
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public, auth
 as $$
-  with target_user as (
-    select u.id
-    from auth.users u
-    where lower(trim(coalesce(u.email, ''))) = lower(trim(coalesce(email_input, '')))
+declare
+  resolved_email text;
+  resolved_user_id uuid;
+begin
+  resolved_email := public.resolve_signin_email(email_input);
+  if resolved_email is null then
+    return false;
+  end if;
+
+  select u.id
+    into resolved_user_id
+  from auth.users u
+  where lower(trim(coalesce(u.email, ''))) = resolved_email
+  limit 1;
+
+  if resolved_user_id is null then
+    return false;
+  end if;
+
+  return coalesce((
+    select us.require_verification_code
+    from public.user_settings us
+    where us.user_id = resolved_user_id
     limit 1
+  ), false);
+end;
+$$;
+
+create or replace function public.resolve_signin_email(login_input text)
+returns text
+language plpgsql
+stable
+security definer
+set search_path = public, auth
+as $$
+declare
+  cleaned_input text;
+  resolved_email text;
+begin
+  cleaned_input := lower(trim(coalesce(login_input, '')));
+  if cleaned_input = '' then
+    return null;
+  end if;
+
+  if position('@' in cleaned_input) > 0 then
+    select lower(trim(coalesce(u.email, '')))
+      into resolved_email
+    from auth.users u
+    where lower(trim(coalesce(u.email, ''))) = cleaned_input
+    limit 1;
+
+    return coalesce(resolved_email, cleaned_input);
+  end if;
+
+  select lower(trim(coalesce(u.email, '')))
+    into resolved_email
+  from public.user_settings us
+  join auth.users u on u.id = us.user_id
+  where lower(trim(coalesce(us.username, ''))) = cleaned_input
+  limit 1;
+
+  return resolved_email;
+end;
+$$;
+
+create or replace function public.consume_signin_code_attempt(
+  login_input text,
+  max_attempts integer default 6,
+  cooldown_minutes integer default 10
+)
+returns table (
+  allowed boolean,
+  retry_after_seconds integer,
+  attempts_used integer,
+  attempts_remaining integer,
+  window_seconds integer
+)
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  resolved_email text;
+  limit_attempts integer;
+  limit_cooldown_minutes integer;
+  started_at timestamptz;
+  used_attempts integer;
+  window_end timestamptz;
+begin
+  resolved_email := public.resolve_signin_email(login_input);
+  if resolved_email is null then
+    raise exception 'Enter a valid email or username.';
+  end if;
+
+  limit_attempts := greatest(2, least(coalesce(max_attempts, 6), 20));
+  limit_cooldown_minutes := greatest(5, least(coalesce(cooldown_minutes, 10), 60));
+
+  insert into public.signin_code_attempts (email, window_started_at, attempts, last_attempt_at)
+  values (resolved_email, now(), 0, now())
+  on conflict (email) do nothing;
+
+  select sca.window_started_at, sca.attempts
+    into started_at, used_attempts
+  from public.signin_code_attempts sca
+  where sca.email = resolved_email
+  for update;
+
+  window_end := started_at + make_interval(mins => limit_cooldown_minutes);
+
+  if now() >= window_end then
+    update public.signin_code_attempts
+    set window_started_at = now(),
+        attempts = 0,
+        last_attempt_at = now()
+    where email = resolved_email;
+
+    started_at := now();
+    used_attempts := 0;
+    window_end := started_at + make_interval(mins => limit_cooldown_minutes);
+  end if;
+
+  if used_attempts >= limit_attempts then
+    return query
+      select
+        false,
+        greatest(1, ceil(extract(epoch from (window_end - now())))::integer),
+        used_attempts,
+        0,
+        limit_cooldown_minutes * 60;
+    return;
+  end if;
+
+  used_attempts := used_attempts + 1;
+
+  update public.signin_code_attempts
+  set attempts = used_attempts,
+      last_attempt_at = now()
+  where email = resolved_email;
+
+  return query
+    select
+      true,
+      0,
+      used_attempts,
+      greatest(0, limit_attempts - used_attempts),
+      limit_cooldown_minutes * 60;
+end;
+$$;
+
+create or replace function public.admin_create_manual_account(
+  login_name_input text,
+  password_input text,
+  display_name_input text default null
+)
+returns table (
+  user_id uuid,
+  login_name text,
+  temporary_email text
+)
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  normalized_login text;
+  clean_password text;
+  clean_display_name text;
+  new_user_id uuid;
+  generated_email text;
+begin
+  if not public.current_user_is_dev_or_admin() then
+    raise exception 'Not authorized.';
+  end if;
+
+  normalized_login := lower(trim(coalesce(login_name_input, '')));
+  clean_password := coalesce(password_input, '');
+  clean_display_name := nullif(trim(coalesce(display_name_input, '')), '');
+
+  if normalized_login !~ '^[a-z0-9_]{3,24}$' then
+    raise exception 'Login name must be 3-24 chars: lowercase letters, numbers, underscore.';
+  end if;
+
+  if length(clean_password) < 8 then
+    raise exception 'Password must be at least 8 characters.';
+  end if;
+
+  if exists (
+    select 1
+    from public.user_settings us
+    where lower(trim(coalesce(us.username, ''))) = normalized_login
+  ) then
+    raise exception 'Username is already taken.';
+  end if;
+
+  generated_email := normalized_login || '+manual-' || substr(gen_random_uuid()::text, 1, 8) || '@accounts.local';
+  while exists (
+    select 1
+    from auth.users u
+    where lower(trim(coalesce(u.email, ''))) = generated_email
+  ) loop
+    generated_email := normalized_login || '+manual-' || substr(gen_random_uuid()::text, 1, 8) || '@accounts.local';
+  end loop;
+
+  new_user_id := gen_random_uuid();
+
+  insert into auth.users (
+    instance_id,
+    id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    created_at,
+    updated_at
   )
-  select coalesce(us.require_verification_code, false)
-  from target_user tu
-  left join public.user_settings us on us.user_id = tu.id;
+  values (
+    '00000000-0000-0000-0000-000000000000'::uuid,
+    new_user_id,
+    'authenticated',
+    'authenticated',
+    generated_email,
+    crypt(clean_password, gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    jsonb_build_object(
+      'manual_account', true,
+      'manual_login', normalized_login,
+      'display_name', clean_display_name
+    ),
+    now(),
+    now()
+  );
+
+  insert into public.user_profiles (user_id, email, banned, created_at, updated_at)
+  values (new_user_id, generated_email, false, now(), now())
+  on conflict (user_id) do update
+    set email = excluded.email,
+        banned = false,
+        updated_at = now();
+
+  insert into public.user_settings (
+    user_id,
+    display_name,
+    username,
+    language,
+    time_zone,
+    email_updates,
+    game_alerts,
+    profile_public,
+    show_online,
+    require_verification_code,
+    updated_at
+  )
+  values (
+    new_user_id,
+    clean_display_name,
+    normalized_login,
+    'en',
+    'UTC',
+    false,
+    true,
+    false,
+    true,
+    false,
+    now()
+  )
+  on conflict (user_id) do update
+    set display_name = coalesce(excluded.display_name, public.user_settings.display_name),
+        username = excluded.username,
+        updated_at = now();
+
+  perform public.admin_log_action(
+    new_user_id,
+    generated_email,
+    'admin_create_manual_account',
+    jsonb_build_object('manual_login', normalized_login)
+  );
+
+  return query select new_user_id, normalized_login, generated_email;
+end;
 $$;
 
 create or replace function public.admin_delete_account(target_user_id uuid)
@@ -1513,16 +1797,16 @@ begin
   from auth.users
   where id = target_user_id;
 
-  delete from public.user_saves where user_id = target_user_id;
-  delete from public.user_profiles where user_id = target_user_id;
-  delete from auth.users where id = target_user_id;
-
   perform public.admin_log_action(
     target_user_id,
     target_email,
     'delete_account',
     jsonb_build_object('hard_delete', true)
   );
+
+  delete from public.user_saves where user_id = target_user_id;
+  delete from public.user_profiles where user_id = target_user_id;
+  delete from auth.users where id = target_user_id;
 
   return true;
 end;
@@ -1546,6 +1830,9 @@ revoke all on function public.public_list_hidden_games() from public;
 revoke all on function public.submit_feedback_entry(text, text, text, text, text) from public;
 revoke all on function public.admin_list_feedback(integer, integer) from public;
 revoke all on function public.user_requires_signin_code(text) from public;
+revoke all on function public.resolve_signin_email(text) from public;
+revoke all on function public.consume_signin_code_attempt(text, integer, integer) from public;
+revoke all on function public.admin_create_manual_account(text, text, text) from public;
 
 grant execute on function public.admin_list_users() to authenticated;
 grant execute on function public.admin_list_activity(integer, integer) to authenticated;
@@ -1554,6 +1841,7 @@ grant execute on function public.admin_set_staff_role(uuid, text, boolean) to au
 grant execute on function public.admin_set_staff_role_by_email(text, text, boolean) to authenticated;
 grant execute on function public.admin_set_ban(uuid, boolean, text) to authenticated;
 grant execute on function public.admin_delete_account(uuid) to authenticated;
+grant execute on function public.admin_create_manual_account(text, text, text) to authenticated;
 grant execute on function public.admin_log_action(uuid, text, text, jsonb) to authenticated;
 grant execute on function public.current_user_staff_role() to authenticated;
 grant execute on function public.current_user_is_moderator() to authenticated;
@@ -1573,6 +1861,10 @@ grant execute on function public.list_my_unread_friend_messages(integer) to auth
 grant execute on function public.mark_friend_message_read(uuid) to authenticated;
 grant execute on function public.user_requires_signin_code(text) to anon;
 grant execute on function public.user_requires_signin_code(text) to authenticated;
+grant execute on function public.resolve_signin_email(text) to anon;
+grant execute on function public.resolve_signin_email(text) to authenticated;
+grant execute on function public.consume_signin_code_attempt(text, integer, integer) to anon;
+grant execute on function public.consume_signin_code_attempt(text, integer, integer) to authenticated;
 grant execute on function public.public_list_hidden_games() to anon;
 grant execute on function public.public_list_hidden_games() to authenticated;
 grant execute on function public.submit_feedback_entry(text, text, text, text, text) to anon;
@@ -1659,6 +1951,12 @@ select 'public_list_hidden_games rpc exists' as check_name,
   to_regprocedure('public.public_list_hidden_games()') is not null as ok;
 select 'submit_feedback_entry rpc exists' as check_name,
   to_regprocedure('public.submit_feedback_entry(text,text,text,text,text)') is not null as ok;
+select 'resolve_signin_email rpc exists' as check_name,
+  to_regprocedure('public.resolve_signin_email(text)') is not null as ok;
+select 'consume_signin_code_attempt rpc exists' as check_name,
+  to_regprocedure('public.consume_signin_code_attempt(text,integer,integer)') is not null as ok;
+select 'admin_create_manual_account rpc exists' as check_name,
+  to_regprocedure('public.admin_create_manual_account(text,text,text)') is not null as ok;
 
 -- Optional: should return 0 rows when not signed in as an admin.
 select count(*) as admin_list_users_preview_count from public.admin_list_users();

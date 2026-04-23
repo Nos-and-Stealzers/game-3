@@ -387,8 +387,8 @@
           <h3 class="section-title">Email + Password</h3>
           <div class="grid">
             <label class="field full">
-              <span class="label">Email</span>
-              <input id="authEmail" class="input" type="email" placeholder="you@example.com" autocomplete="email">
+              <span class="label">Email or Username</span>
+              <input id="authEmail" class="input" type="text" placeholder="you@example.com or username" autocomplete="username">
             </label>
             <label class="field">
               <span class="label">Password</span>
@@ -404,7 +404,7 @@
             <button id="authSignUpBtn" type="button" class="btn gold">Create Account</button>
             <button id="authPasswordResetBtn" type="button" class="btn">Send Password Reset</button>
           </div>
-          <p class="hint">Sign up creates a password account and may ask for email verification depending on Supabase auth settings.</p>
+          <p class="hint">You can sign in with email or username. Sign up still requires a real email address.</p>
         </section>
 
         <section id="codePanel" class="card hidden" style="box-shadow:none; margin:0;">
@@ -521,6 +521,8 @@
     var autoCloudLoadedUserId = "";
     var AUTO_SYNC_INTERVAL_MS = 60000;
     var OTP_CODE_TTL_MS = 200 * 1000;
+    var SIGNIN_CODE_MAX_ATTEMPTS = 6;
+    var SIGNIN_CODE_COOLDOWN_MINUTES = 10;
     var authActionInFlight = false;
 
     var pendingCodeFlow = "";
@@ -750,6 +752,88 @@
       return String(value || "").trim();
     }
 
+    function normalizeLoginInput(value) {
+      return String(value || "").trim();
+    }
+
+    function isPlaceholderManualEmail(value) {
+      var email = String(value || "").trim().toLowerCase();
+      return email.endsWith("@accounts.local");
+    }
+
+    async function resolveSigninEmail(loginInput) {
+      var cleaned = normalizeLoginInput(loginInput).toLowerCase();
+      if (!cleaned) {
+        return "";
+      }
+
+      if (!supabaseClient) {
+        return cleaned;
+      }
+
+      var result = await supabaseClient.rpc("resolve_signin_email", {
+        login_input: cleaned
+      });
+      if (result && result.error) {
+        throw result.error;
+      }
+
+      var resolved = typeof result.data === "string" ? result.data : "";
+      return normalizeEmail(resolved || cleaned).toLowerCase();
+    }
+
+    async function reserveSigninCodeAttempt(loginInput) {
+      if (!supabaseClient) {
+        return;
+      }
+
+      var result = await supabaseClient.rpc("consume_signin_code_attempt", {
+        login_input: normalizeLoginInput(loginInput),
+        max_attempts: SIGNIN_CODE_MAX_ATTEMPTS,
+        cooldown_minutes: SIGNIN_CODE_COOLDOWN_MINUTES
+      });
+      if (result && result.error) {
+        throw result.error;
+      }
+
+      var row = null;
+      if (Array.isArray(result.data)) {
+        row = result.data[0] || null;
+      } else if (result.data && typeof result.data === "object") {
+        row = result.data;
+      }
+
+      if (!row || row.allowed !== false) {
+        return;
+      }
+
+      var retrySeconds = Number(row.retry_after_seconds || 0);
+      var retryMinutes = Math.max(1, Math.ceil(retrySeconds / 60));
+      throw new Error("Too many email code requests for this account. Try again in about " + retryMinutes + " minute(s).");
+    }
+
+    async function sendOtpWithRetry(email, shouldCreateUser, flow) {
+      var payload = {
+        email: email,
+        options: {
+          shouldCreateUser: shouldCreateUser,
+          data: {
+            auth_flow: flow
+          }
+        }
+      };
+
+      var firstAttempt = await supabaseClient.auth.signInWithOtp(payload);
+      if (!firstAttempt.error) {
+        return;
+      }
+
+      var secondAttempt = await supabaseClient.auth.signInWithOtp(payload);
+      if (secondAttempt.error) {
+        throw secondAttempt.error;
+      }
+    }
+
     function validatePasswordInput(password) {
       var value = String(password || "");
       if (value.length < 8) {
@@ -797,12 +881,12 @@
       return window.location.origin + window.location.pathname;
     }
 
-    async function requiresSigninCodeForEmail(email) {
+    async function requiresSigninCodeForEmail(emailOrUsername) {
       if (!supabaseClient) {
         return false;
       }
       var result = await supabaseClient.rpc("user_requires_signin_code", {
-        email_input: email
+        email_input: emailOrUsername
       });
       if (result.error) {
         return false;
@@ -814,9 +898,13 @@
       if (!supabaseClient) {
         throw new Error("Supabase is not configured.");
       }
-      var email = normalizeEmail(authEmail.value);
-      if (!email) {
-        throw new Error("Enter your email.");
+      var loginInput = normalizeLoginInput(authEmail.value);
+      if (!loginInput) {
+        throw new Error("Enter your email or username.");
+      }
+      var email = await resolveSigninEmail(loginInput);
+      if (!email || email.indexOf("@") === -1) {
+        throw new Error("We could not find that account. Use your email or username.");
       }
       var password = validatePasswordInput(authPassword.value);
 
@@ -848,6 +936,9 @@
       var email = normalizeEmail(authEmail.value);
       if (!email) {
         throw new Error("Enter your email.");
+      }
+      if (email.indexOf("@") === -1) {
+        throw new Error("Sign up needs a real email address.");
       }
       var password = validatePasswordInput(authPassword.value);
       var confirmPassword = String(authPasswordConfirm.value || "");
@@ -902,24 +993,26 @@
       if (!supabaseClient) {
         throw new Error("Supabase is not configured.");
       }
-      var email = normalizeEmail(emailOverride || otpEmail.value || authEmail.value);
-      if (!email) {
-        throw new Error("Enter your email.");
+      var rawInput = normalizeLoginInput(emailOverride || otpEmail.value || authEmail.value);
+      if (!rawInput) {
+        throw new Error("Enter your email or username.");
       }
 
-      var shouldCreateUser = flow === "otp_signup";
-      var result = await supabaseClient.auth.signInWithOtp({
-        email: email,
-        options: {
-          shouldCreateUser: shouldCreateUser,
-          data: {
-            auth_flow: flow
-          }
-        }
-      });
-      if (result.error) {
-        throw result.error;
+      var email = flow === "otp_signup"
+        ? normalizeEmail(rawInput)
+        : await resolveSigninEmail(rawInput);
+      if (!email || email.indexOf("@") === -1) {
+        throw new Error("We could not find that account email.");
       }
+
+      if (flow === "otp_signup" && email.indexOf("@") === -1) {
+        throw new Error("Sign-up code requires an email address.");
+      }
+
+      await reserveSigninCodeAttempt(email);
+
+      var shouldCreateUser = flow === "otp_signup";
+      await sendOtpWithRetry(email, shouldCreateUser, flow);
 
       pendingCodeFlow = flow;
       pendingCodeEmail = email;
@@ -979,18 +1072,8 @@
         throw new Error("Send a code first.");
       }
 
-      var result = await supabaseClient.auth.signInWithOtp({
-        email: pendingCodeEmail,
-        options: {
-          shouldCreateUser: pendingCodeFlow === "otp_signup",
-          data: {
-            auth_flow: pendingCodeFlow + "_resend"
-          }
-        }
-      });
-      if (result.error) {
-        throw result.error;
-      }
+      await reserveSigninCodeAttempt(pendingCodeEmail);
+      await sendOtpWithRetry(pendingCodeEmail, pendingCodeFlow === "otp_signup", pendingCodeFlow + "_resend");
 
       markPendingCodeIssued();
       verifyHint.textContent = "New code sent to " + pendingCodeEmail + ". Expires in 200 seconds. Previous code is now invalid.";
@@ -1118,6 +1201,30 @@
           setStatus("Signed in: " + (user.email || "account") + " (cloud loaded)", "ok");
         } else {
           setStatus("Signed in: " + (user.email || "account") + " (no cloud save yet)", "ok");
+        }
+        if (isPlaceholderManualEmail(user.email || "") && !sessionStorage.getItem("manual_email_prompted")) {
+          sessionStorage.setItem("manual_email_prompted", "1");
+          setTimeout(function () {
+            withAuthAction(async function () {
+              try {
+                var wantsEmail = window.confirm("This account was created without a real email. Add one now so sign-in codes and recovery always work?");
+                if (!wantsEmail) {
+                  return;
+                }
+                var newEmail = normalizeEmail(window.prompt("Enter your real email:", "") || "").toLowerCase();
+                if (!newEmail || newEmail.indexOf("@") === -1) {
+                  throw new Error("A valid email is required.");
+                }
+                var updateResult = await supabaseClient.auth.updateUser({ email: newEmail });
+                if (updateResult.error) {
+                  throw updateResult.error;
+                }
+                setStatus("Verification email sent to " + newEmail + ". Confirm it to finish linking this account.", "ok");
+              } catch (promptError) {
+                setStatus(promptError && promptError.message ? promptError.message : "Could not link email.", "error");
+              }
+            });
+          }, 600);
         }
       } catch (error) {
         if (!(error && error.message === "Please sign in first.")) {
@@ -1335,7 +1442,8 @@
     });
 
     authEmail.addEventListener("input", function () {
-      otpEmail.value = normalizeEmail(authEmail.value);
+      var value = normalizeLoginInput(authEmail.value);
+      otpEmail.value = value.indexOf("@") !== -1 ? normalizeEmail(value) : "";
     });
 
     authPassword.addEventListener("keydown", function (event) {

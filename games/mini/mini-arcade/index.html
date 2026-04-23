@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mini Arcade - Amazing Browser Games</title>
+    <meta name="description" content="Play amazing browser games for free! Enjoy puzzle games, strategy games, and more in your browser.">
+    <meta name="keywords" content="browser games, online games, puzzle games, free games, arcade games">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourwebsite.com/">
+    <meta property="og:title" content="Mini Arcade - Amazing Browser Games">
+    <meta property="og:description" content="Play amazing browser games for free! Enjoy puzzle games, strategy games, and more.">
+    <meta property="og:image" content="./images/og-image.svg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://yourwebsite.com/">
+    <meta property="twitter:title" content="Mini Arcade - Amazing Browser Games">
+    <meta property="twitter:description" content="Play amazing browser games for free! Enjoy puzzle games, strategy games, and more.">
+    <meta property="twitter:image" content="./images/og-image.svg">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <link rel="apple-touch-icon" href="./favicon.svg">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Mini Arcade">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="./css/main.css">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="./css/main.css" as="style">
+    <link rel="preload" href="./js/main.js" as="script">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header glass">
+        <nav class="nav">
+            <a href="#" class="logo">
+                <span class="logo-icon">🎮</span>
+                <span>Mini Arcade</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#games" class="nav-link">Games</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <main>
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">Welcome to Mini Arcade</h1>
+                <p class="hero-subtitle">
+                    Discover amazing browser games that run instantly in your browser. 
+                    No downloads, no waiting – just pure gaming fun!
+                </p>
+                <a href="#games" class="hero-cta">
+                    <span>🚀</span>
+                    Start Playing Now
+                </a>
+            </div>
+        </section>
+
+        <!-- Games Section -->
+        <section id="games" class="games">
+            <div class="container">
+                <h2 class="section-title">Featured Games</h2>
+                
+                <div class="games-grid">
+                    <!-- Rainbow Bottles Game -->
+                    <a href="./games/3d-rainbow-bottles.html" class="game-card glass">
+                        <div class="game-preview">
+                            🌈🍶
+                        </div>
+                        <div class="game-info">
+                            <h3 class="game-title">Rainbow Bottles</h3>
+                            <p class="game-description">
+                                Sort colorful objects by type in this addictive 3D puzzle game. 
+                                Pour objects between bottles to create matching sets across 5 different themes!
+                            </p>
+                            <div class="game-tags">
+                                <span class="game-tag">Puzzle</span>
+                                <span class="game-tag">3D</span>
+                                <span class="game-tag">Strategy</span>
+                                <span class="game-tag">Relaxing</span>
+                            </div>
+                            <button class="play-button">
+                                <span>▶️</span>
+                                Play Now
+                            </button>
+                        </div>
+                    </a>
+
+                    <!-- Coming Soon Games -->
+                    <div class="game-card glass coming-soon">
+                        <div class="coming-soon-badge">Coming Soon</div>
+                        <div class="game-preview">
+                            🎯🎲
+                        </div>
+                        <div class="game-info">
+                            <h3 class="game-title">Target Master</h3>
+                            <p class="game-description">
+                                Test your precision and timing in this challenging target practice game. 
+                                Multiple modes and increasing difficulty levels await!
+                            </p>
+                            <div class="game-tags">
+                                <span class="game-tag">Skill</span>
+                                <span class="game-tag">Arcade</span>
+                                <span class="game-tag">Timing</span>
+                            </div>
+                            <button class="play-button">
+                                <span>⏱️</span>
+                                Coming Soon
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="game-card glass coming-soon">
+                        <div class="coming-soon-badge">Coming Soon</div>
+                        <div class="game-preview">
+                            🧩🔀
+                        </div>
+                        <div class="game-info">
+                            <h3 class="game-title">Block Shift</h3>
+                            <p class="game-description">
+                                Slide and arrange colorful blocks to solve increasingly complex puzzles. 
+                                A modern twist on classic sliding puzzle games!
+                            </p>
+                            <div class="game-tags">
+                                <span class="game-tag">Logic</span>
+                                <span class="game-tag">Puzzle</span>
+                                <span class="game-tag">Brain Training</span>
+                            </div>
+                            <button class="play-button">
+                                <span>⏱️</span>
+                                Coming Soon
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="game-card glass coming-soon">
+                        <div class="coming-soon-badge">Coming Soon</div>
+                        <div class="game-preview">
+                            🌟💫
+                        </div>
+                        <div class="game-info">
+                            <h3 class="game-title">Cosmic Runner</h3>
+                            <p class="game-description">
+                                Navigate through space obstacles in this fast-paced endless runner. 
+                                Collect stars and unlock new spacecraft!
+                            </p>
+                            <div class="game-tags">
+                                <span class="game-tag">Action</span>
+                                <span class="game-tag">Endless</span>
+                                <span class="game-tag">Space</span>
+                            </div>
+                            <button class="play-button">
+                                <span>⏱️</span>
+                                Coming Soon
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="game-card glass coming-soon">
+                        <div class="coming-soon-badge">Coming Soon</div>
+                        <div class="game-preview">
+                            🏰⚔️
+                        </div>
+                        <div class="game-info">
+                            <h3 class="game-title">Castle Defense</h3>
+                            <p class="game-description">
+                                Defend your castle from waves of enemies using strategic tower placement. 
+                                Upgrade your defenses and survive the siege!
+                            </p>
+                            <div class="game-tags">
+                                <span class="game-tag">Strategy</span>
+                                <span class="game-tag">Tower Defense</span>
+                                <span class="game-tag">Medieval</span>
+                            </div>
+                            <button class="play-button">
+                                <span>⏱️</span>
+                                Coming Soon
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="game-card glass coming-soon">
+                        <div class="coming-soon-badge">Coming Soon</div>
+                        <div class="game-preview">
+                            🎨🖌️
+                        </div>
+                        <div class="game-info">
+                            <h3 class="game-title">Paint & Create</h3>
+                            <p class="game-description">
+                                Express your creativity with this digital art game. 
+                                Paint, draw, and create beautiful artwork with various tools and effects!
+                            </p>
+                            <div class="game-tags">
+                                <span class="game-tag">Creative</span>
+                                <span class="game-tag">Art</span>
+                                <span class="game-tag">Relaxing</span>
+                            </div>
+                            <button class="play-button">
+                                <span>⏱️</span>
+                                Coming Soon
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <p style="color: var(--white); font-size: 1.1rem; opacity: 0.9;">
+                        🚀 More amazing games coming soon! Stay tuned for regular updates.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="games" style="background: rgba(255,255,255,0.1);">
+            <div class="container">
+                <h2 class="section-title">About Mini Arcade</h2>
+                <div style="max-width: 800px; margin: 0 auto; text-align: center; color: var(--white);">
+                    <p style="font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.95;">
+                        Mini Arcade is your destination for high-quality browser games that you can play instantly. 
+                        Our games are designed to be fun, engaging, and accessible to players of all ages.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin: 3rem 0;">
+                        <div class="glass" style="padding: 2rem; border-radius: 16px; text-align: center;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+                            <h3 style="margin-bottom: 1rem;">Instant Play</h3>
+                            <p style="opacity: 0.9;">No downloads or installations required. Click and play immediately!</p>
+                        </div>
+                        <div class="glass" style="padding: 2rem; border-radius: 16px; text-align: center;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🎮</div>
+                            <h3 style="margin-bottom: 1rem;">Quality Games</h3>
+                            <p style="opacity: 0.9;">Carefully crafted games with beautiful graphics and smooth gameplay.</p>
+                        </div>
+                        <div class="glass" style="padding: 2rem; border-radius: 16px; text-align: center;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🆓</div>
+                            <h3 style="margin-bottom: 1rem;">Always Free</h3>
+                            <p style="opacity: 0.9;">All our games are completely free to play, forever!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer id="contact" class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#home" class="footer-link">Home</a>
+                <a href="#games" class="footer-link">Games</a>
+                <a href="#about" class="footer-link">About</a>
+                <a href="mailto:contact@miniarc.com" class="footer-link">Contact</a>
+            </div>
+            <p class="footer-text">
+                © 2024 Mini Arcade. Made with ❤️ for game lovers everywhere.
+            </p>
+            <p class="footer-text" style="font-size: 0.9rem; opacity: 0.7;">
+                🎮 Ready to play? Choose a game and dive into the fun!
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="./js/main.js"></script>
+    
+    <!-- Analytics (add your tracking code here) -->
+    <script>
+        // Add your analytics code here
+        console.log('🎮 Welcome to Mini Arcade!');
+    </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+{
+  "name": "Mini Arcade - Browser Games",
+  "short_name": "Mini Arcade",
+  "description": "Play amazing browser games for free! Enjoy puzzle games, strategy games, and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#87CEEB",
+  "theme_color": "#4f46e5",
+  "orientation": "any",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon.ico",
+      "sizes": "16x16 32x32 48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "lang": "en",
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "Rainbow Bottles",
+      "short_name": "Rainbow Bottles",
+      "description": "Play the Rainbow Bottles puzzle game",
+      "url": "/games/3d-rainbow-bottles.html",
+      "icons": [
+        {
+          "src": "favicon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "All Games",
+      "short_name": "Games",
+      "description": "Browse all available games",
+      "url": "/#games",
+      "icons": [
+        {
+          "src": "favicon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "favicon.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Mini Arcade homepage showing featured games"
+    },
+    {
+      "src": "favicon.svg",
+      "sizes": "750x1334",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Mini Arcade mobile view"
+    }
+  ]
+}

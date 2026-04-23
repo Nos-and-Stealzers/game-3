@@ -1130,6 +1130,20 @@
               <button id="applyStaffRoleBtn" type="button" class="btn primary">Apply to selected</button>
             </div>
           </article>
+          <article id="manualAccountBox" class="panel utility-box">
+            <strong>Manual Account Creator</strong>
+            <p>Admins and developers can create username/password accounts without a real email. The user can add their own email later from the account page.</p>
+            <div class="inline-actions">
+              <input id="manualAccountUsernameInput" class="input" type="text" placeholder="Username (a-z, 0-9, _)">
+              <input id="manualAccountDisplayNameInput" class="input" type="text" placeholder="Display name (optional)">
+            </div>
+            <div class="inline-actions">
+              <input id="manualAccountPasswordInput" class="input" type="text" placeholder="Temporary password (8+ chars)">
+              <button id="createManualAccountBtn" type="button" class="btn primary">Create Manual Account</button>
+              <button id="copyManualAccountBtn" type="button" class="btn">Copy Last Credentials</button>
+            </div>
+            <div id="manualAccountMeta" class="toolbar-note">No manual account created yet.</div>
+          </article>
           <article class="panel utility-box">
             <strong>Moderator Queue</strong>
             <p>Quick shortcuts for moderation passes without manually changing filters each time.</p>
@@ -1229,6 +1243,13 @@
     var removeStaffBtn = document.getElementById("removeStaffBtn");
     var staffRoleSelect = document.getElementById("staffRoleSelect");
     var applyStaffRoleBtn = document.getElementById("applyStaffRoleBtn");
+    var manualAccountBox = document.getElementById("manualAccountBox");
+    var manualAccountUsernameInput = document.getElementById("manualAccountUsernameInput");
+    var manualAccountDisplayNameInput = document.getElementById("manualAccountDisplayNameInput");
+    var manualAccountPasswordInput = document.getElementById("manualAccountPasswordInput");
+    var createManualAccountBtn = document.getElementById("createManualAccountBtn");
+    var copyManualAccountBtn = document.getElementById("copyManualAccountBtn");
+    var manualAccountMeta = document.getElementById("manualAccountMeta");
     var modViewActiveBtn = document.getElementById("modViewActiveBtn");
     var modViewBannedBtn = document.getElementById("modViewBannedBtn");
     var modRecentSigninsBtn = document.getElementById("modRecentSigninsBtn");
@@ -1307,6 +1328,7 @@
     var activityHasMore = false;
     var currentStaffRole = "";
     var lastDeveloperHealthReport = null;
+    var lastManualAccountPayload = null;
     var activityQuery = {
       limit: 50,
       offset: 0,
@@ -2246,6 +2268,54 @@
       throw new Error("Invalid staff role.");
     }
 
+    async function createManualAccount() {
+      if (!supabaseClient) {
+        throw new Error("Supabase client is not ready.");
+      }
+
+      var username = String(manualAccountUsernameInput && manualAccountUsernameInput.value ? manualAccountUsernameInput.value : "").trim().toLowerCase();
+      var displayName = String(manualAccountDisplayNameInput && manualAccountDisplayNameInput.value ? manualAccountDisplayNameInput.value : "").trim();
+      var password = String(manualAccountPasswordInput && manualAccountPasswordInput.value ? manualAccountPasswordInput.value : "");
+
+      if (!/^[a-z0-9_]{3,24}$/.test(username)) {
+        throw new Error("Username must be 3-24 chars with lowercase letters, numbers, or underscore.");
+      }
+
+      if (password.length < 8) {
+        throw new Error("Password must be at least 8 characters.");
+      }
+
+      var result = await supabaseClient.rpc("admin_create_manual_account", {
+        login_name_input: username,
+        password_input: password,
+        display_name_input: displayName || null
+      });
+      if (result.error) {
+        throw result.error;
+      }
+
+      var row = null;
+      if (Array.isArray(result.data)) {
+        row = result.data[0] || null;
+      } else if (result.data && typeof result.data === "object") {
+        row = result.data;
+      }
+
+      if (!row) {
+        throw new Error("Manual account RPC did not return account details.");
+      }
+
+      lastManualAccountPayload = {
+        username: row.login_name || username,
+        temporaryEmail: row.temporary_email || "",
+        password: password,
+        userId: row.user_id || ""
+      };
+
+      manualAccountMeta.textContent = "Created @" + lastManualAccountPayload.username + " with temp email " + lastManualAccountPayload.temporaryEmail + ".";
+      return lastManualAccountPayload;
+    }
+
     function setUserFilters(nextStatus, nextSort, nextSearch) {
       if (typeof nextStatus === "string") {
         statusFilter.value = nextStatus;
@@ -2682,6 +2752,40 @@
       });
     }
 
+    if (createManualAccountBtn) {
+      createManualAccountBtn.addEventListener("click", async function () {
+        try {
+          var created = await createManualAccount();
+          setStatus("Manual account created for @" + created.username + ".", "ok");
+          setSessionStatus("Manual account ready to share.");
+          await fetchUsers();
+          await fetchActivity({ resetOffset: true });
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Manual account creation failed.", "error");
+        }
+      });
+    }
+
+    if (copyManualAccountBtn) {
+      copyManualAccountBtn.addEventListener("click", async function () {
+        try {
+          if (!lastManualAccountPayload) {
+            throw new Error("Create a manual account first.");
+          }
+          var text = [
+            "Username: " + lastManualAccountPayload.username,
+            "Password: " + lastManualAccountPayload.password,
+            "Temporary email: " + lastManualAccountPayload.temporaryEmail,
+            "User ID: " + lastManualAccountPayload.userId
+          ].join("\n");
+          await copyText(text);
+          setStatus("Copied manual account credentials.", "ok");
+        } catch (error) {
+          setStatus(error && error.message ? error.message : "Could not copy manual account credentials.", "error");
+        }
+      });
+    }
+
     if (exportDiagnosticsBtn) {
       exportDiagnosticsBtn.addEventListener("click", function () {
         var payload = buildDiagnosticsSnapshot();
@@ -2801,6 +2905,10 @@
 
         if (staffRoleBox && !canManageStaffRoles(role)) {
           staffRoleBox.hidden = true;
+        }
+
+        if (manualAccountBox && !isDeveloperRole(role) && !isAdminRole(role)) {
+          manualAccountBox.hidden = true;
         }
 
         if (developerToolBox && !isDeveloperRole(role) && !isAdminRole(role)) {

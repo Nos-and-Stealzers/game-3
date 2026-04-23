@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="highlight" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.3);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="url(#bg)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  
+  <!-- Highlight overlay -->
+  <circle cx="50" cy="50" r="46" fill="url(#highlight)"/>
+  
+  <!-- Game controller emoji-style representation -->
+  <text x="50" y="65" text-anchor="middle" font-size="45" fill="white" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">🎮</text>
+</svg>

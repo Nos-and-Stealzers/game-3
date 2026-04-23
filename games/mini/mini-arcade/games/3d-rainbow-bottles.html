@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Rainbow Bottles - 3D Object Sorting Game</title>
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/x-icon" href="../favicon.ico">
+<link rel="apple-touch-icon" href="../favicon.svg">
+
+<!-- Bare specifiers via import map + shim -->
+<script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+  :root { --bg:#87CEEB; --white:#fff; }
+  html,body {height:100%; margin:0; 
+    background: url('../images/background.jpg') center/cover no-repeat fixed,
+                linear-gradient(180deg, #87CEEB 0%, #98D8E8 100%);
+    font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Cantarell, Arial, "Apple Color Emoji","Segoe UI Emoji"; 
+    color: var(--white);
+    position: relative;
+    overflow-x: hidden;
+  }
+  #app {position:fixed; inset:0; display:grid; grid-template-rows: auto 1fr auto; min-height:100%; z-index: 2;}
+  header, footer {padding:.6rem .9rem; display:flex; align-items:center; gap:.6rem; flex-wrap:wrap;
+    background: linear-gradient(180deg, rgba(255,255,255,.25), rgba(255,255,255,.05)), rgba(79, 70, 229, 0.15);
+    border-bottom:1px solid rgba(255,255,255,.2); position:relative; z-index:10;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 12px rgba(0,0,0,.1);
+    backdrop-filter: blur(10px);}
+  footer {border-bottom:none; border-top:1px solid rgba(255,255,255,.2); 
+    box-shadow: inset 0 -1px 0 rgba(255,255,255,.3), 0 -4px 12px rgba(0,0,0,.1);}
+  h1 {font-size:1.05rem; margin:0}
+  .spacer{flex:1}
+  .btn{appearance:none; border:none; border-radius:12px; padding:.6rem .9rem; font-weight:800; color:#fff; background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(0,0,0,.15)), #4f46e5; box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 8px 20px rgba(0,0,0,.28); cursor:pointer}
+  .btn.alt{background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(0,0,0,.15)), #22c55e}
+  .btn.warn{background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(0,0,0,.15)), #f59e0b}
+  select {appearance:none; border-radius:10px; border:1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.12); color:#fff; padding:.5rem .7rem; font-weight:700}
+  #msg{min-height:1.5em; opacity:.95}
+  #stage{position:relative; z-index:1; min-height:280px;}
+  #stage canvas {display:block; width:100%; height:100%}
+  #overlay{position:absolute; inset:0; pointer-events:none}
+  .pill{padding:6px 10px; border-radius:999px; background: rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); font-size:.9rem; font-weight:800}
+  .hint-ring{position:absolute; border:3px dashed rgba(255,255,255,.9); border-radius:50%; width:44px; height:44px; transform:translate(-50%,-50%); animation: ping 1s infinite ease-in-out}
+  @keyframes ping{0%{opacity:1; transform:translate(-50%,-50%) scale(.9)} 100%{opacity:0; transform:translate(-50%,-50%) scale(1.6)}}
+  
+  /* Confetti styles */
+  .confetti{position:fixed; width:10px; height:10px; pointer-events:none; z-index:9999}
+  .confetti.rect{border-radius:0}
+  .confetti.circle{border-radius:50%}
+  @keyframes confetti-fall{0%{transform:translateY(-100vh) rotate(0deg); opacity:1} 100%{transform:translateY(100vh) rotate(360deg); opacity:0}}
+  
+  /* Win dialog styles */
+  .win-dialog{position:fixed; inset:0; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:2000; opacity:0; visibility:hidden; transition:all 0.3s ease}
+  .win-dialog.show{opacity:1; visibility:visible}
+  .win-dialog-content{background:linear-gradient(145deg, #2a1f5f, #1a1340); border:2px solid rgba(255,255,255,0.2); border-radius:20px; padding:2rem; text-align:center; max-width:400px; box-shadow:0 20px 40px rgba(0,0,0,0.5)}
+  .win-dialog h2{margin:0 0 1rem 0; font-size:2rem; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,0.5)}
+  .win-dialog p{margin:0 0 2rem 0; color:rgba(255,255,255,0.8); font-size:1.1rem}
+  .win-dialog-buttons{display:flex; gap:1rem; justify-content:center}
+  .win-dialog .btn{min-width:120px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>🌈 Rainbow Bottles</h1>
+    <div class="pill">Tap a bottle, then another — pours all matching objects</div>
+    <div class="spacer"></div>
+
+    <!-- Object set selector -->
+    <label for="palette" style="font-weight:700">Theme:</label>
+    <select id="palette" title="Choose an object theme">
+      <option value="Transport">Transport (default)</option>
+      <option value="Home">Home & Living</option>
+      <option value="Food">Food & Snacks</option>
+      <option value="Animals">Animals</option>
+      <option value="Nature">Nature</option>
+    </select>
+
+    <div id="hud" style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-left:.5rem">
+      <button id="btn-home" class="btn" onclick="window.location.href='../index.html'">🏠 Home</button>
+      <button id="btn-center" class="btn">🎯 Center</button>
+      <button id="btn-undo" class="btn">↩ Undo</button>
+      <button id="btn-reset" class="btn warn">Reset</button>
+      <button id="btn-hint" class="btn">💡 Hint</button>
+      <button id="btn-next" class="btn alt">Next</button>
+      <button id="btn-sound" class="btn">🔈 Sound: On</button>
+    </div>
+  </header>
+
+  <div id="stage"><div id="overlay"></div></div>
+
+  <footer>
+    <div id="msg">Welcome to Rainbow Bottles! Sort objects by type — cars with cars, houses with houses! 🌈</div>
+    <div class="spacer"></div>
+    <div>Moves: <span id="score">0</span></div>
+  </footer>
+</div>
+
+<!-- Win Dialog -->
+<div id="win-dialog" class="win-dialog">
+  <div class="win-dialog-content">
+    <h2>🌈 Rainbow Bottles Champion!</h2>
+    <p>You've successfully sorted all the objects!<br>Ready for another colorful challenge?</p>
+    <div class="win-dialog-buttons">
+      <button id="btn-play-again" class="btn alt">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+/* ===== Object Sets (instead of colors) ===== */
+const OBJECT_SETS = {
+  Transport: ["🚗","🚌","🚚","🚁","✈️"], // Red, Yellow, Blue, Green, White
+  Home: ["🏠","🛏️","🪑","🚪","🪴"], // Brown, Blue, Orange, Dark Brown, Green  
+  Food: ["🍎","🍌","🍕","🍇","🥕"], // Red, Yellow, Orange, Purple, Orange-Red
+  Animals: ["🐶","🐱","🐸","🦁","🐠"], // Brown, Gray, Green, Golden, Blue
+  Nature: ["🌳","🌸","⚡","🔥","💧"] // Green, Pink, Yellow, Red, Blue
+};
+
+/* ===== Config ===== */
+const CAPACITY = 4;
+const EXTRA_BOTTLES = 2;
+const NUM_COLORS = 5;
+
+const BOTTLE_LINER = "#BFE9FF";
+const RIM_COLOR    = "#E6F2FF";
+
+/* ===== State ===== */
+let scene, camera, renderer, controls, raycaster, pointer, stageEl, overlayEl, msgEl, scoreEl;
+let bottles = []; // [{stack:string[], group:THREE.Group, liquidMeshes:THREE.Mesh[], idx:number}]
+let selection = null;
+let undoStack = [];
+let moves = 0;
+let soundOn = true;
+
+let ACTIVE_SET_NAME = "Transport";
+let OBJECTS = [...OBJECT_SETS[ACTIVE_SET_NAME]];
+
+/* ===== Sound (realistic effects) ===== */
+const SFX = (() => {
+  let ctx=null; 
+  const ensure=()=>{
+    if(!ctx) {
+      ctx = new (window.AudioContext||window.webkitAudioContext)();
+      console.log('Audio context created:', ctx.state);
+    }
+    return ctx;
+  };
+  const now=()=>ensure().currentTime;
+  
+  // Simple click sound
+  const click=()=>{ 
+    if(!soundOn) return; 
+    try {
+      const c=ensure(); 
+      if(c.state === 'suspended') c.resume();
+      const o=c.createOscillator(), g=c.createGain();
+      o.type="triangle"; o.frequency.value=800; 
+      g.gain.setValueAtTime(.0001,now()); 
+      g.gain.linearRampToValueAtTime(.06,now()+.01); 
+      g.gain.exponentialRampToValueAtTime(0.0001,now()+.08);
+      o.connect(g).connect(c.destination); 
+      o.start(); 
+      o.stop(now()+.09);
+      console.log('Playing click sound');
+    } catch(e) {
+      console.error('Click sound error:', e);
+    }
+  };
+  
+  // Realistic pouring sound (bubbling liquid)
+  const pour=()=>{ 
+    if(!soundOn) return; 
+    try {
+      const c=ensure(); 
+      if(c.state === 'suspended') c.resume();
+      
+      // Create bubbling effect with multiple oscillators
+      for(let i=0; i<3; i++) {
+        const o=c.createOscillator(), g=c.createGain(), filter=c.createBiquadFilter();
+        o.type="sine"; 
+        o.frequency.value=120 + Math.random()*80; // Random bubble frequencies
+        
+        // Modulate frequency for realistic bubbling
+        const lfo=c.createOscillator();
+        lfo.type="sine";
+        lfo.frequency.value=3 + Math.random()*2;
+        const lfoGain=c.createGain();
+        lfoGain.gain.value=20;
+        lfo.connect(lfoGain).connect(o.frequency);
+        
+        // Low-pass filter for muffled liquid sound
+        filter.type="lowpass";
+        filter.frequency.value=400;
+        filter.Q.value=2;
+        
+        g.gain.setValueAtTime(.0001,now()+i*0.1); 
+        g.gain.linearRampToValueAtTime(.08,now()+i*0.1+.05); 
+        g.gain.exponentialRampToValueAtTime(0.0001,now()+i*0.1+.6);
+        
+        o.connect(filter).connect(g).connect(c.destination); 
+        lfo.start(now()+i*0.1);
+        o.start(now()+i*0.1); 
+        lfo.stop(now()+i*0.1+.7);
+        o.stop(now()+i*0.1+.7);
+      }
+      console.log('Playing pour sound');
+    } catch(e) {
+      console.error('Pour sound error:', e);
+    }
+  };
+  
+  // Magical hint sound (like a chime or bell)
+  const hint=()=>{ 
+    if(!soundOn) return; 
+    try {
+      const c=ensure(); 
+      if(c.state === 'suspended') c.resume();
+      
+      // Create bell-like sound with harmonics
+      const frequencies = [523.25, 659.25, 783.99]; // C, E, G notes
+      frequencies.forEach((freq, i) => {
+        const o=c.createOscillator(), g=c.createGain();
+        o.type="sine"; 
+        o.frequency.value=freq;
+        
+        // Bell envelope - quick attack, slow decay
+        g.gain.setValueAtTime(.0001,now()+i*0.1); 
+        g.gain.linearRampToValueAtTime(.12,now()+i*0.1+.02); 
+        g.gain.exponentialRampToValueAtTime(0.0001,now()+i*0.1+1.5);
+        
+        o.connect(g).connect(c.destination); 
+        o.start(now()+i*0.1); 
+        o.stop(now()+i*0.1+1.6);
+      });
+      console.log('Playing hint sound');
+    } catch(e) {
+      console.error('Hint sound error:', e);
+    }
+  };
+  
+  // Error/invalid sound (buzzer)
+  const invalid=()=>{ 
+    if(!soundOn) return; 
+    try {
+      const c=ensure(); 
+      if(c.state === 'suspended') c.resume();
+      const o=c.createOscillator(), g=c.createGain();
+      o.type="square"; 
+      o.frequency.setValueAtTime(150,now()); 
+      o.frequency.linearRampToValueAtTime(100,now()+0.3);
+      g.gain.setValueAtTime(0.0001,now()); 
+      g.gain.linearRampToValueAtTime(0.08,now()+0.02); 
+      g.gain.exponentialRampToValueAtTime(0.0001,now()+0.35);
+      o.connect(g).connect(c.destination); 
+      o.start(); 
+      o.stop(now()+0.36);
+      console.log('Playing invalid sound');
+    } catch(e) {
+      console.error('Invalid sound error:', e);
+    }
+  };
+  
+  // Victory fanfare
+  const win=()=>{ 
+    if(!soundOn) return; 
+    try {
+      const c=ensure(); 
+      if(c.state === 'suspended') c.resume();
+      
+      // Victory melody - more elaborate
+      const melody=[
+        {freq:523.25, time:0},    // C
+        {freq:659.25, time:0.15}, // E  
+        {freq:783.99, time:0.3},  // G
+        {freq:1046.5, time:0.45}, // C (octave)
+        {freq:783.99, time:0.6},  // G
+        {freq:1046.5, time:0.75}  // C (octave)
+      ];
+      
+      melody.forEach(note => {
+        const o=c.createOscillator(), g=c.createGain(); 
+        o.type="triangle"; 
+        o.frequency.value=note.freq; 
+        g.gain.setValueAtTime(0.0001,now()+note.time); 
+        g.gain.linearRampToValueAtTime(0.15,now()+note.time+.05); 
+        g.gain.exponentialRampToValueAtTime(0.0001,now()+note.time+.4); 
+        o.connect(g).connect(c.destination); 
+        o.start(now()+note.time); 
+        o.stop(now()+note.time+.45);
+      });
+      console.log('Playing win sound');
+    } catch(e) {
+      console.error('Win sound error:', e);
+    }
+  };
+  
+  const resumeIfSuspended=()=>{ 
+    try {
+      const c=ensure(); 
+      if(c.state==="suspended") {
+        c.resume();
+        console.log('Audio context resumed');
+      }
+    } catch(e) {
+      console.error('Resume audio error:', e);
+    }
+  };
+  
+  return {click,pour,hint,invalid,win,resumeIfSuspended};
+})();
+
+/* ===== Confetti System ===== */
+function createConfetti() {
+  const allObjects = Object.values(OBJECT_SETS).flat();
+  const celebrationObjects = ['🎉', '🎊', '⭐', '✨', '🌟', '💫', '🎈', '🎁', '🏆', '👏'];
+  const confettiObjects = [...OBJECTS, ...celebrationObjects];
+  
+  for (let i = 0; i < 80; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.left = Math.random() * 100 + '%';
+    confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+    confetti.style.animation = `confetti-fall ${confetti.style.animationDuration} linear ${confetti.style.animationDelay} forwards`;
+    confetti.style.fontSize = (Math.random() * 20 + 15) + 'px';
+    confetti.textContent = confettiObjects[Math.floor(Math.random() * confettiObjects.length)];
+    
+    document.body.appendChild(confetti);
+    
+    // Remove confetti after animation
+    setTimeout(() => {
+      if (confetti.parentNode) {
+        confetti.parentNode.removeChild(confetti);
+      }
+    }, (parseFloat(confetti.style.animationDuration) + parseFloat(confetti.style.animationDelay)) * 1000);
+  }
+}
+
+/* ===== Helpers ===== */
+const randInt=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const deepCloneState=()=>bottles.map(b=>({stack:[...b.stack]}));
+const restoreState=s=>{s.forEach((x,i)=>{bottles[i].stack=[...x.stack]; updateBottleVisual(bottles[i]);});};
+const setMsg=t=>msgEl.textContent=t;
+const setMoves=n=>scoreEl.textContent=n;
+
+/* ===== Level generation ===== */
+function generateLevel(numObjects=NUM_COLORS, capacity=CAPACITY, extra=EXTRA_BOTTLES){
+  const chosen = shuffle([...OBJECTS]).slice(0,numObjects);
+  const pool=[]; chosen.forEach(obj=>{for(let i=0;i<capacity;i++) pool.push(obj);});
+  shuffle(pool);
+  const bottleCount = numObjects + extra;
+  const stacks = Array.from({length:bottleCount}, ()=>[]);
+  let i=0;
+  for(let b=0;b<numObjects;b++){ for(let k=0;k<capacity;k++) stacks[b].push(pool[i++]); }
+  for(let n=0;n<randInt(18,30);n++){ const a=randInt(0,numObjects-1), b=randInt(0,numObjects-1); if(a===b) continue; if(stacks[a].length && stacks[b].length<capacity){ stacks[b].push(stacks[a].pop()); } }
+  return {stacks, objectSet:chosen};
+}
+
+/* ===== Scene ===== */
+function safeCanvasSize() {
+  const header = document.querySelector('header');
+  const footer = document.querySelector('footer');
+  const r = stageEl.getBoundingClientRect();
+  // robust fallback if r.height is 0 during early layout
+  let w = Math.max(1, Math.floor(r.width || window.innerWidth));
+  let h = Math.floor(r.height);
+  if (!h || h < 1) {
+    const hh = header ? header.offsetHeight : 0;
+    const fh = footer ? footer.offsetHeight : 0;
+    h = Math.max(1, window.innerHeight - hh - fh);
+  }
+  return {w, h};
+}
+
+function init3D(){
+  stageEl=document.getElementById('stage');
+  overlayEl=document.getElementById('overlay');
+  msgEl=document.getElementById('msg');
+  scoreEl=document.getElementById('score');
+
+  scene=new THREE.Scene(); scene.fog=null;
+
+  const {w,h} = safeCanvasSize();
+  camera=new THREE.PerspectiveCamera(55, w/h, .1, 200);
+  camera.position.set(0, 7.5, 18);
+
+  // IMPORTANT: avoid enormous MSAA renderbuffers on high-DPR + large canvas
+  renderer=new THREE.WebGLRenderer({antialias:false, alpha:true});
+  renderer.setSize(w,h,false);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.toneMapping=THREE.NoToneMapping;
+  renderer.toneMappingExposure=1.0;
+  stageEl.appendChild(renderer.domElement);
+
+  // Handle context loss gracefully (prevents UI “vanish” confusion)
+  renderer.getContext().canvas.addEventListener('webglcontextlost', (e)=>{
+    e.preventDefault();
+    setMsg("Graphics reset detected. Please reload the page.");
+  }, false);
+
+  const hemi=new THREE.HemisphereLight(0xffffff,0x223355,.6); scene.add(hemi);
+  const key=new THREE.DirectionalLight(0xffffff,.8); key.position.set(5,10,6); scene.add(key);
+  const rim=new THREE.DirectionalLight(0x90c0ff,.4); rim.position.set(-6,4,-8); scene.add(rim);
+
+  // Create beautiful antique wooden table
+  const tableGroup = new THREE.Group();
+  
+  // Table top - realistic wood texture from Unsplash
+  const textureLoader = new THREE.TextureLoader();
+  const woodTexture = textureLoader.load(
+    'https://images.unsplash.com/photo-1546484396-fb3fc6f95f98',
+    (texture) => {
+      console.log('Wood texture loaded successfully from Unsplash');
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(2, 1.5);
+    },
+    undefined,
+    (error) => {
+      console.error('Wood texture failed to load from Unsplash:', error);
+      console.log('Using fallback brown color for table');
+    }
+  );
+  
+  const tableTop = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 0.4, 14), 
+    new THREE.MeshStandardMaterial({ 
+      map: woodTexture,
+      roughness: 0.0,
+      metalness: 0.0,
+      color: 0xffffff // Ensure no color tinting
+    })
+  );
+  tableTop.position.y = 0.2;
+  
+  // Table legs - tall ornate legs extending beyond screen
+  const legGeometry = new THREE.CylinderGeometry(0.3, 0.4, 25); // Much taller!
+  const legMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x654321,
+    roughness: 0.0,
+    metalness: 0.0
+  });
+  
+  const leg1 = new THREE.Mesh(legGeometry, legMaterial);
+  const leg2 = new THREE.Mesh(legGeometry, legMaterial);
+  const leg3 = new THREE.Mesh(legGeometry, legMaterial);
+  const leg4 = new THREE.Mesh(legGeometry, legMaterial);
+  
+  // Position legs at corners - extending far down
+  leg1.position.set(-8.5, -12.5, 5.5);
+  leg2.position.set(8.5, -12.5, 5.5);
+  leg3.position.set(-8.5, -12.5, -5.5);
+  leg4.position.set(8.5, -12.5, -5.5);
+  
+  // Decorative apron around table edge
+  const apronMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x654321,
+    roughness: 0.0,
+    metalness: 0.0
+  });
+  
+  const apronFront = new THREE.Mesh(new THREE.BoxGeometry(19, 0.8, 0.2), apronMaterial);
+  apronFront.position.set(0, -0.4, 6.9);
+  
+  const apronBack = new THREE.Mesh(new THREE.BoxGeometry(19, 0.8, 0.2), apronMaterial);
+  apronBack.position.set(0, -0.4, -6.9);
+  
+  const apronLeft = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 13.6), apronMaterial);
+  apronLeft.position.set(-9.9, -0.4, 0);
+  
+  const apronRight = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 13.6), apronMaterial);
+  apronRight.position.set(9.9, -0.4, 0);
+  
+  // Add decorative brass corner pieces
+  const cornerGeometry = new THREE.SphereGeometry(0.15);
+  const brasseMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xDAA520,
+    roughness: 0.1,
+    metalness: 0.8
+  });
+  
+  const corner1 = new THREE.Mesh(cornerGeometry, brasseMaterial);
+  const corner2 = new THREE.Mesh(cornerGeometry, brasseMaterial);
+  const corner3 = new THREE.Mesh(cornerGeometry, brasseMaterial);
+  const corner4 = new THREE.Mesh(cornerGeometry, brasseMaterial);
+  
+  corner1.position.set(-9.5, 0.4, 6.5);
+  corner2.position.set(9.5, 0.4, 6.5);
+  corner3.position.set(-9.5, 0.4, -6.5);
+  corner4.position.set(9.5, 0.4, -6.5);
+  
+  // Assemble the table
+  tableGroup.add(tableTop);
+  tableGroup.add(leg1, leg2, leg3, leg4);
+  tableGroup.add(apronFront, apronBack, apronLeft, apronRight);
+  tableGroup.add(corner1, corner2, corner3, corner4);
+  
+  scene.add(tableGroup);
+
+  controls=new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping=true;
+  controls.minPolarAngle=Math.PI/4; controls.maxPolarAngle=Math.PI/2.2;
+  controls.screenSpacePanning=false;
+
+  raycaster=new THREE.Raycaster(); pointer=new THREE.Vector2();
+  renderer.domElement.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('resize', onResize);
+  animate();
+}
+function onResize(){
+  const {w,h} = safeCanvasSize();
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+  renderer.setSize(w,h,false);
+}
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); }
+
+/* ===== Bottle build ===== */
+const BOTTLE = { innerRadiusTop:.65, innerRadiusBottom:.72, outerRadius:.8, height:5.3, baseH:.18 };
+function createBottle(index,x,z){
+  const group=new THREE.Group(); group.name=`bottle-${index}`; group.position.set(x,0,z); group.userData.index=index;
+  const glassMat=new THREE.MeshPhysicalMaterial({ color:new THREE.Color(BOTTLE_LINER).convertSRGBToLinear(), roughness:.2, metalness:0, transmission:.9, thickness:.5, transparent:true, opacity:.22, depthWrite:false, ior:1.35, clearcoat:1, clearcoatRoughness:.15 });
+  const wall=new THREE.Mesh(new THREE.CylinderGeometry(BOTTLE.outerRadius,BOTTLE.outerRadius,BOTTLE.height,40,1,true), glassMat);
+  wall.position.y=BOTTLE.height/2; group.add(wall);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(BOTTLE.outerRadius*0.86,.06,12,48), new THREE.MeshStandardMaterial({color:new THREE.Color(RIM_COLOR).convertSRGBToLinear(), roughness:.25, metalness:.25}));
+  rim.position.y=BOTTLE.height+.08; rim.rotation.x=Math.PI/2; group.add(rim);
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(BOTTLE.outerRadius*.95,BOTTLE.outerRadius*.95,BOTTLE.baseH,40), new THREE.MeshStandardMaterial({color:0x0c1a30, metalness:.2, roughness:.8}));
+  base.position.y=BOTTLE.baseH/2; group.add(base);
+  const liquids=new THREE.Group(); liquids.name="liquids"; liquids.renderOrder=2; group.add(liquids);
+  scene.add(group);
+  return {group, liquidMeshes:[], stack:[], idx:index};
+}
+function layerHeight(){ return (BOTTLE.height*0.9)/CAPACITY; }
+function layerY(n){ const h=layerHeight(); return (h/2)+(n*h)+BOTTLE.baseH*0.2; }
+
+// Create beautiful gradient materials for objects
+function createGradientMaterial(objectEmoji){ 
+  const gradients = {
+    // Transport - Bold, saturated colors
+    '🚗': { top: 0xff0000, bottom: 0x990000 }, // Bright red
+    '🚌': { top: 0xffff00, bottom: 0xcccc00 }, // Bright yellow  
+    '🚚': { top: 0x0066ff, bottom: 0x003399 }, // Bright blue
+    '🚁': { top: 0x00ff00, bottom: 0x009900 }, // Bright green
+    '✈️': { top: 0xffffff, bottom: 0x999999 }, // Pure white to gray
+    
+    // Home - Rich, warm colors
+    '🏠': { top: 0xff6600, bottom: 0x993300 }, // Bright orange-brown
+    '🛏️': { top: 0x3366ff, bottom: 0x0033cc }, // Rich blue
+    '🪑': { top: 0xffcc00, bottom: 0xcc9900 }, // Golden yellow
+    '🚪': { top: 0x663300, bottom: 0x330000 }, // Deep brown
+    '🪴': { top: 0x33cc33, bottom: 0x006600 }, // Vibrant green
+    
+    // Food - Appetizing, vivid colors  
+    '🍎': { top: 0xff3333, bottom: 0xcc0000 }, // Apple red
+    '🍌': { top: 0xffff33, bottom: 0xcccc00 }, // Banana yellow
+    '🍕': { top: 0xff9933, bottom: 0xcc6600 }, // Pizza orange
+    '🍇': { top: 0x9933ff, bottom: 0x6600cc }, // Grape purple
+    '🥕': { top: 0xff6633, bottom: 0xcc3300 }, // Carrot orange
+    
+    // Animals - Natural, vibrant colors
+    '🐶': { top: 0xcc6633, bottom: 0x993300 }, // Dog brown
+    '🐱': { top: 0x999999, bottom: 0x666666 }, // Cat gray
+    '🐸': { top: 0x33cc33, bottom: 0x009900 }, // Frog green
+    '🦁': { top: 0xffcc33, bottom: 0xcc9900 }, // Lion golden
+    '🐠': { top: 0x3399ff, bottom: 0x0066cc }, // Fish blue
+    
+    // Nature - Bright, natural colors
+    '🌳': { top: 0x33ff33, bottom: 0x009900 }, // Tree green
+    '🌸': { top: 0xff99cc, bottom: 0xcc3399 }, // Flower pink
+    '⚡': { top: 0xffff33, bottom: 0xcccc00 }, // Lightning yellow
+    '🔥': { top: 0xff3300, bottom: 0x990000 }, // Fire red
+    '💧': { top: 0x3399ff, bottom: 0x0066cc }  // Water blue
+  };
+  
+  const colors = gradients[objectEmoji] || { top: 0xff6b35, bottom: 0xcc3300 };
+  
+  // Create a canvas for the gradient
+  const canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  
+  // Create vertical gradient
+  const gradient = ctx.createLinearGradient(0, 0, 0, 64);
+  gradient.addColorStop(0, `#${colors.top.toString(16).padStart(6, '0')}`);
+  gradient.addColorStop(1, `#${colors.bottom.toString(16).padStart(6, '0')}`);
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 32, 64);
+  
+  const texture = new THREE.CanvasTexture(canvas);
+  return new THREE.MeshLambertMaterial({ map: texture });
+}
+
+function updateBottleVisual(b){
+  const liquids=b.group.children.find(c=>c.name==="liquids");
+  while(liquids.children.length) liquids.remove(liquids.children[0]);
+  b.liquidMeshes.length=0;
+  const h=layerHeight(), rTop=BOTTLE.innerRadiusTop*.97, rBot=BOTTLE.innerRadiusBottom*.97;
+  b.stack.forEach((objectEmoji,i)=>{
+    const material = createGradientMaterial(objectEmoji);
+    const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(rTop,rBot,h*.98,36,1,false), material);
+    cylinder.position.y = layerY(i);
+    cylinder.renderOrder = 2;
+    liquids.add(cylinder);
+    b.liquidMeshes.push(cylinder);
+  });
+}
+
+/* ===== Rules: contiguous-run pours ===== */
+const topColor=b=>b.stack.length?b.stack[b.stack.length-1]:null;
+const freeSpace=b=>CAPACITY-b.stack.length;
+function runLengthTop(b){
+  if(!b.stack.length) return 0;
+  const c=topColor(b); let n=1; for(let i=b.stack.length-2;i>=0;i--){ if(b.stack[i]===c) n++; else break; } return n;
+}
+function maxPourCount(src,dst){
+  if(src===dst) return 0; if(!src.stack.length) return 0; if(dst.stack.length===CAPACITY) return 0;
+  const c=topColor(src), n=runLengthTop(src);
+  if(dst.stack.length===0) return Math.min(n, freeSpace(dst));
+  if(topColor(dst)===c) return Math.min(n, freeSpace(dst));
+  return 0;
+}
+const canPour=(s,d)=>maxPourCount(s,d)>0;
+function isSolved(){ return bottles.every(b=> b.stack.length===0 || (b.stack.length===CAPACITY && b.stack.every(x=>x===b.stack[0]))); }
+
+/* ===== Pour animation ===== */
+function mouthPos(g){ return g.localToWorld(new THREE.Vector3(0, BOTTLE.height*0.9, 0)); }
+function orientToward(srcG, dstG, angle){
+  const fromQ=srcG.quaternion.clone();
+  const dir=new THREE.Vector3().subVectors(dstG.getWorldPosition(new THREE.Vector3()), srcG.getWorldPosition(new THREE.Vector3())).normalize();
+  const axis=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0), dir).normalize();
+  const toQ=fromQ.clone().multiply(new THREE.Quaternion().setFromAxisAngle(axis, angle));
+  return {fromQ,toQ};
+}
+function makeStream(a,b,color){
+  const v=new THREE.Vector3().subVectors(b,a), len=Math.max(.4, v.length());
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,len,16,1,true), new THREE.MeshBasicMaterial({color:new THREE.Color(color).convertSRGBToLinear(), transparent:true, opacity:.95}));
+  m.position.copy(new THREE.Vector3().addVectors(a,b).multiplyScalar(.5));
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), v.clone().normalize());
+  m.renderOrder=3; return m;
+}
+function animatePour(src,dst,color,count){
+  return new Promise(resolve=>{
+    const srcG=src.group, dstG=dst.group, ang=.5;
+    const {fromQ,toQ}=orientToward(srcG,dstG,ang);
+    const stream=makeStream(mouthPos(srcG), mouthPos(dstG), color); stream.visible=false; scene.add(stream);
+    const t0=performance.now(), DUR=420;
+    const tick=()=>{
+      const t=Math.min(1,(performance.now()-t0)/DUR);
+      srcG.quaternion.slerpQuaternions(fromQ,toQ,t);
+      const sp=mouthPos(srcG), dp=mouthPos(dstG), v=new THREE.Vector3().subVectors(dp,sp), len=Math.max(.4,v.length());
+      stream.position.copy(new THREE.Vector3().addVectors(sp,dp).multiplyScalar(.5));
+      stream.scale.set(1, len/stream.geometry.parameters.height, 1);
+      stream.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), v.clone().normalize());
+      stream.visible = t>.25 && t<.95;
+      if(t<1) requestAnimationFrame(tick); else {
+        const t1=performance.now(), DUR2=260;
+        const settle=()=>{
+          const tt=Math.min(1,(performance.now()-t1)/DUR2);
+          srcG.quaternion.slerpQuaternions(toQ,fromQ,tt);
+          if(tt<1) requestAnimationFrame(settle); else { scene.remove(stream); resolve(); }
+        }; settle();
+      }
+    }; tick();
+  });
+}
+async function doPour(src,dst){
+  const n=maxPourCount(src,dst); if(n<=0) return 0;
+  SFX.pour(); // Realistic pouring sound
+  await animatePour(src,dst, topColor(src), n);
+  for(let k=0;k<n;k++) dst.stack.push(src.stack.pop());
+  updateBottleVisual(src); updateBottleVisual(dst);
+  return n;
+}
+
+/* ===== Centering / Framing ===== */
+function getBottlesBox(){
+  const box = new THREE.Box3();
+  for(const b of bottles){
+    const bb = new THREE.Box3().setFromObject(b.group);
+    box.union(bb);
+  }
+  return box;
+}
+function frameToBox(box, {pad=1.35, animate=false}={}){
+  if (box.isEmpty()) return;
+  const size   = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const fov    = THREE.MathUtils.degToRad(camera.fov);
+  const dist   = (maxDim/2) / Math.tan(fov/2) * pad;
+
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  const newPos = center.clone().add(dir.multiplyScalar(dist));
+
+  camera.near = Math.max(0.1, dist/100);
+  camera.far  = dist*100;
+  camera.updateProjectionMatrix();
+  controls.minDistance = Math.max(3, dist*0.3);
+  controls.maxDistance = dist*4;
+
+  if (!animate){
+    controls.target.copy(center);
+    camera.position.copy(newPos);
+    controls.update();
+    return;
+  }
+  const startPos = camera.position.clone();
+  const startTgt = controls.target.clone();
+  const t0 = performance.now(), DUR = 350;
+  (function tick(){
+    const t = Math.min(1, (performance.now()-t0)/DUR);
+    const e = (t<.5) ? 2*t*t : -1 + (4 - 2*t)*t;
+    camera.position.lerpVectors(startPos, newPos, e);
+    controls.target.lerpVectors(startTgt, center, e);
+    controls.update();
+    if (t<1) requestAnimationFrame(tick);
+  })();
+}
+function frameToBottles(opts){ frameToBox(getBottlesBox(), opts); }
+
+/* ===== UI ===== */
+function onPointerDown(ev){
+  const rect=renderer.domElement.getBoundingClientRect();
+  pointer.x=((ev.clientX-rect.left)/rect.width)*2-1;
+  pointer.y=-((ev.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(pointer,camera);
+  const hits=raycaster.intersectObjects(scene.children,true);
+  let idx=null; for(const h of hits){ let g=h.object; while(g && typeof g.userData?.index!=="number") g=g.parent; if(g){ idx=g.userData.index; break; } }
+  if(idx==null) return; handleBottleClick(idx, ev.clientX, ev.clientY);
+}
+function addHintRing(x,y){ const r=document.createElement('div'); r.className='hint-ring'; r.style.left=x+'px'; r.style.top=y+'px'; overlayEl.appendChild(r); setTimeout(()=>r.remove(),1000); }
+async function handleBottleClick(idx,cx,cy){
+  SFX.resumeIfSuspended(); // Ensure audio context is active
+  SFX.click();
+  if(selection===null){ selection=idx; highlightSelected(true); setMsg("Now tap another bottle to pour all matching objects."); return; }
+  if(idx===selection){ highlightSelected(false); selection=null; return; }
+  const src=bottles[selection], dst=bottles[idx];
+  if(!canPour(src,dst)){ SFX.invalid(); setMsg("Try a bottle with the same top object or an empty one."); highlightSelected(false); selection=null; addHintRing(cx,cy); return; }
+  undoStack.push(deepCloneState()); moves++; setMoves(moves);
+  await doPour(src,dst);
+  highlightSelected(false); selection=null;
+  setMsg("Nice! Keep sorting.");
+  if(isSolved()){ 
+    SFX.win(); // Victory sound
+    setMsg("🎉 You win! Amazing work!"); 
+    createConfetti();
+    setTimeout(() => {
+      document.getElementById('win-dialog').classList.add('show');
+    }, 500);
+  }
+}
+function highlightSelected(on){ bottles.forEach((b,i)=>{ b.group.scale.set(i===selection && on ? 1.06 : 1, i===selection && on ? 1.06 : 1, i===selection && on ? 1.06 : 1); }); }
+
+/* ===== Layout & controls ===== */
+function layoutBottles(){
+  const perRow=Math.min(8,bottles.length), rows=Math.ceil(bottles.length/perRow), spacing=2.35;
+  for(let i=0;i<bottles.length;i++){ const r=Math.floor(i/perRow), c=i%perRow, x=(c-(perRow-1)/2)*spacing, z=(r-(rows-1)/2)*(-3.0); bottles[i].group.position.set(x,0,z); }
+}
+document.getElementById('btn-center').addEventListener('click', ()=> frameToBottles({pad:1.25, animate:true}));
+document.getElementById('btn-undo').addEventListener('click',()=>{ if(!undoStack.length) return; const s=undoStack.pop(); restoreState(s); moves=Math.max(0,moves-1); setMoves(moves); setMsg("Undid the last pour."); });
+document.getElementById('btn-reset').addEventListener('click',()=>{ if(!initialState) return; restoreState(initialState); undoStack.length=0; moves=0; setMoves(moves); selection=null; highlightSelected(false); setMsg("Back to start!"); frameToBottles({pad:1.25, animate:true}); });
+document.getElementById('btn-hint').addEventListener('click',()=>{ 
+  const mv=findHintMove(); 
+  if(!mv){ 
+    SFX.invalid(); // No hint available sound
+    setMsg("No easy hint right now. Try moving into empties or matching tops!"); 
+    return; 
+  } 
+  SFX.hint(); // Magical hint sound
+  setMsg("Hint: try those two highlighted bottles."); 
+  bounceBottle(mv.src,2); 
+  bounceBottle(mv.dst,2); 
+});
+document.getElementById('btn-next').addEventListener('click', ()=> newLevel());
+document.getElementById('btn-sound').addEventListener('click', (e)=>{ 
+  soundOn=!soundOn; 
+  e.currentTarget.textContent = soundOn ? "🔈 Sound: On" : "🔇 Sound: Off"; 
+  console.log('Sound toggled to:', soundOn);
+  
+  // Test sound when enabling
+  if(soundOn) {
+    console.log('Testing sound...');
+    SFX.click();
+  }
+});
+document.getElementById('palette').addEventListener('change', (e)=>{ applyObjectSet(e.target.value); });
+
+// Win dialog event listeners
+document.getElementById('btn-play-again').addEventListener('click', ()=>{ 
+  document.getElementById('win-dialog').classList.remove('show');
+  newLevel();
+});
+
+
+function bounceBottle(i,times=1){ const g=bottles[i].group; let t=0; const tick=()=>{ t+=.08; const s=1+Math.sin(t*6)*.065; g.scale.set(s,s,s); if(t<Math.PI*times) requestAnimationFrame(tick); else g.scale.set(1,1,1); }; tick(); }
+function findHintMove(){
+  for(let i=0;i<bottles.length;i++) for(let j=0;j<bottles.length;j++){ if(i===j) continue; const s=bottles[i], d=bottles[j]; if(canPour(s,d) && d.stack.length && topColor(s)===topColor(d)) return {src:i,dst:j}; }
+  for(let i=0;i<bottles.length;i++) for(let j=0;j<bottles.length;j++){ if(i===j) continue; const s=bottles[i], d=bottles[j]; if(canPour(s,d)) return {src:i,dst:j}; }
+  return null;
+}
+
+/* ===== Tests (console) ===== */
+(function runTests(){
+  const mk=a=>({stack:[...a]});
+
+  // Kept original intent but fixed clearly-wrong data: destination must not be full
+  const A=mk(["r","r","b"]);         // not full; top is 'b'
+  const B=mk([]);                    // empty
+  const C=mk(["b"]);                 // top 'b'
+  console.assert(canPour(A,B)===true, "A -> B empty should be allowed");
+  console.assert(canPour(A,C)===true, "A(top b) -> C(top b) should be allowed");
+  console.assert(canPour(C,A)===true, "C(top b) -> A(top b) should be allowed");
+
+  const D=mk(["r","g","b","y"]), E=mk(["g","g","g"]);
+  console.assert(canPour(D,E)===false, "Different top color should be blocked");
+
+  const F=mk(["p","p","p","p"]);
+  const G=mk([]);
+  console.assert(canPour(F,G)===true, "Full source into empty should be allowed");
+
+  let tmp=[ mk(["r","r","r","r"]), mk([]) ];
+  bottles=tmp; console.assert(isSolved()===true, "Solved layout true");
+  tmp=[ mk(["r","r","b","r"]), mk([]) ];
+  bottles=tmp; console.assert(isSolved()===false, "Unsorted false");
+
+  // Contiguous-run specific
+  const Hs=mk(["x","x","y","y"]), Hd=mk(["y"]);
+  console.assert(maxPourCount(Hs,Hd)===2, "Pour both y layers");
+  const Is=mk(["a","a","a","a"]), Id=mk(["a","a","a"]);
+  console.assert(maxPourCount(Is,Id)===1, "Limited by capacity");
+  const Js=mk(["m","n"]), Jd=mk(["m"]);
+  console.assert(canPour(Js,Jd)===false, "Different tops block");
+  const Ks=mk([]), Kd=mk([]);
+  console.assert(canPour(Ks,Kd)===false, "Empty source blocks");
+  const Ls=mk(["t","t","t","t"]), Ld=mk([]); // empty dst takes full run
+  console.assert(maxPourCount(Ls,Ld)===4, "Empty dest takes full run");
+
+  // Object set sanity — ALL object sets: unique objects
+  for (const [name, arr] of Object.entries(OBJECT_SETS)) {
+    console.assert(new Set(arr).size===arr.length, `Object set "${name}" must have unique objects`);
+    console.assert(arr.length >= 5, `Object set "${name}" should have at least 5 objects`);
+    arr.forEach(obj => {
+      console.assert(typeof obj === 'string' && obj.length > 0, `Object "${obj}" in set "${name}" should be a non-empty string`);
+    });
+  }
+
+  bottles = []; // restore
+  console.log("✅ Tests passed (logic + object set uniqueness)");
+})();
+
+/* ===== Boot & palette switching ===== */
+let initialState=null;
+
+function applyObjectSet(name){
+  ACTIVE_SET_NAME = name in OBJECT_SETS ? name : "Transport";
+  OBJECTS = [...OBJECT_SETS[ACTIVE_SET_NAME]];
+  newLevel(); // rebuild with new object set
+  setMsg(`Theme set to "${ACTIVE_SET_NAME}" — let's sort!`);
+}
+
+function newLevel(){
+  if(bottles.length){ bottles.forEach(b=>scene.remove(b.group)); bottles.length=0; }
+  const {stacks}=generateLevel(NUM_COLORS, CAPACITY, EXTRA_BOTTLES);
+  for(let i=0;i<stacks.length;i++){ const b=createBottle(i,0,0); b.stack=stacks[i]; bottles.push(b); updateBottleVisual(b); }
+  layoutBottles();
+  frameToBottles({pad:1.25, animate:false});   // auto-frame
+
+  undoStack.length=0; moves=0; setMoves(moves); selection=null; highlightSelected(false);
+  setMsg("Sort each bottle into a single object type. Matching objects pour together!");
+  initialState=deepCloneState();
+}
+
+(function main(){
+  init3D(); applyObjectSet(ACTIVE_SET_NAME);
+  
+  // Test sound system on load
+  console.log('Rainbow Bottles loaded. Sound enabled:', soundOn);
+  console.log('Click the sound button or interact with the game to test audio');
+  
+  window.addEventListener('keydown',(e)=>{
+    const k=e.key.toLowerCase();
+    if(k==='z') document.getElementById('btn-undo').click();
+    if(k==='r') document.getElementById('btn-reset').click();
+    if(k==='h') document.getElementById('btn-hint').click();
+    if(k==='n') document.getElementById('btn-next').click();
+    if(k==='s') document.getElementById('btn-sound').click();
+    if(k==='c') document.getElementById('btn-center').click();
+    if(k==='t') { // Test sound with 'T' key
+      console.log('Manual sound test triggered');
+      SFX.click();
+    }
+  });
+})();
+</script>
+</body>
+</html>
