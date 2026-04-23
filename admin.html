@@ -1132,10 +1132,13 @@
           </article>
           <article id="manualAccountBox" class="panel utility-box">
             <strong>Manual Account Creator</strong>
-            <p>Admins and developers can create username/password accounts without a real email. The user can add their own email later from the account page.</p>
+            <p>Admins and developers can create username/password accounts without a real email. Optional template email supports placeholders like {username}@accounts.local.</p>
             <div class="inline-actions">
               <input id="manualAccountUsernameInput" class="input" type="text" placeholder="Username (a-z, 0-9, _)">
               <input id="manualAccountDisplayNameInput" class="input" type="text" placeholder="Display name (optional)">
+            </div>
+            <div class="inline-actions">
+              <input id="manualAccountTemplateEmailInput" class="input" type="text" placeholder="Template email (optional), e.g. {username}@accounts.local">
             </div>
             <div class="inline-actions">
               <input id="manualAccountPasswordInput" class="input" type="text" placeholder="Temporary password (8+ chars)">
@@ -1220,6 +1223,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.config.js"></script>
+  <script src="js/debug-console.js"></script>
+  <script src="js/site-ux.js"></script>
   <script>
     var SUPABASE_CONFIG_KEY = "gamehub_supabase_config";
     var ADMIN_EMAILS = {
@@ -1246,6 +1251,7 @@
     var manualAccountBox = document.getElementById("manualAccountBox");
     var manualAccountUsernameInput = document.getElementById("manualAccountUsernameInput");
     var manualAccountDisplayNameInput = document.getElementById("manualAccountDisplayNameInput");
+    var manualAccountTemplateEmailInput = document.getElementById("manualAccountTemplateEmailInput");
     var manualAccountPasswordInput = document.getElementById("manualAccountPasswordInput");
     var createManualAccountBtn = document.getElementById("createManualAccountBtn");
     var copyManualAccountBtn = document.getElementById("copyManualAccountBtn");
@@ -2275,6 +2281,7 @@
 
       var username = String(manualAccountUsernameInput && manualAccountUsernameInput.value ? manualAccountUsernameInput.value : "").trim().toLowerCase();
       var displayName = String(manualAccountDisplayNameInput && manualAccountDisplayNameInput.value ? manualAccountDisplayNameInput.value : "").trim();
+      var templateEmail = String(manualAccountTemplateEmailInput && manualAccountTemplateEmailInput.value ? manualAccountTemplateEmailInput.value : "").trim().toLowerCase();
       var password = String(manualAccountPasswordInput && manualAccountPasswordInput.value ? manualAccountPasswordInput.value : "");
 
       if (!/^[a-z0-9_]{3,24}$/.test(username)) {
@@ -2285,10 +2292,15 @@
         throw new Error("Password must be at least 8 characters.");
       }
 
+      if (templateEmail && templateEmail.indexOf("@") === -1) {
+        throw new Error("Template email must include '@'. You can use {username} as a placeholder.");
+      }
+
       var result = await supabaseClient.rpc("admin_create_manual_account", {
         login_name_input: username,
         password_input: password,
-        display_name_input: displayName || null
+        display_name_input: displayName || null,
+        template_email_input: templateEmail || null
       });
       if (result.error) {
         throw result.error;

@@ -204,7 +204,55 @@ as $$
     and coalesce(prof.banned, false) = false
     and pres.updated_at is not null
     and pres.updated_at > now() - interval '15 minutes'
-    and coalesce(pres.status, 'offline') in ('online', 'playing');
+    and coalesce(pres.status, 'offline') in ('online', 'playing', 'away', 'background');
+$$;
+
+create or replace function public.public_list_online_presence(limit_count integer default 100)
+returns table (
+  user_id uuid,
+  display_name text,
+  username text,
+  current_game_id text,
+  current_game_title text,
+  presence_status text,
+  presence_updated_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select
+    pres.user_id,
+    coalesce(
+      nullif(trim(coalesce(settings.display_name, '')), ''),
+      nullif(trim(coalesce(settings.username, '')), ''),
+      split_part(lower(coalesce(prof.email, '')), '@', 1),
+      'Guest'
+    ) as display_name,
+    nullif(trim(coalesce(settings.username, '')), '') as username,
+    pres.current_game_id,
+    pres.current_game_title,
+    coalesce(pres.status, 'offline') as presence_status,
+    pres.updated_at as presence_updated_at
+  from public.user_presence pres
+  left join public.user_profiles prof on prof.user_id = pres.user_id
+  left join public.user_settings settings on settings.user_id = pres.user_id
+  where coalesce(settings.show_online, true)
+    and coalesce(prof.banned, false) = false
+    and pres.updated_at is not null
+    and pres.updated_at > now() - interval '15 minutes'
+    and coalesce(pres.status, 'offline') in ('online', 'playing', 'away', 'background')
+  order by
+    case coalesce(pres.status, 'offline')
+      when 'playing' then 1
+      when 'online' then 2
+      when 'away' then 3
+      when 'background' then 4
+      else 5
+    end,
+    pres.updated_at desc
+  limit greatest(1, least(coalesce(limit_count, 100), 200));
 $$;
 
 create or replace function public.sync_user_profile()
@@ -1162,6 +1210,7 @@ revoke all on function public.admin_log_action(uuid, text, text, jsonb) from pub
 revoke all on function public.current_user_staff_role() from public;
 revoke all on function public.current_user_is_moderator() from public;
 revoke all on function public.public_online_user_count() from public;
+revoke all on function public.public_list_online_presence(integer) from public;
 
 grant execute on function public.admin_list_users() to authenticated;
 grant execute on function public.admin_list_activity(integer, integer) to authenticated;
@@ -1175,6 +1224,8 @@ grant execute on function public.current_user_staff_role() to authenticated;
 grant execute on function public.current_user_is_moderator() to authenticated;
 grant execute on function public.public_online_user_count() to anon;
 grant execute on function public.public_online_user_count() to authenticated;
+grant execute on function public.public_list_online_presence(integer) to anon;
+grant execute on function public.public_list_online_presence(integer) to authenticated;
 grant execute on function public.upsert_my_user_settings(uuid, jsonb) to authenticated;
 grant execute on function public.upsert_my_presence(text, text, text, boolean) to authenticated;
 grant execute on function public.upsert_friend_link(text, text, boolean) to authenticated;
@@ -1244,6 +1295,8 @@ select 'admin_activity_logs table exists' as check_name, to_regclass('public.adm
 
 select 'admin_list_users rpc exists' as check_name,
   to_regprocedure('public.admin_list_users()') is not null as ok;
+select 'public_list_online_presence rpc exists' as check_name,
+  to_regprocedure('public.public_list_online_presence(integer)') is not null as ok;
 select 'admin_list_activity rpc exists' as check_name,
   to_regprocedure('public.admin_list_activity(integer,integer)') is not null as ok;
 select 'admin_list_activity_filtered rpc exists' as check_name,

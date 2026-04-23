@@ -186,12 +186,29 @@
       color: #30323b;
       background: #fbfbfb;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
 
     .tab-btn.active {
       border-color: var(--line-strong);
       background: #fff7e8;
       color: #4d3908;
+    }
+
+    .tab-badge {
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+      background: #fff;
+      color: var(--warn-text);
+      border: 1px solid var(--warn-line);
+      white-space: nowrap;
     }
 
     .grid {
@@ -379,8 +396,8 @@
 
         <h2 class="section-title">Auth Method</h2>
         <div class="tabs" role="tablist" aria-label="Account auth modes">
-          <button id="tabPassword" class="tab-btn active" type="button" data-mode="password">Password</button>
-          <button id="tabCode" class="tab-btn" type="button" data-mode="code">Email Code</button>
+          <button id="tabPassword" class="tab-btn active" type="button" data-mode="password">Password <span id="passwordTabBadge" class="tab-badge hidden">Code required</span></button>
+          <button id="tabCode" class="tab-btn" type="button" data-mode="code">Email Code <span id="codeTabBadge" class="tab-badge hidden">Code sent</span></button>
         </div>
 
         <section id="passwordPanel" class="card" style="box-shadow:none; margin:0;">
@@ -463,6 +480,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.config.js"></script>
   <script src="js/friend-message-toast.js"></script>
+  <script src="js/debug-console.js"></script>
+  <script src="js/site-ux.js"></script>
   <script>
     var FAVORITES_KEY = "gamehub_favorites";
     var RECENTS_KEY = "gamehub_recent";
@@ -485,6 +504,8 @@
 
     var tabPassword = document.getElementById("tabPassword");
     var tabCode = document.getElementById("tabCode");
+    var passwordTabBadge = document.getElementById("passwordTabBadge");
+    var codeTabBadge = document.getElementById("codeTabBadge");
 
     var passwordPanel = document.getElementById("passwordPanel");
     var codePanel = document.getElementById("codePanel");
@@ -531,6 +552,9 @@
     var pendingCodeExpiresAt = 0;
     var pendingCodeExpired = false;
     var pendingCodeExpiryTimer = null;
+    var manualEmailPromptLockUserId = "";
+    var passwordCodeHintTimer = null;
+    var passwordCodeHintRequestId = 0;
 
     function isAdminEmail(email) {
       if (typeof email !== "string") {
@@ -678,9 +702,18 @@
 
       passwordPanel.classList.toggle("hidden", !usePassword);
       codePanel.classList.toggle("hidden", !useCode);
+      setCodeTabBadgeVisible(useCode && !!pendingCodeEmail && !!pendingCodeFlow);
+
+      if (useCode && pendingCodeEmail && pendingCodeFlow) {
+        verifyPanel.classList.remove("hidden");
+        verifyHint.textContent = "Code sent to " + pendingCodeEmail + ". Expires in 200 seconds. Requesting a new code invalidates the previous one.";
+      }
     }
 
     function showVerifyPanel(show) {
+      if (show) {
+        setAuthMode("code");
+      }
       verifyPanel.classList.toggle("hidden", !show);
       if (show) {
         verifyHint.textContent = pendingCodeEmail
@@ -741,6 +774,7 @@
       verifyCodeInput.type = "password";
       verifyToggleBtn.textContent = "Show Code";
       verifyHint.textContent = "Enter the code sent to your email.";
+      setCodeTabBadgeVisible(false);
       showVerifyPanel(false);
     }
 
@@ -889,9 +923,66 @@
         email_input: emailOrUsername
       });
       if (result.error) {
-        return false;
+        throw result.error;
       }
       return result.data === true;
+    }
+
+    function setPasswordTabBadgeVisible(show) {
+      if (!passwordTabBadge) {
+        return;
+      }
+      passwordTabBadge.classList.toggle("hidden", !show);
+    }
+
+    function setCodeTabBadgeVisible(show) {
+      if (!codeTabBadge) {
+        return;
+      }
+      codeTabBadge.classList.toggle("hidden", !show);
+    }
+
+    function clearPasswordCodeHintTimer() {
+      if (passwordCodeHintTimer) {
+        clearTimeout(passwordCodeHintTimer);
+        passwordCodeHintTimer = null;
+      }
+    }
+
+    async function refreshPasswordCodeHint() {
+      var loginInput = normalizeLoginInput(authEmail.value);
+      var requestId = ++passwordCodeHintRequestId;
+
+      if (!loginInput || loginInput.length < 3) {
+        setPasswordTabBadgeVisible(false);
+        return;
+      }
+
+      try {
+        var requiresCode = await requiresSigninCodeForEmail(loginInput);
+        if (requestId !== passwordCodeHintRequestId) {
+          return;
+        }
+        setPasswordTabBadgeVisible(requiresCode);
+      } catch (_error) {
+        if (requestId === passwordCodeHintRequestId) {
+          setPasswordTabBadgeVisible(false);
+        }
+      }
+    }
+
+    function schedulePasswordCodeHintRefresh() {
+      clearPasswordCodeHintTimer();
+      passwordCodeHintTimer = setTimeout(function () {
+        refreshPasswordCodeHint();
+      }, 250);
+    }
+
+    async function requireTermsAcceptance() {
+      if (typeof window.__GAMEHUB_REQUIRE_TERMS_ACCEPTANCE__ === "function") {
+        return window.__GAMEHUB_REQUIRE_TERMS_ACCEPTANCE__();
+      }
+      return true;
     }
 
     async function signInWithPassword() {
@@ -908,10 +999,12 @@
       }
       var password = validatePasswordInput(authPassword.value);
 
-      var requiresCode = await requiresSigninCodeForEmail(email);
+      var requiresCode = await requiresSigninCodeForEmail(loginInput);
       if (requiresCode) {
         await sendOtpCode("otp_signin", email);
         setAuthMode("code");
+        showVerifyPanel(true);
+        verifyHint.textContent = "Check your email for the verification code, then enter it below to finish signing in.";
         setStatus("Verification code required for this account. We sent a sign-in code.", "warn");
         return;
       }
@@ -948,6 +1041,8 @@
       if (password !== confirmPassword) {
         throw new Error("Passwords do not match.");
       }
+
+      await requireTermsAcceptance();
 
       var result = await supabaseClient.auth.signUp({
         email: email,
@@ -1009,6 +1104,10 @@
         throw new Error("Sign-up code requires an email address.");
       }
 
+      if (flow === "otp_signup") {
+        await requireTermsAcceptance();
+      }
+
       await reserveSigninCodeAttempt(email);
 
       var shouldCreateUser = flow === "otp_signup";
@@ -1017,6 +1116,8 @@
       pendingCodeFlow = flow;
       pendingCodeEmail = email;
       markPendingCodeIssued();
+      setAuthMode("code");
+      setCodeTabBadgeVisible(true);
       verifyHint.textContent = "Code sent to " + email + ". Expires in 200 seconds. Requesting a new code invalidates the previous one.";
       showVerifyPanel(true);
       setStatus("Verification code sent.", "ok");
@@ -1202,8 +1303,8 @@
         } else {
           setStatus("Signed in: " + (user.email || "account") + " (no cloud save yet)", "ok");
         }
-        if (isPlaceholderManualEmail(user.email || "") && !sessionStorage.getItem("manual_email_prompted")) {
-          sessionStorage.setItem("manual_email_prompted", "1");
+        if (isPlaceholderManualEmail(user.email || "") && manualEmailPromptLockUserId !== user.id) {
+          manualEmailPromptLockUserId = user.id;
           setTimeout(function () {
             withAuthAction(async function () {
               try {
@@ -1219,6 +1320,7 @@
                 if (updateResult.error) {
                   throw updateResult.error;
                 }
+                manualEmailPromptLockUserId = "";
                 setStatus("Verification email sent to " + newEmail + ". Confirm it to finish linking this account.", "ok");
               } catch (promptError) {
                 setStatus(promptError && promptError.message ? promptError.message : "Could not link email.", "error");
@@ -1331,6 +1433,7 @@
           var sessionUser = session && session.user ? session.user : null;
           if (!sessionUser) {
             autoCloudLoadedUserId = "";
+            manualEmailPromptLockUserId = "";
             setAdminPortalVisibility("");
             setStatus("Signed out.", "warn");
           } else {
@@ -1444,6 +1547,11 @@
     authEmail.addEventListener("input", function () {
       var value = normalizeLoginInput(authEmail.value);
       otpEmail.value = value.indexOf("@") !== -1 ? normalizeEmail(value) : "";
+      schedulePasswordCodeHintRefresh();
+    });
+
+    authEmail.addEventListener("blur", function () {
+      refreshPasswordCodeHint();
     });
 
     authPassword.addEventListener("keydown", function (event) {
@@ -1491,6 +1599,7 @@
     });
 
     setAuthMode("password");
+    refreshPasswordCodeHint();
     initSupabase();
   </script>
 </body>

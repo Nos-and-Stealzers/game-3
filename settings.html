@@ -2401,6 +2401,10 @@
                         <span class="check"><input id="cloudAutoSyncToggle" type="checkbox"> Cloud Auto Sync</span>
                         <span id="authStatus" class="meta">Checking cloud account status...</span>
                     </label>
+                    <label class="setting-block">
+                        <span class="check"><input id="developerToolsToggle" type="checkbox"> Developer tools</span>
+                        <span class="meta">Shows the debug menu and developer-only helpers after you enable it.</span>
+                    </label>
                     <section class="setting-block">
                         <span class="meta">Quick Presets</span>
                         <div class="preset-actions">
@@ -2806,6 +2810,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.config.js"></script>
     <script src="js/friend-message-toast.js"></script>
+    <script src="js/debug-console.js"></script>
+    <script src="js/site-ux.js"></script>
     <script>
         var FAVORITES_KEY = "gamehub_favorites";
         var RECENTS_KEY = "gamehub_recent";
@@ -2816,6 +2822,7 @@
         var OPEN_SOURCE_ONLY_KEY = "gamehub_open_source_only";
         var PLAYABLE_ONLY_KEY = "gamehub_playable_only";
         var CLOUD_AUTO_SYNC_KEY = "gamehub_cloud_auto_sync";
+        var DEVELOPER_TOOLS_KEY = "gamehub_developer_tools_enabled";
         var DIRECT_LAUNCH_THRESHOLD_MB_KEY = "gamehub_direct_launch_threshold_mb";
         var SETTINGS_TAB_KEY = "gamehub_settings_tab";
         var GAME_SAVES_KEY = "gamehub_game_saves";
@@ -2842,6 +2849,7 @@
         var fastModeToggle = document.getElementById("fastModeToggle");
         var directLaunchThresholdInput = document.getElementById("directLaunchThresholdInput");
         var cloudAutoSyncToggle = document.getElementById("cloudAutoSyncToggle");
+        var developerToolsToggle = document.getElementById("developerToolsToggle");
         var presetChromebookBtn = document.getElementById("presetChromebookBtn");
         var presetVisualsBtn = document.getElementById("presetVisualsBtn");
         var presetStatus = document.getElementById("presetStatus");
@@ -5469,6 +5477,9 @@
             openSourceOnlyToggle.checked = readSetting(OPEN_SOURCE_ONLY_KEY, "0") === "1";
             playableOnlyToggle.checked = readSetting(PLAYABLE_ONLY_KEY, "0") === "1";
             cloudAutoSyncToggle.checked = readSetting(CLOUD_AUTO_SYNC_KEY, "1") === "1";
+            if (developerToolsToggle) {
+                developerToolsToggle.checked = readSetting(DEVELOPER_TOOLS_KEY, "0") === "1";
+            }
             syncSettingsTabFromStorage();
             renderSaveHealthStatus();
             renderAllGameSaveStatus();
@@ -5484,6 +5495,13 @@
             feedbackStatus.classList.remove("ok", "error");
             if (tone) {
                 feedbackStatus.classList.add(tone);
+            }
+        }
+
+        function setDeveloperToolsEnabled(enabled) {
+            storageSet(DEVELOPER_TOOLS_KEY, enabled === true ? "1" : "0");
+            if (typeof window.__GAMEHUB_DEBUG_CONSOLE_REFRESH__ === "function") {
+                window.__GAMEHUB_DEBUG_CONSOLE_REFRESH__();
             }
         }
 
@@ -5960,6 +5978,9 @@
         playableOnlyToggle.addEventListener("change", function () { writeSetting(PLAYABLE_ONLY_KEY, playableOnlyToggle.checked ? "1" : "0"); });
         fastModeToggle.addEventListener("change", function () { writeSetting(FAST_MODE_KEY, fastModeToggle.checked ? "1" : "0"); });
         cloudAutoSyncToggle.addEventListener("change", function () { writeSetting(CLOUD_AUTO_SYNC_KEY, cloudAutoSyncToggle.checked ? "1" : "0"); });
+        if (developerToolsToggle) {
+            developerToolsToggle.addEventListener("change", function () { setDeveloperToolsEnabled(developerToolsToggle.checked); });
+        }
         saveStatusGroupFilter.addEventListener("change", renderAllGameSaveStatus);
         userUsername.addEventListener("input", updateUsernameUiFeedback);
         userUsername.addEventListener("blur", updateUsernameUiFeedback);

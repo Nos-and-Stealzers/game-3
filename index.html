@@ -1102,6 +1102,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.config.js"></script>
+    <script src="js/debug-console.js"></script>
+    <script src="js/site-ux.js"></script>
     <script>
         var games = [];
 
@@ -1171,6 +1173,7 @@
         var cloudAutoSyncTimer = null;
         var homePresenceTimer = null;
         var homePresenceEventsBound = false;
+        var lastWebsitePeopleCount = null;
         var hiddenGameIds = {};
         var currentStaffRole = "";
 
@@ -1512,6 +1515,10 @@
                 return;
             }
 
+            websitePeopleCount.textContent = lastWebsitePeopleCount === null
+                ? "Website visitors: checking..."
+                : "Website visitors: " + lastWebsitePeopleCount + " online";
+
             try {
                 var result = await supabaseClient.rpc("public_online_user_count");
                 if (result.error) {
@@ -1523,9 +1530,17 @@
                     throw new Error("Invalid visitor count.");
                 }
 
+                lastWebsitePeopleCount = count;
                 websitePeopleCount.textContent = "Website visitors: " + count + " online";
+                websitePeopleCount.title = "Updated just now";
             } catch (error) {
-                websitePeopleCount.textContent = "Website visitors: -- online";
+                if (lastWebsitePeopleCount !== null) {
+                    websitePeopleCount.textContent = "Website visitors: " + lastWebsitePeopleCount + " online";
+                    websitePeopleCount.title = "Using the last known count because the live refresh failed.";
+                } else {
+                    websitePeopleCount.textContent = "Website visitors: checking...";
+                    websitePeopleCount.title = "Waiting for a live count.";
+                }
             }
         }
 
@@ -1564,6 +1579,14 @@
 
             window.addEventListener("focus", function () {
                 publishHomePresence().catch(function () {});
+                refreshWebsitePeopleCount().catch(function () {});
+            });
+
+            window.addEventListener("online", function () {
+                refreshWebsitePeopleCount().catch(function () {});
+            });
+
+            window.addEventListener("pageshow", function () {
                 refreshWebsitePeopleCount().catch(function () {});
             });
 

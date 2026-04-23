@@ -494,6 +494,15 @@
     }).join("");
   }
 
+  function setDiagnosticsVisible(nextVisible) {
+    diagVisible = !!nextVisible;
+    renderDiagOverlay();
+  }
+
+  function toggleDiagnosticsOverlay() {
+    setDiagnosticsVisible(!diagVisible);
+  }
+
   function installDiagnosticsOverlay() {
     if (window.__GAMEHUB_DIAG_OVERLAY_INSTALLED__) {
       return;
@@ -531,9 +540,16 @@
       if (typeof event.stopImmediatePropagation === "function") {
         event.stopImmediatePropagation();
       }
-      diagVisible = !diagVisible;
-      renderDiagOverlay();
+      toggleDiagnosticsOverlay();
     }, true);
+
+    window.__GAMEHUB_OPEN_DIAGNOSTICS__ = function () {
+      setDiagnosticsVisible(true);
+    };
+    window.__GAMEHUB_CLOSE_DIAGNOSTICS__ = function () {
+      setDiagnosticsVisible(false);
+    };
+    window.__GAMEHUB_TOGGLE_DIAGNOSTICS__ = toggleDiagnosticsOverlay;
   }
 
   function inferCurrentGameContext() {

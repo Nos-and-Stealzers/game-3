@@ -263,7 +263,55 @@ as $$
     and coalesce(prof.banned, false) = false
     and pres.updated_at is not null
     and pres.updated_at > now() - interval '15 minutes'
-    and coalesce(pres.status, 'offline') in ('online', 'playing');
+    and coalesce(pres.status, 'offline') in ('online', 'playing', 'away', 'background');
+$$;
+
+create or replace function public.public_list_online_presence(limit_count integer default 100)
+returns table (
+  user_id uuid,
+  display_name text,
+  username text,
+  current_game_id text,
+  current_game_title text,
+  presence_status text,
+  presence_updated_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select
+    pres.user_id,
+    coalesce(
+      nullif(trim(coalesce(settings.display_name, '')), ''),
+      nullif(trim(coalesce(settings.username, '')), ''),
+      split_part(lower(coalesce(prof.email, '')), '@', 1),
+      'Guest'
+    ) as display_name,
+    nullif(trim(coalesce(settings.username, '')), '') as username,
+    pres.current_game_id,
+    pres.current_game_title,
+    coalesce(pres.status, 'offline') as presence_status,
+    pres.updated_at as presence_updated_at
+  from public.user_presence pres
+  left join public.user_profiles prof on prof.user_id = pres.user_id
+  left join public.user_settings settings on settings.user_id = pres.user_id
+  where coalesce(settings.show_online, true)
+    and coalesce(prof.banned, false) = false
+    and pres.updated_at is not null
+    and pres.updated_at > now() - interval '15 minutes'
+    and coalesce(pres.status, 'offline') in ('online', 'playing', 'away', 'background')
+  order by
+    case coalesce(pres.status, 'offline')
+      when 'playing' then 1
+      when 'online' then 2
+      when 'away' then 3
+      when 'background' then 4
+      else 5
+    end,
+    pres.updated_at desc
+  limit greatest(1, least(coalesce(limit_count, 100), 200));
 $$;
 
 create or replace function public.sync_user_profile()
@@ -1636,10 +1684,13 @@ begin
 end;
 $$;
 
+drop function if exists public.admin_create_manual_account(text, text, text);
+
 create or replace function public.admin_create_manual_account(
   login_name_input text,
   password_input text,
-  display_name_input text default null
+  display_name_input text default null,
+  template_email_input text default null
 )
 returns table (
   user_id uuid,
@@ -1654,8 +1705,12 @@ declare
   normalized_login text;
   clean_password text;
   clean_display_name text;
+  clean_template_email text;
   new_user_id uuid;
   generated_email text;
+  base_local text;
+  base_domain text;
+  at_pos integer;
 begin
   if not public.current_user_is_dev_or_admin() then
     raise exception 'Not authorized.';
@@ -1664,6 +1719,7 @@ begin
   normalized_login := lower(trim(coalesce(login_name_input, '')));
   clean_password := coalesce(password_input, '');
   clean_display_name := nullif(trim(coalesce(display_name_input, '')), '');
+  clean_template_email := nullif(lower(trim(coalesce(template_email_input, ''))), '');
 
   if normalized_login !~ '^[a-z0-9_]{3,24}$' then
     raise exception 'Login name must be 3-24 chars: lowercase letters, numbers, underscore.';
@@ -1681,14 +1737,36 @@ begin
     raise exception 'Username is already taken.';
   end if;
 
-  generated_email := normalized_login || '+manual-' || substr(gen_random_uuid()::text, 1, 8) || '@accounts.local';
-  while exists (
-    select 1
-    from auth.users u
-    where lower(trim(coalesce(u.email, ''))) = generated_email
-  ) loop
+  if clean_template_email is not null then
+    generated_email := replace(clean_template_email, '{username}', normalized_login);
+    at_pos := position('@' in generated_email);
+    if at_pos <= 1 or at_pos >= length(generated_email) then
+      raise exception 'Template email must resolve to a valid address.';
+    end if;
+
+    base_local := split_part(generated_email, '@', 1);
+    base_domain := split_part(generated_email, '@', 2);
+    if base_local = '' or base_domain = '' or position('.' in base_domain) = 0 then
+      raise exception 'Template email must resolve to a valid address.';
+    end if;
+
+    while exists (
+      select 1
+      from auth.users u
+      where lower(trim(coalesce(u.email, ''))) = generated_email
+    ) loop
+      generated_email := base_local || '+manual-' || substr(gen_random_uuid()::text, 1, 8) || '@' || base_domain;
+    end loop;
+  else
     generated_email := normalized_login || '+manual-' || substr(gen_random_uuid()::text, 1, 8) || '@accounts.local';
-  end loop;
+    while exists (
+      select 1
+      from auth.users u
+      where lower(trim(coalesce(u.email, ''))) = generated_email
+    ) loop
+      generated_email := normalized_login || '+manual-' || substr(gen_random_uuid()::text, 1, 8) || '@accounts.local';
+    end loop;
+  end if;
 
   new_user_id := gen_random_uuid();
 
@@ -1824,6 +1902,7 @@ revoke all on function public.current_user_staff_role() from public;
 revoke all on function public.current_user_is_moderator() from public;
 revoke all on function public.current_user_is_dev_or_admin() from public;
 revoke all on function public.public_online_user_count() from public;
+revoke all on function public.public_list_online_presence(integer) from public;
 revoke all on function public.set_game_visibility_override(text, boolean, text) from public;
 revoke all on function public.list_game_visibility_overrides() from public;
 revoke all on function public.public_list_hidden_games() from public;
@@ -1832,7 +1911,7 @@ revoke all on function public.admin_list_feedback(integer, integer) from public;
 revoke all on function public.user_requires_signin_code(text) from public;
 revoke all on function public.resolve_signin_email(text) from public;
 revoke all on function public.consume_signin_code_attempt(text, integer, integer) from public;
-revoke all on function public.admin_create_manual_account(text, text, text) from public;
+revoke all on function public.admin_create_manual_account(text, text, text, text) from public;
 
 grant execute on function public.admin_list_users() to authenticated;
 grant execute on function public.admin_list_activity(integer, integer) to authenticated;
@@ -1841,13 +1920,15 @@ grant execute on function public.admin_set_staff_role(uuid, text, boolean) to au
 grant execute on function public.admin_set_staff_role_by_email(text, text, boolean) to authenticated;
 grant execute on function public.admin_set_ban(uuid, boolean, text) to authenticated;
 grant execute on function public.admin_delete_account(uuid) to authenticated;
-grant execute on function public.admin_create_manual_account(text, text, text) to authenticated;
+grant execute on function public.admin_create_manual_account(text, text, text, text) to authenticated;
 grant execute on function public.admin_log_action(uuid, text, text, jsonb) to authenticated;
 grant execute on function public.current_user_staff_role() to authenticated;
 grant execute on function public.current_user_is_moderator() to authenticated;
 grant execute on function public.current_user_is_dev_or_admin() to authenticated;
 grant execute on function public.public_online_user_count() to anon;
 grant execute on function public.public_online_user_count() to authenticated;
+grant execute on function public.public_list_online_presence(integer) to anon;
+grant execute on function public.public_list_online_presence(integer) to authenticated;
 grant execute on function public.set_game_visibility_override(text, boolean, text) to authenticated;
 grant execute on function public.list_game_visibility_overrides() to authenticated;
 grant execute on function public.admin_list_feedback(integer, integer) to authenticated;
@@ -1951,12 +2032,14 @@ select 'public_list_hidden_games rpc exists' as check_name,
   to_regprocedure('public.public_list_hidden_games()') is not null as ok;
 select 'submit_feedback_entry rpc exists' as check_name,
   to_regprocedure('public.submit_feedback_entry(text,text,text,text,text)') is not null as ok;
+select 'public_list_online_presence rpc exists' as check_name,
+  to_regprocedure('public.public_list_online_presence(integer)') is not null as ok;
 select 'resolve_signin_email rpc exists' as check_name,
   to_regprocedure('public.resolve_signin_email(text)') is not null as ok;
 select 'consume_signin_code_attempt rpc exists' as check_name,
   to_regprocedure('public.consume_signin_code_attempt(text,integer,integer)') is not null as ok;
 select 'admin_create_manual_account rpc exists' as check_name,
-  to_regprocedure('public.admin_create_manual_account(text,text,text)') is not null as ok;
+  to_regprocedure('public.admin_create_manual_account(text,text,text,text)') is not null as ok;
 
 -- Optional: should return 0 rows when not signed in as an admin.
 select count(*) as admin_list_users_preview_count from public.admin_list_users();
