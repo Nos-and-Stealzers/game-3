@@ -713,9 +713,14 @@
     function showVerifyPanel(show) {
       if (show) {
         setAuthMode("code");
+        codePanel.classList.remove("hidden");
+        verifyPanel.classList.remove("hidden");
       }
       verifyPanel.classList.toggle("hidden", !show);
       if (show) {
+        if (pendingCodeEmail) {
+          otpEmail.value = pendingCodeEmail;
+        }
         verifyHint.textContent = pendingCodeEmail
           ? ("Code sent to " + pendingCodeEmail + ". Expires in 200 seconds. Requesting a new code invalidates the previous one.")
           : "Enter the code sent to your email.";
@@ -776,6 +781,17 @@
       verifyHint.textContent = "Enter the code sent to your email.";
       setCodeTabBadgeVisible(false);
       showVerifyPanel(false);
+    }
+
+    function beginPendingVerification(flow, email) {
+      pendingCodeFlow = flow;
+      pendingCodeEmail = email;
+      otpEmail.value = email;
+      markPendingCodeIssued();
+      setAuthMode("code");
+      setCodeTabBadgeVisible(true);
+      verifyHint.textContent = "Code sent to " + email + ". Expires in 200 seconds. Requesting a new code invalidates the previous one.";
+      showVerifyPanel(true);
     }
 
     function normalizeCode(value) {
@@ -999,11 +1015,9 @@
       }
       var password = validatePasswordInput(authPassword.value);
 
-      var requiresCode = await requiresSigninCodeForEmail(loginInput);
+      var requiresCode = await requiresSigninCodeForEmail(email);
       if (requiresCode) {
         await sendOtpCode("otp_signin", email);
-        setAuthMode("code");
-        showVerifyPanel(true);
         verifyHint.textContent = "Check your email for the verification code, then enter it below to finish signing in.";
         setStatus("Verification code required for this account. We sent a sign-in code.", "warn");
         return;
@@ -1062,8 +1076,10 @@
       if (user) {
         await autoLoadCloudForUser(user);
       }
-
-      setStatus("Account created. Check your email if verification is required.", "ok");
+      await reserveSigninCodeAttempt(email);
+      await sendOtpWithRetry(email, false, "otp_signup_followup");
+      beginPendingVerification("otp_signup", email);
+      setStatus("Account created. Enter the verification code we sent to finish sign-in.", "ok");
     }
 
     async function sendPasswordReset() {
@@ -1113,13 +1129,7 @@
       var shouldCreateUser = flow === "otp_signup";
       await sendOtpWithRetry(email, shouldCreateUser, flow);
 
-      pendingCodeFlow = flow;
-      pendingCodeEmail = email;
-      markPendingCodeIssued();
-      setAuthMode("code");
-      setCodeTabBadgeVisible(true);
-      verifyHint.textContent = "Code sent to " + email + ". Expires in 200 seconds. Requesting a new code invalidates the previous one.";
-      showVerifyPanel(true);
+      beginPendingVerification(flow, email);
       setStatus("Verification code sent.", "ok");
     }
 

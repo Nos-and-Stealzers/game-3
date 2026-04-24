@@ -2863,6 +2863,9 @@
         var feedbackStatus = document.getElementById("feedbackStatus");
         var importDataInput = document.getElementById("importDataInput");
         var authStatus = document.getElementById("authStatus");
+        var overviewAccountStatus = document.getElementById("overviewAccountStatus");
+        var overviewCloudStatus = document.getElementById("overviewCloudStatus");
+        var overviewSecurityStatus = document.getElementById("overviewSecurityStatus");
         var saveDataStatus = document.getElementById("saveDataStatus");
         var cloudDataStatus = document.getElementById("cloudDataStatus");
         var localSaveChip = document.getElementById("localSaveChip");
@@ -5375,6 +5378,7 @@
             }
             syncFriendsAutoRefreshState();
             syncSettingsPresenceLoopState();
+            updateOverviewStatuses();
         }
 
         function isMissingTableError(error) {
@@ -5485,6 +5489,53 @@
             renderAllGameSaveStatus();
             applySecurityChecklistState();
             updateProfilePreview(readUserSettings());
+            updateOverviewStatuses();
+        }
+
+        function setOverviewValue(node, message) {
+            if (!node) {
+                return;
+            }
+            node.textContent = message;
+        }
+
+        function updateOverviewStatuses() {
+            var isConfigured = !!supabaseClient;
+            var isSignedIn = !!(activeAccountUser && activeAccountUser.id);
+            var cloudAutoSyncEnabled = readSetting(CLOUD_AUTO_SYNC_KEY, "1") === "1";
+
+            if (!isConfigured) {
+                setOverviewValue(overviewAccountStatus, "Cloud not configured");
+            } else if (isSignedIn) {
+                var email = typeof activeAccountUser.email === "string" ? activeAccountUser.email : "account";
+                setOverviewValue(overviewAccountStatus, "Signed in as " + email);
+            } else {
+                setOverviewValue(overviewAccountStatus, "Not signed in");
+            }
+
+            if (!cloudAutoSyncEnabled) {
+                setOverviewValue(overviewCloudStatus, "Auto sync disabled");
+            } else if (!isConfigured) {
+                setOverviewValue(overviewCloudStatus, "Waiting for cloud setup");
+            } else if (!isSignedIn) {
+                setOverviewValue(overviewCloudStatus, "Ready after sign-in");
+            } else {
+                var lastSync = storageGet(CLOUD_LAST_SYNC_KEY);
+                setOverviewValue(overviewCloudStatus, lastSync ? ("Synced at " + new Date(lastSync).toLocaleString()) : "Sync active");
+            }
+
+            var enabledSecurity = securityCheckboxes.filter(function (checkbox) {
+                return checkbox.checked;
+            }).length;
+            var totalSecurity = securityCheckboxes.length;
+            var requireCode = readSecurityChecklist().requireVerificationCode === true;
+            var securityMessage = totalSecurity
+                ? (enabledSecurity + "/" + totalSecurity + " checks on")
+                : "Security checklist unavailable";
+            if (totalSecurity) {
+                securityMessage += requireCode ? " • code required" : " • code optional";
+            }
+            setOverviewValue(overviewSecurityStatus, securityMessage);
         }
 
         function setFeedbackStatus(message, tone) {
@@ -5640,6 +5691,7 @@
 
         function updateSecurityChecklistSummary() {
             if (!securityChecklistStatus) {
+                updateOverviewStatuses();
                 return;
             }
             var enabled = securityCheckboxes.filter(function (checkbox) {
@@ -5648,9 +5700,11 @@
             var total = securityCheckboxes.length;
             if (!total) {
                 securityChecklistStatus.textContent = "No security options found.";
+                updateOverviewStatuses();
                 return;
             }
             securityChecklistStatus.textContent = enabled + " / " + total + " safety options checked.";
+            updateOverviewStatuses();
         }
 
         function setSecurityChecklistFlag(key, value) {
@@ -5941,6 +5995,7 @@
             if (!hasFactory || !cfg.url || !cfg.anonKey) {
                 authStatus.textContent = "Cloud account: not configured.";
                 setAccountVisibility(null);
+                updateOverviewStatuses();
                 return;
             }
 
@@ -5951,16 +6006,19 @@
                 authStatus.textContent = user && user.email ? ("Signed in: " + user.email) : "Cloud account ready. Sign in on Account page.";
                 setAccountVisibility(user);
                 await hydrateUserSettingsFromAccount(user);
+                updateOverviewStatuses();
                 supabaseClient.auth.onAuthStateChange(function (_event, session) {
                     var sessionUser = session && session.user ? session.user : null;
                     authStatus.textContent = sessionUser && sessionUser.email ? ("Signed in: " + sessionUser.email) : "Cloud account ready. Sign in on Account page.";
                     setAccountVisibility(sessionUser);
                     hydrateUserSettingsFromAccount(sessionUser);
+                    updateOverviewStatuses();
                 });
             } catch (error) {
                 supabaseClient = null;
                 authStatus.textContent = "Cloud account failed to load.";
                 setAccountVisibility(null);
+                updateOverviewStatuses();
             }
         }
 
@@ -5977,7 +6035,10 @@
         openSourceOnlyToggle.addEventListener("change", function () { writeSetting(OPEN_SOURCE_ONLY_KEY, openSourceOnlyToggle.checked ? "1" : "0"); });
         playableOnlyToggle.addEventListener("change", function () { writeSetting(PLAYABLE_ONLY_KEY, playableOnlyToggle.checked ? "1" : "0"); });
         fastModeToggle.addEventListener("change", function () { writeSetting(FAST_MODE_KEY, fastModeToggle.checked ? "1" : "0"); });
-        cloudAutoSyncToggle.addEventListener("change", function () { writeSetting(CLOUD_AUTO_SYNC_KEY, cloudAutoSyncToggle.checked ? "1" : "0"); });
+        cloudAutoSyncToggle.addEventListener("change", function () {
+            writeSetting(CLOUD_AUTO_SYNC_KEY, cloudAutoSyncToggle.checked ? "1" : "0");
+            updateOverviewStatuses();
+        });
         if (developerToolsToggle) {
             developerToolsToggle.addEventListener("change", function () { setDeveloperToolsEnabled(developerToolsToggle.checked); });
         }
