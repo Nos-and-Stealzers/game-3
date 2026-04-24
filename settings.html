@@ -840,7 +840,7 @@
 
         .friends-chat-shell {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
             gap: 0;
             align-items: stretch;
             height: 100%;
@@ -849,14 +849,15 @@
         }
 
         .friends-chat-menu {
-            display: none;
+            display: grid;
             gap: 8px;
             padding: 8px;
-            border-radius: 14px;
-            border: 1px solid var(--line);
+            border-right: 1px solid var(--line);
             background: rgba(255, 255, 255, 0.62);
-            max-height: 430px;
+            max-height: none;
+            height: 100%;
             overflow: auto;
+            min-width: 0;
         }
 
         .friends-chat-menu-item {
@@ -911,6 +912,19 @@
             flex: 1;
             overflow: hidden;
             min-width: 0;
+        }
+
+        @media (max-width: 980px) {
+            .friends-chat-shell {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto minmax(0, 1fr);
+            }
+
+            .friends-chat-menu {
+                border-right: 0;
+                border-bottom: 1px solid var(--line);
+                max-height: 180px;
+            }
         }
 
         .friends-chat-thread-head {
@@ -2698,7 +2712,7 @@
                             </div>
                         </article>
 
-                        <article class="security-action-card">
+                        <article id="securitySetupShortcutsCard" class="security-action-card" hidden>
                             <h3>Supabase Security Setup Shortcuts</h3>
                             <p>Open your project security pages, then mark each item configured.</p>
                             <div class="security-action-row">
@@ -2952,6 +2966,7 @@
         var securityMarkPasswordNotifyBtn = document.getElementById("securityMarkPasswordNotifyBtn");
         var securityMarkEmailNotifyBtn = document.getElementById("securityMarkEmailNotifyBtn");
         var securityMarkMfaNotifyBtn = document.getElementById("securityMarkMfaNotifyBtn");
+        var securitySetupShortcutsCard = document.getElementById("securitySetupShortcutsCard");
         var securityActionStatus = document.getElementById("securityActionStatus");
         var securityOtpSendBtn = document.getElementById("securityOtpSendBtn");
         var securityOtpCodeInput = document.getElementById("securityOtpCodeInput");
@@ -2996,6 +3011,7 @@
             available: true
         };
         var sensitiveVerifyInFlight = false;
+        var currentStaffRole = "";
         var sensitiveVerifyPendingResolver = null;
         var sensitiveVerifyActionLabel = "update this setting";
         var sensitiveVerifyCodeSessionId = 0;
@@ -3084,16 +3100,46 @@
             return USERNAME_REGEX.test(username);
         }
 
+        function isStaffRole(role) {
+            var normalized = String(role || "").trim().toLowerCase();
+            return normalized === "admin" || normalized === "developer" || normalized === "dev";
+        }
+
+        function applySecurityRoleVisibility() {
+            if (!securitySetupShortcutsCard) {
+                return;
+            }
+            var allowed = isStaffRole(currentStaffRole);
+            securitySetupShortcutsCard.hidden = !allowed;
+            securitySetupShortcutsCard.classList.toggle("hidden", !allowed);
+        }
+
+        async function refreshStaffRole() {
+            if (!supabaseClient || !activeAccountUser || !activeAccountUser.id) {
+                currentStaffRole = "";
+                applySecurityRoleVisibility();
+                return;
+            }
+            try {
+                var roleResult = await supabaseClient.rpc("current_user_staff_role");
+                if (roleResult && roleResult.error) {
+                    throw roleResult.error;
+                }
+                currentStaffRole = String(roleResult && roleResult.data ? roleResult.data : "").trim().toLowerCase();
+            } catch (error) {
+                currentStaffRole = "";
+            }
+            applySecurityRoleVisibility();
+        }
+
         function syncUsernameGateState() {
             usernameGateRequired = !!(activeAccountUser && activeAccountUser.id) && !hasRequiredUsername();
             settingsTabButtons.forEach(function (button) {
-                var tab = button.getAttribute("data-settings-tab") || "general";
-                var blocked = usernameGateRequired && tab !== "profile";
-                button.disabled = blocked;
-                button.title = blocked ? "Set your username first." : "";
+                button.disabled = false;
+                button.title = "";
             });
             if (usernameGateRequired) {
-                userSettingsStatus.textContent = "Pick a username first to unlock the rest of Settings.";
+                userSettingsStatus.textContent = "Set a username to unlock friend discovery and easier account lookup.";
             }
         }
 
@@ -3128,9 +3174,6 @@
         function setActiveSettingsTab(tabName, persist) {
             var activeTab = ["general", "profile", "friends", "security", "data"].indexOf(tabName) !== -1 ? tabName : "general";
             var isSignedIn = !!(activeAccountUser && activeAccountUser.id);
-            if (usernameGateRequired && activeTab !== "profile") {
-                activeTab = "profile";
-            }
             settingsTabButtons.forEach(function (button) {
                 var isActive = button.getAttribute("data-settings-tab") === activeTab;
                 button.classList.toggle("active", isActive);
@@ -5373,12 +5416,10 @@
                 }
                 setFriendsStatus("Sign in to manage friends.");
             }
-            if (isSignedIn && usernameGateRequired) {
-                setActiveSettingsTab("profile", false);
-            }
             syncFriendsAutoRefreshState();
             syncSettingsPresenceLoopState();
             updateOverviewStatuses();
+            refreshStaffRole();
         }
 
         function isMissingTableError(error) {
@@ -5499,6 +5540,40 @@
             node.textContent = message;
         }
 
+        function syncSecurityActionInteractivity() {
+            var isReady = !!(supabaseClient && activeAccountUser && activeAccountUser.id);
+            var requiresAuthControls = [
+                securityChangeEmailBtn,
+                securityResetPasswordBtn,
+                securityReauthTestBtn,
+                securityShowSessionsBtn,
+                securitySignOutBtn,
+                securityAddPasskeyBtn,
+                securityRemovePasskeyBtn,
+                securityDeleteAccountBtn,
+                securityMarkPasswordNotifyBtn,
+                securityMarkEmailNotifyBtn,
+                securityMarkMfaNotifyBtn,
+                securityOtpSendBtn,
+                securityOtpVerifyBtn
+            ];
+
+            requiresAuthControls.forEach(function (control) {
+                if (!control) {
+                    return;
+                }
+                control.disabled = !isReady;
+                control.title = isReady ? "" : "Sign in to use this security action.";
+            });
+
+            if (securityChangeEmailInput) {
+                securityChangeEmailInput.disabled = !isReady;
+            }
+            if (securityOtpCodeInput) {
+                securityOtpCodeInput.disabled = !isReady;
+            }
+        }
+
         function updateOverviewStatuses() {
             var isConfigured = !!supabaseClient;
             var isSignedIn = !!(activeAccountUser && activeAccountUser.id);
@@ -5524,16 +5599,19 @@
                 setOverviewValue(overviewCloudStatus, lastSync ? ("Synced at " + new Date(lastSync).toLocaleString()) : "Sync active");
             }
 
-            var enabledSecurity = securityCheckboxes.filter(function (checkbox) {
-                return checkbox.checked;
-            }).length;
-            var totalSecurity = securityCheckboxes.length;
-            var requireCode = readSecurityChecklist().requireVerificationCode === true;
-            var securityMessage = totalSecurity
-                ? (enabledSecurity + "/" + totalSecurity + " checks on")
-                : "Security checklist unavailable";
-            if (totalSecurity) {
-                securityMessage += requireCode ? " • code required" : " • code optional";
+            var securityMessage = "Sign in to view";
+            if (isSignedIn) {
+                var enabledSecurity = securityCheckboxes.filter(function (checkbox) {
+                    return checkbox.checked;
+                }).length;
+                var totalSecurity = securityCheckboxes.length;
+                var requireCode = readSecurityChecklist().requireVerificationCode === true;
+                securityMessage = totalSecurity
+                    ? (enabledSecurity + "/" + totalSecurity + " checks on")
+                    : "Security checklist unavailable";
+                if (totalSecurity) {
+                    securityMessage += requireCode ? " • code required" : " • code optional";
+                }
             }
             setOverviewValue(overviewSecurityStatus, securityMessage);
         }
@@ -5584,6 +5662,7 @@
                 if (!rpcResult.error) {
                     setFeedbackStatus("Feedback sent. Thanks for the report.", "ok");
                     return;
+                syncSecurityActionInteractivity();
                 }
             }
 
@@ -6553,53 +6632,63 @@
             });
         }
 
-        sensitiveVerifyToggleBtn.addEventListener("click", function () {
-            var show = sensitiveVerifyCodeInput.type === "password";
-            sensitiveVerifyCodeInput.type = show ? "text" : "password";
-            sensitiveVerifyToggleBtn.textContent = show ? "Hide Code" : "Show Code";
-            sensitiveVerifyCodeInput.focus();
-        });
+        if (sensitiveVerifyToggleBtn && sensitiveVerifyCodeInput) {
+            sensitiveVerifyToggleBtn.addEventListener("click", function () {
+                var show = sensitiveVerifyCodeInput.type === "password";
+                sensitiveVerifyCodeInput.type = show ? "text" : "password";
+                sensitiveVerifyToggleBtn.textContent = show ? "Hide Code" : "Show Code";
+                sensitiveVerifyCodeInput.focus();
+            });
+        }
 
-        sensitiveVerifyCancelBtn.addEventListener("click", function () {
-            resolveSensitiveVerifyModal(false);
-        });
+        if (sensitiveVerifyCancelBtn) {
+            sensitiveVerifyCancelBtn.addEventListener("click", function () {
+                resolveSensitiveVerifyModal(false);
+            });
+        }
 
-        sensitiveVerifyResendBtn.addEventListener("click", async function () {
-            try {
-                sensitiveVerifyResendBtn.disabled = true;
-                await sendSensitiveVerificationCode();
-                setSensitiveVerifyStatus("New code sent. Check your inbox.", "ok");
-            } catch (error) {
-                setSensitiveVerifyStatus(error && error.message ? error.message : "Could not resend code.", "error");
-            } finally {
-                sensitiveVerifyResendBtn.disabled = false;
-            }
-        });
+        if (sensitiveVerifyResendBtn) {
+            sensitiveVerifyResendBtn.addEventListener("click", async function () {
+                try {
+                    sensitiveVerifyResendBtn.disabled = true;
+                    await sendSensitiveVerificationCode();
+                    setSensitiveVerifyStatus("New code sent. Check your inbox.", "ok");
+                } catch (error) {
+                    setSensitiveVerifyStatus(error && error.message ? error.message : "Could not resend code.", "error");
+                } finally {
+                    sensitiveVerifyResendBtn.disabled = false;
+                }
+            });
+        }
 
-        sensitiveVerifyConfirmBtn.addEventListener("click", async function () {
-            var code = String(sensitiveVerifyCodeInput.value || "").replace(/\s+/g, "").trim();
-            if (!code) {
-                setSensitiveVerifyStatus("Verification code is required.", "error");
-                return;
-            }
-            try {
-                sensitiveVerifyConfirmBtn.disabled = true;
-                await verifySensitiveCode(code);
-                setSensitiveVerifyStatus("Code verified.", "ok");
-                resolveSensitiveVerifyModal(true);
-            } catch (error) {
-                setSensitiveVerifyStatus(error && error.message ? error.message : "Verification failed. Try again.", "error");
-            } finally {
-                sensitiveVerifyConfirmBtn.disabled = false;
-            }
-        });
+        if (sensitiveVerifyConfirmBtn) {
+            sensitiveVerifyConfirmBtn.addEventListener("click", async function () {
+                var code = String(sensitiveVerifyCodeInput.value || "").replace(/\s+/g, "").trim();
+                if (!code) {
+                    setSensitiveVerifyStatus("Verification code is required.", "error");
+                    return;
+                }
+                try {
+                    sensitiveVerifyConfirmBtn.disabled = true;
+                    await verifySensitiveCode(code);
+                    setSensitiveVerifyStatus("Code verified.", "ok");
+                    resolveSensitiveVerifyModal(true);
+                } catch (error) {
+                    setSensitiveVerifyStatus(error && error.message ? error.message : "Verification failed. Try again.", "error");
+                } finally {
+                    sensitiveVerifyConfirmBtn.disabled = false;
+                }
+            });
+        }
 
-        sensitiveVerifyCodeInput.addEventListener("keydown", function (event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                sensitiveVerifyConfirmBtn.click();
-            }
-        });
+        if (sensitiveVerifyCodeInput) {
+            sensitiveVerifyCodeInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" && sensitiveVerifyConfirmBtn) {
+                    event.preventDefault();
+                    sensitiveVerifyConfirmBtn.click();
+                }
+            });
+        }
 
         document.addEventListener("visibilitychange", function () {
             syncFriendsAutoRefreshState();

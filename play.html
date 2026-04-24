@@ -266,6 +266,7 @@
 
     <script>
         var RECENTS_KEY = "gamehub_recent";
+        var GAME_SAVES_KEY = "gamehub_game_saves";
         var THEME_KEY = "gamehub_theme";
         var FAST_MODE_KEY = "gamehub_fast_mode";
         var PERFORMANCE_PROFILE_KEY = "gamehub_performance_profile";
@@ -313,6 +314,33 @@
             }
         }
 
+        function readObject(key) {
+            try {
+                var value = JSON.parse(storageGet(key) || "{}");
+                if (!value || typeof value !== "object" || Array.isArray(value)) {
+                    return {};
+                }
+                return value;
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function writeObject(key, value) {
+            storageSet(key, JSON.stringify(value || {}));
+        }
+
+        function touchGameSave(gameId) {
+            if (!gameId) {
+                return;
+            }
+            var saves = readObject(GAME_SAVES_KEY);
+            var entry = saves[gameId] && typeof saves[gameId] === "object" ? saves[gameId] : {};
+            entry.updatedAt = new Date().toISOString();
+            saves[gameId] = entry;
+            writeObject(GAME_SAVES_KEY, saves);
+        }
+
         var titleEl = document.getElementById("gameTitle");
         var frame = document.getElementById("gameFrame");
         var frameWrap = document.querySelector(".frame-wrap");
@@ -321,6 +349,7 @@
         var embedStatus = document.getElementById("embedStatus");
         var loadTimer;
         var frameLoaded = false;
+        var gameSaveHeartbeatTimer = null;
 
         function isFullscreenActive() {
             return !!(document.fullscreenElement || document.webkitFullscreenElement);
@@ -565,7 +594,15 @@
             };
             direct.href = game.direct;
             updateRecentGames(game.id);
+            touchGameSave(game.id);
             applyEmbedPolicy(game);
+
+            if (gameSaveHeartbeatTimer) {
+                clearInterval(gameSaveHeartbeatTimer);
+            }
+            gameSaveHeartbeatTimer = setInterval(function () {
+                touchGameSave(game.id);
+            }, 30000);
 
             if (fastMode && typeof game.direct === "string" && game.direct.length > 0) {
                 setStatus("warn", "Fast mode active. Opening direct mode...");
@@ -603,6 +640,7 @@
                 frameLoaded = true;
                 clearTimeout(loadTimer);
                 setStatus("ok", "Game loaded.");
+                touchGameSave(game.id);
             }, { once: true });
 
             loadTimer = setTimeout(function () {

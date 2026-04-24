@@ -290,42 +290,42 @@
             border: 1px solid rgba(255, 255, 255, 0.45);
         }
 
-        .library-overview {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 8px;
-            margin: 12px 0 14px;
-        }
-
-        .overview-tile {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            border-radius: 12px;
-            padding: 10px 12px;
-            box-shadow: var(--panel-shadow);
-            display: grid;
-            gap: 2px;
-        }
-
-        .overview-label {
-            font-size: 0.72rem;
-            font-weight: 800;
-            letter-spacing: 0.2px;
-            color: var(--muted);
-            text-transform: uppercase;
-        }
-
-        .overview-value {
-            font-size: 1.05rem;
-            font-weight: 900;
-            color: var(--panel-title);
-        }
-
         .toolbar {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 10px;
             margin-bottom: 12px;
+            position: sticky;
+            top: 10px;
+            z-index: 6;
+        }
+
+        .library-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 6px 0 10px;
+            flex-wrap: wrap;
+        }
+
+        .library-head h2 {
+            margin: 0;
+            color: var(--panel-title);
+            font-size: 1.08rem;
+            font-weight: 900;
+            letter-spacing: 0.2px;
+        }
+
+        .library-count {
+            margin: 0;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            color: var(--muted);
+            border-radius: 999px;
+            padding: 6px 11px;
+            font-size: 0.8rem;
+            font-weight: 800;
         }
 
         .panel {
@@ -921,56 +921,61 @@
             color: var(--warn-ink);
         }
 
-        .game-launcher {
+        .play-modal {
             position: fixed;
             inset: 0;
-            z-index: 99995;
-            background: rgba(10, 16, 30, 0.62);
-            backdrop-filter: blur(4px);
+            z-index: 99991;
             display: grid;
             place-items: center;
             padding: 12px;
+            background: rgba(8, 18, 38, 0.62);
+            backdrop-filter: blur(5px);
         }
 
-        .game-launcher[hidden] {
+        .play-modal[hidden] {
             display: none !important;
         }
 
-        .game-launcher-card {
+        .play-modal-card {
             width: min(1100px, 100%);
-            height: min(84vh, 760px);
+            height: min(86vh, 820px);
             border: 1px solid var(--line);
-            border-radius: 14px;
+            border-radius: 16px;
             background: var(--panel);
-            box-shadow: 0 30px 70px rgba(6, 18, 42, 0.36);
-            overflow: hidden;
+            box-shadow: 0 28px 56px rgba(0, 0, 0, 0.35);
             display: grid;
             grid-template-rows: auto 1fr;
+            overflow: hidden;
         }
 
-        .game-launcher-head {
-            padding: 10px;
-            border-bottom: 1px solid var(--line);
+        .play-modal-head {
             display: flex;
+            align-items: center;
             justify-content: space-between;
             gap: 8px;
-            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
             background: var(--panel-2);
         }
 
-        .game-launcher-head h3 {
+        .play-modal-title {
             margin: 0;
-            font-size: 0.96rem;
             color: var(--panel-title);
+            font-size: 0.96rem;
+            font-weight: 900;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        .game-launcher-actions {
+        .play-modal-actions {
             display: flex;
-            gap: 6px;
+            align-items: center;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
-        .game-launcher-frame {
+        .play-modal-frame {
             width: 100%;
             height: 100%;
             border: 0;
@@ -1073,6 +1078,10 @@
                 width: 100vw;
                 max-width: 100vw;
             }
+            .play-modal-card {
+                width: 100%;
+                height: calc(100vh - 14px);
+            }
         }
     </style>
 </head>
@@ -1096,25 +1105,6 @@
                 <span class="pill">Fast mode for performance</span>
                 <span id="websitePeopleCount" class="pill">Website visitors: -- online</span>
             </div>
-        </section>
-
-        <section class="library-overview" aria-label="Library overview">
-            <article class="overview-tile">
-                <span class="overview-label">Total Games</span>
-                <span id="overviewTotalGames" class="overview-value">0</span>
-            </article>
-            <article class="overview-tile">
-                <span class="overview-label">Filtered Results</span>
-                <span id="overviewFilteredGames" class="overview-value">0</span>
-            </article>
-            <article class="overview-tile">
-                <span class="overview-label">Local Games</span>
-                <span id="overviewLocalGames" class="overview-value">0</span>
-            </article>
-            <article class="overview-tile">
-                <span class="overview-label">Open Source</span>
-                <span id="overviewOpenSourceGames" class="overview-value">0</span>
-            </article>
         </section>
 
         <section class="panel" aria-label="Open source picks" style="margin-bottom:12px;">
@@ -1163,6 +1153,11 @@
             <span class="meta">Source: games.json</span>
         </section>
 
+        <section class="library-head" aria-label="Library summary">
+            <h2>All Games</h2>
+            <p id="libraryCount" class="library-count">Loading games...</p>
+        </section>
+
         <section id="gameGrid" class="grid" aria-label="Games list"></section>
         <p id="emptyState" class="empty">No games match that search. Try another term or reset category.</p>
 
@@ -1206,16 +1201,17 @@
         </article>
     </section>
 
-    <section id="gameLauncher" class="game-launcher" hidden aria-hidden="true">
-        <article class="game-launcher-card" role="dialog" aria-modal="true" aria-labelledby="gameLauncherTitle">
-            <header class="game-launcher-head">
-                <h3 id="gameLauncherTitle">Now Playing</h3>
-                <div class="game-launcher-actions">
-                    <a id="gameLauncherDirect" class="btn alt" href="#" target="_blank" rel="noopener noreferrer">Open Direct</a>
-                    <button id="gameLauncherClose" type="button" class="btn warn">Close</button>
+    <section id="playModal" class="play-modal" hidden aria-hidden="true">
+        <article class="play-modal-card" role="dialog" aria-modal="true" aria-labelledby="playModalTitle">
+            <header class="play-modal-head">
+                <h3 id="playModalTitle" class="play-modal-title">Now Playing</h3>
+                <div class="play-modal-actions">
+                    <a id="playModalOpenPage" class="btn alt" href="#" target="_blank" rel="noopener noreferrer">Open Player Page</a>
+                    <a id="playModalOpenDirect" class="btn alt" href="#" target="_blank" rel="noopener noreferrer">Open Direct</a>
+                    <button id="closePlayModalBtn" type="button" class="btn warn">Close</button>
                 </div>
             </header>
-            <iframe id="gameLauncherFrame" class="game-launcher-frame" title="In-page game player" loading="eager" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+            <iframe id="playModalFrame" class="play-modal-frame" title="Embedded game player" loading="eager" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </article>
     </section>
 
@@ -1271,6 +1267,7 @@
         var clearFavoritesBtn = document.getElementById("clearFavoritesBtn");
         var clearRecentBtn = document.getElementById("clearRecentBtn");
         var modeBadge = document.getElementById("modeBadge");
+        var libraryCount = document.getElementById("libraryCount");
         var openFeedbackBtn = document.getElementById("openFeedbackBtn");
         var feedbackModal = document.getElementById("feedbackModal");
         var closeFeedbackBtn = document.getElementById("closeFeedbackBtn");
@@ -1279,20 +1276,17 @@
         var feedbackMessageInput = document.getElementById("feedbackMessageInput");
         var sendFeedbackBtn = document.getElementById("sendFeedbackBtn");
         var feedbackStatus = document.getElementById("feedbackStatus");
+        var playModal = document.getElementById("playModal");
+        var playModalTitle = document.getElementById("playModalTitle");
+        var playModalFrame = document.getElementById("playModalFrame");
+        var playModalOpenPage = document.getElementById("playModalOpenPage");
+        var playModalOpenDirect = document.getElementById("playModalOpenDirect");
+        var closePlayModalBtn = document.getElementById("closePlayModalBtn");
         var openSourceOnlyToggle = document.getElementById("openSourceOnlyToggle");
         var playableOnlyToggle = document.getElementById("playableOnlyToggle");
         var saveDataStatus = document.getElementById("saveDataStatus");
         var cloudDataStatus = document.getElementById("cloudDataStatus");
         var websitePeopleCount = document.getElementById("websitePeopleCount");
-        var overviewTotalGames = document.getElementById("overviewTotalGames");
-        var overviewFilteredGames = document.getElementById("overviewFilteredGames");
-        var overviewLocalGames = document.getElementById("overviewLocalGames");
-        var overviewOpenSourceGames = document.getElementById("overviewOpenSourceGames");
-        var gameLauncher = document.getElementById("gameLauncher");
-        var gameLauncherTitle = document.getElementById("gameLauncherTitle");
-        var gameLauncherFrame = document.getElementById("gameLauncherFrame");
-        var gameLauncherDirect = document.getElementById("gameLauncherDirect");
-        var gameLauncherClose = document.getElementById("gameLauncherClose");
         var localSaveChip = document.getElementById("localSaveChip");
         var cloudSaveChip = document.getElementById("cloudSaveChip");
         var fnafSaveStatus = document.getElementById("fnafSaveStatus");
@@ -1342,6 +1336,30 @@
             if (feedbackSubjectInput) feedbackSubjectInput.value = "";
             if (feedbackNameInput) feedbackNameInput.value = "";
             if (feedbackMessageInput) feedbackMessageInput.value = "";
+        }
+
+        function openPlayModal(game) {
+            if (!playModal || !playModalFrame || !game) {
+                return;
+            }
+            var launchUrl = "play.html?game=" + encodeURIComponent(game.id);
+            playModal.hidden = false;
+            playModal.setAttribute("aria-hidden", "false");
+            playModalTitle.textContent = "Now Playing: " + game.title;
+            playModalOpenPage.href = launchUrl;
+            playModalOpenDirect.href = game.direct;
+            playModalFrame.src = launchUrl;
+            document.body.style.overflow = "hidden";
+        }
+
+        function closePlayModal() {
+            if (!playModal || !playModalFrame) {
+                return;
+            }
+            playModal.hidden = true;
+            playModal.setAttribute("aria-hidden", "true");
+            playModalFrame.removeAttribute("src");
+            document.body.style.overflow = "";
         }
 
         async function sendFeedbackEmail() {
@@ -2056,7 +2074,10 @@
             var favoriteClass = isFavorite ? "btn alt fav active" : "btn alt fav";
             var favoriteLabel = isFavorite ? "Favorited" : "Favorite";
             var cardClass = compact ? "card compact" : "card";
+            var launch = "play.html?game=" + encodeURIComponent(game.id);
+            var playLabel = "Play";
             var directTrackingAttr = ' data-recent-id="' + game.id + '"';
+            var playTrackingAttr = ' data-play-id="' + game.id + '" data-play-launch="' + launch + '"';
             var hasPfp = typeof game.pfp === "string" && game.pfp.length > 0;
             var gameGradient = typeof game.gradient === "string" && game.gradient.length > 0
                 ? game.gradient
@@ -2082,7 +2103,7 @@
                 '<h2 class="title">' + game.title + '</h2>' +
                 '<p class="desc">' + game.description + '</p>' +
                 '<div class="actions">' +
-                '<button type="button" class="btn play" data-play-id="' + game.id + '">Play</button>' +
+                '<a class="btn play" href="' + launch + '"' + playTrackingAttr + '>' + playLabel + '</a>' +
                 '<a class="btn alt" href="' + game.direct + '" target="_blank" rel="noopener noreferrer"' + directTrackingAttr + '>Open Direct</a>' +
                 (game.repo ? '<a class="btn alt" href="' + game.repo + '" target="_blank" rel="noopener noreferrer">Source</a>' : '') +
                 '<button type="button" class="' + favoriteClass + '" data-favorite-id="' + game.id + '">' + favoriteLabel + '</button>' +
@@ -2146,46 +2167,6 @@
             openSourceEmpty.style.display = openSourceGames.length ? "none" : "block";
         }
 
-        function renderLibraryOverview(filteredGames) {
-            if (overviewTotalGames) {
-                overviewTotalGames.textContent = String(games.length);
-            }
-            if (overviewFilteredGames) {
-                overviewFilteredGames.textContent = String(Array.isArray(filteredGames) ? filteredGames.length : games.length);
-            }
-            if (overviewLocalGames) {
-                overviewLocalGames.textContent = String(games.filter(function (game) { return game.platform === "local"; }).length);
-            }
-            if (overviewOpenSourceGames) {
-                overviewOpenSourceGames.textContent = String(games.filter(function (game) { return game.openSource === true; }).length);
-            }
-        }
-
-        function openGameLauncher(game) {
-            if (!gameLauncher || !gameLauncherFrame || !game) {
-                return;
-            }
-            gameLauncherTitle.textContent = game.title;
-            gameLauncherFrame.src = game.source || game.direct || "about:blank";
-            if (gameLauncherDirect) {
-                gameLauncherDirect.href = game.direct || game.source || "#";
-            }
-            gameLauncher.hidden = false;
-            gameLauncher.setAttribute("aria-hidden", "false");
-            pushRecentGame(game.id);
-            queueCloudAutoSync();
-            renderFavoritesAndRecent();
-        }
-
-        function closeGameLauncher() {
-            if (!gameLauncher || !gameLauncherFrame) {
-                return;
-            }
-            gameLauncher.hidden = true;
-            gameLauncher.setAttribute("aria-hidden", "true");
-            gameLauncherFrame.src = "about:blank";
-        }
-
         function render() {
             if (!games.length) {
                 gameGrid.innerHTML = "";
@@ -2211,6 +2192,10 @@
             filtered.sort(function (a, b) {
                 return a.title.localeCompare(b.title);
             });
+
+            if (libraryCount) {
+                libraryCount.textContent = filtered.length + " game" + (filtered.length === 1 ? "" : "s") + " shown";
+            }
 
             // Auto-enable extra lightweight rendering when very large result sets are shown.
             document.body.classList.toggle("auto-ultra-lite", filtered.length >= 36 && readSetting(PERFORMANCE_PROFILE_KEY, "normal") !== "ultra");
@@ -2268,7 +2253,6 @@
             emptyState.style.display = filtered.length ? "none" : "block";
             renderFavoritesAndRecent();
             renderOpenSource();
-            renderLibraryOverview(filtered);
         }
 
         function populateCategoryFilter() {
@@ -2313,6 +2297,20 @@
                 return;
             }
 
+            var playTrigger = target.closest("a[data-play-id]");
+            if (playTrigger instanceof HTMLElement) {
+                event.preventDefault();
+                var playId = playTrigger.getAttribute("data-play-id") || "";
+                var game = getGameById(playId);
+                if (game) {
+                    pushRecentGame(playId);
+                    queueCloudAutoSync();
+                    renderFavoritesAndRecent();
+                    openPlayModal(game);
+                }
+                return;
+            }
+
             var directTrigger = target.closest("a[data-recent-id]");
             if (directTrigger instanceof HTMLElement) {
                 var recentId = directTrigger.getAttribute("data-recent-id");
@@ -2321,16 +2319,6 @@
                     queueCloudAutoSync();
                     renderFavoritesAndRecent();
                 }
-            }
-
-            var playTrigger = target.closest("button[data-play-id]");
-            if (playTrigger instanceof HTMLElement) {
-                var playId = playTrigger.getAttribute("data-play-id");
-                var playGame = playId ? getGameById(playId) : null;
-                if (playGame) {
-                    openGameLauncher(playGame);
-                }
-                return;
             }
 
             var favoriteId = target.getAttribute("data-favorite-id");
@@ -2405,29 +2393,29 @@
             });
         }
 
+        if (playModal) {
+            playModal.addEventListener("click", function (event) {
+                if (event.target === playModal) {
+                    closePlayModal();
+                }
+            });
+        }
+
+        if (closePlayModalBtn) {
+            closePlayModalBtn.addEventListener("click", function () {
+                closePlayModal();
+            });
+        }
+
         document.addEventListener("keydown", function (event) {
             if (event.key === "Escape" && feedbackModal && !feedbackModal.hidden) {
                 closeFeedbackModal();
                 return;
             }
-            if (event.key === "Escape" && gameLauncher && !gameLauncher.hidden) {
-                closeGameLauncher();
+            if (event.key === "Escape" && playModal && !playModal.hidden) {
+                closePlayModal();
             }
         });
-
-        if (gameLauncherClose) {
-            gameLauncherClose.addEventListener("click", function () {
-                closeGameLauncher();
-            });
-        }
-
-        if (gameLauncher) {
-            gameLauncher.addEventListener("click", function (event) {
-                if (event.target === gameLauncher) {
-                    closeGameLauncher();
-                }
-            });
-        }
 
         if (sendFeedbackBtn) {
             sendFeedbackBtn.addEventListener("click", function () {

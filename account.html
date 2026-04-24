@@ -680,6 +680,11 @@
         .then(action)
         .finally(function () {
           authActionInFlight = false;
+          if (pendingCodeEmail && pendingCodeFlow) {
+            setAuthMode("code");
+            codePanel.classList.remove("hidden");
+            verifyPanel.classList.remove("hidden");
+          }
           authSignInBtn.disabled = disabledBefore.signIn;
           authSignUpBtn.disabled = disabledBefore.signUp;
           authPasswordResetBtn.disabled = disabledBefore.reset;
