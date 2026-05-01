@@ -1023,6 +1023,7 @@
       var requiresCode = await requiresSigninCodeForEmail(email);
       if (requiresCode) {
         await sendOtpCode("otp_signin", email);
+        beginPendingVerification("otp_signin", email);
         verifyHint.textContent = "Check your email for the verification code, then enter it below to finish signing in.";
         setStatus("Verification code required for this account. We sent a sign-in code.", "warn");
         return;
