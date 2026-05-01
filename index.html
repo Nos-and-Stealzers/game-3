@@ -1338,10 +1338,31 @@
             if (feedbackMessageInput) feedbackMessageInput.value = "";
         }
 
-        function openPlayModal(game) {
+        async function openPlayModal(game) {
             if (!playModal || !playModalFrame || !game) {
                 return;
             }
+
+            // Require login before playing
+            try {
+                if (!supabaseClient || !supabaseClient.auth) {
+                    alert('Please sign in to play games.');
+                    window.location.href = 'account.html';
+                    return;
+                }
+                var auth = await supabaseClient.auth.getUser();
+                var user = auth && auth.data ? auth.data.user : null;
+                if (!user) {
+                    alert('Please sign in to play games.');
+                    window.location.href = 'account.html';
+                    return;
+                }
+            } catch (_err) {
+                alert('Please sign in to play games.');
+                window.location.href = 'account.html';
+                return;
+            }
+
             var launchUrl = "play.html?game=" + encodeURIComponent(game.id);
             playModal.hidden = false;
             playModal.setAttribute("aria-hidden", "false");
@@ -1405,6 +1426,23 @@
         function isStaffRole(role) {
             var normalized = String(role || "").trim().toLowerCase();
             return normalized === "admin" || normalized === "moderator" || normalized === "developer" || normalized === "dev";
+        }
+
+        // Map features to allowed staff roles. Adjust this mapping to control
+        // which roles can see which privileged UI/features.
+        var STAFF_FEATURES = {
+            viewHiddenGames: ["admin", "moderator", "developer"],
+            viewBetaGames: ["developer", "admin"],
+            settingsShortcuts: ["admin", "developer"]
+        };
+
+        function staffRoleAllows(feature) {
+            try {
+                var allowed = STAFF_FEATURES[feature] || [];
+                return allowed.indexOf(String(currentStaffRole || "").trim().toLowerCase()) !== -1;
+            } catch (_err) {
+                return false;
+            }
         }
 
         async function refreshStaffRole() {
@@ -1955,7 +1993,7 @@
                     return false;
                 }
                 var gameId = game && typeof game.id === "string" ? game.id.trim().toLowerCase() : "";
-                if (gameId && hiddenGameIds[gameId] && !isStaffRole(currentStaffRole)) {
+                if (gameId && hiddenGameIds[gameId] && !staffRoleAllows('viewHiddenGames')) {
                     return false;
                 }
                 return true;

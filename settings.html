@@ -3105,11 +3105,25 @@
             return normalized === "admin" || normalized === "developer" || normalized === "dev";
         }
 
+        // Role→feature mapping for settings page. Configure per-feature access.
+        var STAFF_FEATURES = {
+            settingsShortcuts: ["admin", "developer"]
+        };
+
+        function staffRoleAllows(feature) {
+            try {
+                var allowed = STAFF_FEATURES[feature] || [];
+                return allowed.indexOf(String(currentStaffRole || "").trim().toLowerCase()) !== -1;
+            } catch (_err) {
+                return false;
+            }
+        }
+
         function applySecurityRoleVisibility() {
             if (!securitySetupShortcutsCard) {
                 return;
             }
-            var allowed = isStaffRole(currentStaffRole);
+            var allowed = staffRoleAllows('settingsShortcuts');
             securitySetupShortcutsCard.hidden = !allowed;
             securitySetupShortcutsCard.classList.toggle("hidden", !allowed);
         }
