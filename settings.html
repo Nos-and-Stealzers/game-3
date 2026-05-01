@@ -5118,6 +5118,10 @@
 
         function writeUserSettings(settings) {
             storageSet(USER_SETTINGS_KEY, JSON.stringify(settings || {}));
+            try {
+                storageSet(USER_SETTINGS_KEY + "_changed", String(Date.now()));
+            } catch (_e) {
+            }
         }
 
         function applyUserSettingsForm() {
