@@ -1468,6 +1468,8 @@
         var user = auth && auth.data ? auth.data.user : null;
 
         if (user) {
+          // Ensure admin visibility immediately so staff can access admin tools
+          setAdminPortalVisibility(user.email || "");
           var hasUsername = await ensureUsernameComplete(user);
           if (!hasUsername) {
             restartCloudPeriodicSync();
@@ -1487,6 +1489,8 @@
             setAdminPortalVisibility("");
             setStatus("Signed out.", "warn");
           } else {
+            // Show admin link immediately while profile setup completes
+            setAdminPortalVisibility(sessionUser.email || "");
             ensureUsernameComplete(sessionUser).then(function (hasUsername) {
               if (hasUsername) {
                 autoLoadCloudForUser(sessionUser);
