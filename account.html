@@ -563,8 +563,42 @@
       return !!ADMIN_EMAILS[email.trim().toLowerCase()];
     }
 
-    function setAdminPortalVisibility(email) {
-      adminPortalBtn.classList.toggle("hidden", !isAdminEmail(email));
+    function isStaffRole(role) {
+      var normalized = String(role || "").trim().toLowerCase();
+      return normalized === "admin" || normalized === "moderator" || normalized === "developer" || normalized === "dev";
+    }
+
+    async function setAdminPortalVisibility(email) {
+      try {
+        // Hide by default
+        adminPortalBtn.classList.add("hidden");
+
+        var normalizedEmail = String(email || "").trim().toLowerCase();
+        if (isAdminEmail(normalizedEmail)) {
+          adminPortalBtn.classList.remove("hidden");
+          return;
+        }
+
+        if (!supabaseClient || typeof supabaseClient.rpc !== "function") {
+          return;
+        }
+
+        try {
+          var roleResult = await supabaseClient.rpc("current_user_staff_role");
+          if (!roleResult || roleResult.error) {
+            return;
+          }
+          var role = String(roleResult.data || "").trim().toLowerCase();
+          if (isStaffRole(role)) {
+            adminPortalBtn.classList.remove("hidden");
+            return;
+          }
+        } catch (_err) {
+          // ignore and fall through (remain hidden)
+        }
+      } catch (_err) {
+        // defensive: ensure we never throw here
+      }
     }
 
     function storageGet(key) {
