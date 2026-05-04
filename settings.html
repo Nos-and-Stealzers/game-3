@@ -2823,6 +2823,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.config.js"></script>
+    <script src="js/admin-console.js"></script>
+    <script src="js/username-server-sync.js"></script>
     <script src="js/friend-message-toast.js"></script>
     <script src="js/debug-console.js"></script>
     <script src="js/site-ux.js"></script>
@@ -6732,6 +6734,10 @@
         syncSettingsTabFromStorage();
         loadGamesCatalog();
         initSupabase();
+        // Initialize real-time username server sync
+        if (window.__GAMEHUB_USERNAME_SYNC__ && typeof window.__GAMEHUB_USERNAME_SYNC__.init === 'function') {
+            window.__GAMEHUB_USERNAME_SYNC__.init({ debounceMs: 1500 });
+        }
     </script>
 </body>
 </html>

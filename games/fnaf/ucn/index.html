@@ -143,10 +143,12 @@
     <div class="glitch"></div>
     <img src="resources/vignette.png" class="vignette">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="../../../js/fnaf-loader-optimized.js"></script>
     <script src="../../../js/fnaf-save-sync.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../../../js/supabase.config.js"></script>
     <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { pagehideOnly: true, runOnStart: false, captureIndexedDb: true };</script>
+    <script src="../../../js/admin-console.js"></script>
     <script src="../../../js/cloud-autosync.js"></script>
     <script src="../../../js/fnaf-input-fix.js"></script>
     <script src="../../../js/fnaf-recovery.js"></script>
@@ -210,6 +212,13 @@
         let pendingLoadErrorTimer = null;
         const REQUEST_TIMEOUT_MS = 30000;
         const MAX_REQUEST_RETRIES = 2;
+        
+        // Check if optimized loader config is available
+        const optimizedConfig = window.__FNAF_LOADER_CONFIG__ || {
+          skipPreflight: true,
+          fetchTimeout: 30000,
+          maxRetries: 2
+        };
 
         function normalizePercent(percent) {
             if (!Number.isFinite(percent)) return 0;
@@ -239,11 +248,11 @@
             }, 3500);
         }
 
-        async function fetchWithRetry(url, options = {}, retries = MAX_REQUEST_RETRIES) {
+        async function fetchWithRetry(url, options = {}, retries = optimizedConfig.maxRetries) {
             let lastError = null;
             for (let attempt = 0; attempt <= retries; attempt++) {
                 const controller = new AbortController();
-                const timeoutMs = document.hidden ? REQUEST_TIMEOUT_MS * 6 : REQUEST_TIMEOUT_MS;
+                const timeoutMs = document.hidden ? optimizedConfig.fetchTimeout * 6 : optimizedConfig.fetchTimeout;
                 const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                 try {
                     const response = await fetch(url, { ...options, signal: controller.signal });
@@ -252,8 +261,9 @@
                 } catch (error) {
                     clearTimeout(timeoutId);
                     lastError = error;
-                    if (attempt === retries) {
-                        throw lastError;
+                    if (attempt < retries) {
+                        // Exponential backoff
+                        await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, attempt)));
                     }
                 }
             }

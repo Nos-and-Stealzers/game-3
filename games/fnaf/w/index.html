@@ -205,16 +205,19 @@
             <p id="recoveryMessage">A runtime issue was detected. You can try a quick recover or reload the game.</p>
             <div class="recovery-actions">
                 <button id="recoverNowBtn" type="button" class="recovery-btn">Quick Recover</button>
+                <button id="retryDownloadBtn" type="button" class="recovery-btn">Retry Download</button>
                 <button id="reloadGameBtn" type="button" class="recovery-btn primary">Reload Game</button>
                 <button id="closeRecoveryBtn" type="button" class="recovery-btn">Dismiss</button>
             </div>
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="../../../js/fnaf-loader-optimized.js"></script>
     <script src="../../../js/fnaf-save-sync.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../../../js/supabase.config.js"></script>
     <script>window.__GAMEHUB_CLOUD_SYNC_OPTIONS__ = { pagehideOnly: true, runOnStart: false, captureIndexedDb: true };</script>
+    <script src="../../../js/admin-console.js"></script>
     <script src="../../../js/cloud-autosync.js"></script>
     <script src="../../../js/fnaf-input-fix.js"></script>
 </body>
@@ -228,6 +231,7 @@
     const recoveryMessage = document.getElementById('recoveryMessage');
     const recoverNowBtn = document.getElementById('recoverNowBtn');
     const reloadGameBtn = document.getElementById('reloadGameBtn');
+    const retryDownloadBtn = document.getElementById('retryDownloadBtn');
     const closeRecoveryBtn = document.getElementById('closeRecoveryBtn');
     const inputStability = window.installFnafInputStability ? window.installFnafInputStability("MMFCanvas") : null;
     const isLowSpecDevice = (typeof navigator !== 'undefined') && (
@@ -368,6 +372,21 @@
             window.location.reload();
         });
     }
+    if (retryDownloadBtn) {
+        retryDownloadBtn.addEventListener('click', function () {
+            try {
+                hideRecoveryOverlay();
+                if (typeof attemptLoadResources === 'function') {
+                    attemptLoadResources();
+                } else {
+                    // fallback: full reload
+                    window.location.reload();
+                }
+            } catch (e) {
+                window.location.reload();
+            }
+        });
+    }
     if (closeRecoveryBtn) {
         closeRecoveryBtn.addEventListener('click', hideRecoveryOverlay);
     }
@@ -392,6 +411,13 @@
         const MAX_REQUEST_RETRIES = 2;
         let blackFrameStreak = 0;
         let blackFrameWatcherId = null;
+        
+        // Check if optimized loader config is available
+        const optimizedConfig = window.__FNAF_LOADER_CONFIG__ || {
+          skipPreflight: true,
+          fetchTimeout: 30000,
+          maxRetries: 2
+        };
 
         function normalizePercent(percent) {
             if (!Number.isFinite(percent)) return 0;
@@ -477,11 +503,11 @@
             }
         }
 
-        async function fetchWithRetry(url, options = {}, retries = MAX_REQUEST_RETRIES) {
+        async function fetchWithRetry(url, options = {}, retries = optimizedConfig.maxRetries) {
             let lastError = null;
             for (let attempt = 0; attempt <= retries; attempt++) {
                 const controller = new AbortController();
-                const timeoutMs = document.hidden ? BACKGROUND_REQUEST_TIMEOUT_MS : REQUEST_TIMEOUT_MS;
+                const timeoutMs = document.hidden ? BACKGROUND_REQUEST_TIMEOUT_MS : optimizedConfig.fetchTimeout;
                 const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                 try {
                     const response = await fetch(url, { ...options, signal: controller.signal });
@@ -490,8 +516,9 @@
                 } catch (error) {
                     clearTimeout(timeoutId);
                     lastError = error;
-                    if (attempt === retries) {
-                        throw lastError;
+                    if (attempt < retries) {
+                        // Exponential backoff
+                        await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, attempt)));
                     }
                 }
             }
@@ -638,7 +665,7 @@
 
                 Promise.all(fileParts.map((part, index) =>
                     fetchWithRetry(part).then((response) => {
-                        if (!response.ok) throw new Error("Missing part: " + part);
+                        if (!response.ok) throw new Error("Missing part: " + part + " (HTTP " + response.status + ")");
                         return response.arrayBuffer();
                     }).then((data) => {
                         buffers[index] = data;
@@ -710,25 +737,83 @@
             return "LOADING FAILED";
         }
         const resourceParts = getParts("src/resources.zip", 1, parts);
-        preflightParts(resourceParts)
-            .then((missingParts) => {
-                if (missingParts.length) {
-                    throw new Error("Missing parts: " + missingParts.join(", "));
+
+        // Ensure wedone is only run once
+        let wedoneStarted = false;
+
+        async function safeWedone() {
+            if (wedoneStarted) return;
+            wedoneStarted = true;
+            try {
+                await wedone();
+            } catch (e) {
+                console.error('Error during wedone():', e);
+                showLoadError(formatLoaderError(e));
+            }
+        }
+
+        async function attemptLoadResources() {
+            try {
+                updateProgress('Preparing resources...', 2);
+
+                // Start both strategies in parallel and use whichever completes first
+                const mergedPromise = mergeFiles(resourceParts).then(url => ({ type: 'merged', url }));
+                const extractedPromise = (async () => { await extract(); return { type: 'extracted' }; })();
+
+                const winner = await Promise.race([mergedPromise, extractedPromise]);
+
+                if (winner && winner.type === 'merged') {
+                    // If we have a merged blob URL, intercept requests for resources.zip
+                    const mergedUrl = winner.url;
+                    window.fetch = async function (url, ...args) {
+                        var requestUrl = typeof url === "string" ? url : (url && typeof url.url === "string" ? url.url : "");
+                        if (requestUrl && requestUrl.endsWith("resources.zip")) {
+                            return originalFetch(mergedUrl, ...args);
+                        }
+                        return originalFetch(url, ...args);
+                    };
+                    await intercept();
+                    await safeWedone();
+                    return;
                 }
-                return Promise.all([mergeFiles(resourceParts)]);
-            })
-            .then(([resources]) => {
-            window.fetch = async function (url, ...args) {
-                var requestUrl = typeof url === "string" ? url : (url && typeof url.url === "string" ? url.url : "");
-                if (requestUrl && requestUrl.endsWith("resources.zip")) {
-                    return originalFetch(resources, ...args);
+
+                if (winner && winner.type === 'extracted') {
+                    // extract() already mapped file entries
+                    await intercept();
+                    await safeWedone();
+                    return;
                 }
-                return originalFetch(url, ...args);
-            };
-            return wedone();
-        }).catch((error) => {
-            console.error('FNAF World loader failed:', error);
-            showLoadError(formatLoaderError(error));
+
+                // If we reached here, try fallback: ensure extract is attempted
+                updateProgress('Attempting fallback: downloading resources.zip', 5);
+                await extract();
+                await intercept();
+                await safeWedone();
+            } catch (error) {
+                console.error('FNAF World loader failed (parallel):', error);
+                // Last-resort fallback: attempt direct extract again once
+                try {
+                    updateProgress('Retrying direct resources.zip download', 4);
+                    await extract();
+                    await intercept();
+                    await safeWedone();
+                } catch (fallbackError) {
+                    console.error('FNAF World loader final fallback failed:', fallbackError);
+                    showLoadError(formatLoaderError(fallbackError || error));
+                }
+            }
+        }
+
+        // Run preflight first to detect obvious missing parts quickly, but still allow parallel strategies
+        preflightParts(resourceParts).then((missingParts) => {
+            if (missingParts.length) {
+                console.warn('Preflight detected missing parts:', missingParts);
+                // Still try parallel strategies (extract may succeed even if parts missing)
+            }
+            attemptLoadResources();
+        }).catch((err) => {
+            console.error('Preflight check failed:', err);
+            attemptLoadResources();
         });
     };
 </script>
